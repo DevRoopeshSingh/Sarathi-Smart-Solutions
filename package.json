@@ -1,0 +1,9 @@
+{
+  "name": "sarathi-smart-solutions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf dist && mkdir -p dist && cp index.html styles.css app.js recommendation.mjs 01_icon_primary.png dist/",
+    "test": "node --test tests/*.test.mjs"
+  }
+}
