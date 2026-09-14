@@ -14,7 +14,7 @@
     "serve": "node scripts/serve.mjs"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "eslint": "^9.22.0",
     "globals": "^16.0.0",
