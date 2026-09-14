@@ -1,9 +1,23 @@
 {
   "name": "sarathi-smart-solutions",
+  "version": "1.0.0",
+  "description": "Official static website for Sarathi Smart Solutions - Security, Connectivity, and Automation.",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "rm -rf dist && mkdir -p dist && cp index.html styles.css app.js recommendation.mjs 01_icon_primary.png dist/",
-    "test": "node --test tests/*.test.mjs"
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "serve": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.63.0",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3"
   }
 }

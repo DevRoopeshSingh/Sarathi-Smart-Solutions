@@ -1,3 +1,37 @@
+# Production build artifacts
 dist/
+
+# Dependencies
+node_modules/
+
+# Archives and bundles
 *.tar.gz
+*.zip
+
+# Operating system files
 .DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test output and coverage
+test-results/
+playwright-report/
+.nyc_output/
+coverage/
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
