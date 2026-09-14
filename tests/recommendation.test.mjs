@@ -1,33 +1,148 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildRecommendation, SIZE_OPTIONS } from "../recommendation.mjs";
+import {
+  buildRecommendation,
+  formatEnquiryMessage,
+  buildWhatsAppUrl,
+  CONTACT_CONFIG,
+  NEED_LABELS,
+  SIZE_OPTIONS
+} from "../recommendation.mjs";
 
-test("home and business each expose three size options", () => {
+test("home and business each expose three valid size options", () => {
   assert.equal(SIZE_OPTIONS.Home.length, 3);
   assert.equal(SIZE_OPTIONS.Business.length, 3);
+  const expectedValues = ["Compact", "Standard", "Large"];
+  assert.deepEqual(
+    SIZE_OPTIONS.Home.map((opt) => opt.value),
+    expectedValues
+  );
+  assert.deepEqual(
+    SIZE_OPTIONS.Business.map((opt) => opt.value),
+    expectedValues
+  );
+});
+
+test("contact configuration exposes required company details", () => {
+  assert.equal(CONTACT_CONFIG.whatsappNumber, "918369704457");
+  assert.equal(CONTACT_CONFIG.phone, "+918369704457");
+  assert.equal(CONTACT_CONFIG.email, "sarathismartsolutions@gmail.com");
+  assert.match(CONTACT_CONFIG.address, /Bhayander East/);
+  assert.match(CONTACT_CONFIG.disclaimer, /site survey/);
 });
 
 test("a compact CCTV request produces a Secure Start bundle", () => {
-  const result = buildRecommendation({ space: "Home", needs: ["cctv"], size: "Compact" });
+  const result = buildRecommendation({
+    space: "Home",
+    needs: ["cctv"],
+    size: "Compact"
+  });
   assert.equal(result.title, "Secure Start Bundle");
   assert.match(result.items[0].detail, /2–3 camera/);
   assert.match(result.summary, /Space: Home/);
+  assert.match(result.summary, /Approx. size: Compact/);
+  assert.match(result.summary, /Recommended starting bundle: Secure Start Bundle/);
 });
 
-test("a combined standard request produces a coordinated bundle", () => {
-  const result = buildRecommendation({ space: "Business", needs: ["cctv", "network", "biometric"], size: "Standard" });
+test("a combined standard request produces a Connected Control bundle", () => {
+  const result = buildRecommendation({
+    space: "Business",
+    needs: ["cctv", "network", "biometric"],
+    size: "Standard"
+  });
   assert.equal(result.title, "Connected Control Bundle");
-  assert.equal(result.items.length, 4);
+  assert.equal(result.items.length, 4); // 3 chosen needs + 1 setup item
   assert.match(result.summary, /Biometric attendance/);
+  assert.match(result.intro, /coordinated business solution/);
 });
 
 test("a large multi-service request produces Smart Site 360", () => {
-  const result = buildRecommendation({ space: "Business", needs: ["cctv", "network", "biometric", "intercom"], size: "Large" });
+  const result = buildRecommendation({
+    space: "Business",
+    needs: ["cctv", "network", "biometric", "intercom"],
+    size: "Large"
+  });
   assert.equal(result.title, "Smart Site 360 Bundle");
+  assert.equal(result.items.length, 5);
 });
 
-test("incomplete selections are rejected", () => {
-  assert.throws(() => buildRecommendation({ space: "Home", needs: [], size: "Compact" }), /at least one/);
-  assert.throws(() => buildRecommendation({ space: "", needs: ["cctv"], size: "Compact" }), /valid space/);
-  assert.throws(() => buildRecommendation({ space: "Home", needs: ["cctv"], size: "" }), /valid size/);
+test("every valid space and size permutation generates a valid recommendation", () => {
+  const spaces = ["Home", "Business"];
+  const sizes = ["Compact", "Standard", "Large"];
+  const needsKeys = Object.keys(NEED_LABELS);
+
+  for (const space of spaces) {
+    for (const size of sizes) {
+      const result = buildRecommendation({
+        space,
+        needs: [needsKeys[0]],
+        size
+      });
+      assert.ok(result.title);
+      assert.ok(result.intro);
+      assert.ok(result.summary);
+      assert.equal(result.items.length, 2);
+    }
+  }
+});
+
+test("incomplete or invalid inputs are rejected with clear errors", () => {
+  assert.throws(
+    () => buildRecommendation({ space: "Home", needs: [], size: "Compact" }),
+    /Choose at least one need/
+  );
+  assert.throws(
+    () => buildRecommendation({ space: "Home", needs: "not-an-array", size: "Compact" }),
+    /Choose at least one need/
+  );
+  assert.throws(
+    () => buildRecommendation({ space: "", needs: ["cctv"], size: "Compact" }),
+    /Choose a valid space/
+  );
+  assert.throws(
+    () => buildRecommendation({ space: "InvalidSpace", needs: ["cctv"], size: "Compact" }),
+    /Choose a valid space/
+  );
+  assert.throws(
+    () => buildRecommendation({ space: "Home", needs: ["cctv"], size: "" }),
+    /Choose a valid size/
+  );
+  assert.throws(
+    () => buildRecommendation({ space: "Home", needs: ["cctv"], size: "Huge" }),
+    /Choose a valid size/
+  );
+});
+
+test("unknown need keys throw descriptive error", () => {
+  assert.throws(
+    () =>
+      buildRecommendation({
+        space: "Home",
+        needs: ["cctv", "non_existent_service"],
+        size: "Compact"
+      }),
+    /Unknown need: non_existent_service/
+  );
+});
+
+test("formatEnquiryMessage produces consistent multi-line text", () => {
+  const message = formatEnquiryMessage({
+    space: "Home",
+    needs: ["cctv", "locks"],
+    size: "Standard",
+    title: "Connected Control Bundle"
+  });
+  assert.match(message, /^SARATHI SMART SOLUTIONS — ENQUIRY/);
+  assert.match(message, /Space: Home/);
+  assert.match(message, /Approx. size: Standard/);
+  assert.match(message, /Needs: CCTV surveillance & mobile viewing, Smart locks/);
+  assert.match(message, /Recommended starting bundle: Connected Control Bundle/);
+});
+
+test("buildWhatsAppUrl generates safe, properly formatted wa.me URLs", () => {
+  const url = buildWhatsAppUrl("+91 83697 04457", "Hello from Sarathi & Co.");
+  assert.equal(url, "https://wa.me/918369704457?text=Hello%20from%20Sarathi%20%26%20Co.");
+
+  const fallbackUrl = buildWhatsAppUrl("918369704457", "");
+  assert.equal(fallbackUrl, "https://wa.me/918369704457?text=");
 });
