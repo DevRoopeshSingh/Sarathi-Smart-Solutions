@@ -1,0 +1,7 @@
+# Robots.txt for Sarathi Smart Solutions
+# Replace https://www.example.com/ with your live production domain upon deployment.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://www.example.com/sitemap.xml
