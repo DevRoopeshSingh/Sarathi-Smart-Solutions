@@ -131,9 +131,13 @@ for (const width of [320, 375, 768, 1024, 1440]) {
       await page
         .locator("#services")
         .screenshot({ path: testInfo.outputPath(`services-${width}.png`) });
-      await page
-        .locator("#work-gallery")
-        .screenshot({ path: testInfo.outputPath(`proof-${width}.png`) });
+      const workGallery = page.locator("#work-gallery");
+      await workGallery.scrollIntoViewIfNeeded();
+      await page.evaluate(async () => {
+        const images = Array.from(document.querySelectorAll("#work-gallery img"));
+        await Promise.all(images.map((img) => img.decode().catch(() => {})));
+      });
+      await workGallery.screenshot({ path: testInfo.outputPath(`proof-${width}.png`) });
     }
     await page.locator('.floating-contact a[href="#survey-form"]').click();
     await expect(page.locator("#survey-title")).toBeInViewport();

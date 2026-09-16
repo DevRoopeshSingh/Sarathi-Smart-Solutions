@@ -6,7 +6,7 @@
  */
 
 import { rm, mkdir, copyFile, readFile, writeFile } from "node:fs/promises";
-import { resolve, join } from "node:path";
+import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PUBLIC_FILES, getSiteUrl, renderPublicText } from "./site-config.mjs";
 
@@ -31,6 +31,7 @@ async function build() {
   for (const file of ASSETS_TO_COPY) {
     const src = join(ROOT_DIR, file);
     const dest = join(DIST_DIR, file);
+    await mkdir(dirname(dest), { recursive: true });
     if (/\.(html|txt|xml)$/.test(file)) {
       await writeFile(dest, renderPublicText(await readFile(src, "utf8"), siteUrl));
     } else {

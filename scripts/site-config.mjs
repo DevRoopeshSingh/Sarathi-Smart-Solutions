@@ -12,7 +12,13 @@ export const PUBLIC_FILES = Object.freeze([
   "warranty-policy.html",
   "amc-policy.html",
   "cancellation-refund.html",
-  "404.html"
+  "404.html",
+  "assets/images/camera-mounting.jpg",
+  "assets/images/dvr-nvr-rack.jpg",
+  "assets/images/cable-casing-finish.jpg",
+  "assets/images/wifi-ap-installation.jpg",
+  "assets/images/cable-management-before.jpg",
+  "assets/images/cable-management-after.jpg"
 ]);
 
 export function getSiteUrl({ production = false, env = process.env } = {}) {

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.0] - 2026-09-16
+
+### Added
+
+- **Installation Proof Gallery**: Added high-resolution on-site workmanship photography across outdoor camera mounting with weatherproof junction boxes and conduit, wall-mounted 6U DVR/NVR equipment racks, mitred PVC surface casing and trunking, ceiling-mounted enterprise Wi-Fi access points, and before/after structured cable remediation.
+- **Card & Media Styling**: Implemented responsive proof cards with frosted glass pill tags, subtle hover elevation, aspect-ratio protection, and distinct before/after status badges.
+- **Build & Server Asset Pipeline**: Extended `scripts/site-config.mjs`, `scripts/build.mjs`, and `scripts/serve.mjs` to bundle, serve (`image/jpeg`), and recursively copy image assets.
+
 ## [1.0.0] - 2026-09-12
 
 ### Added

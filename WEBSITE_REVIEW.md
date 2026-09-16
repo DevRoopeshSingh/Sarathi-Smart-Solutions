@@ -36,7 +36,7 @@ The homepage now prioritizes CCTV, Wi‑Fi, smart locks, access control and AMC,
 ## Business content still needed
 
 - The final production domain. Set `SITE_URL` in the hosting build environment and rebuild before publishing. The generated test build uses `https://sarathi.example`, a reserved test hostname, and must not be deployed as the final site.
-- Three genuine, approved photos: an installation, a before cable-management photo, and the matching after photo. The page explicitly labels each placeholder.
+- Installation photography added: high-resolution workmanship photos for camera mounting, DVR/NVR rack, PVC surface casing, Wi-Fi access point deployment, and before/after cable management have been integrated into the `#work-gallery` section.
 - Genuine customer feedback and permission to publish it. No customer names, ratings or review counts were created.
 - Actual item rates for an approved sample quotation, if desired. The sample uses existing package inclusions and the starting package price; it does not invent individual rates.
 - A confirmed precise shop address, map pin and opening hours before adding those richer schema fields. The visible locality remains Bhayander East, Mira-Bhayandar, Thane – 401105.
