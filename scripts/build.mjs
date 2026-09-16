@@ -5,24 +5,19 @@
  * or shell-specific commands like 'rm -rf' or 'cp'.
  */
 
-import { rm, mkdir, copyFile } from "node:fs/promises";
+import { rm, mkdir, copyFile, readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { PUBLIC_FILES, getSiteUrl, renderPublicText } from "./site-config.mjs";
 
 const ROOT_DIR = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const DIST_DIR = join(ROOT_DIR, "dist");
 
-const ASSETS_TO_COPY = [
-  "index.html",
-  "styles.css",
-  "app.js",
-  "recommendation.mjs",
-  "01_icon_primary.png",
-  "robots.txt",
-  "sitemap.xml"
-];
+const ASSETS_TO_COPY = PUBLIC_FILES;
 
 async function build() {
+  // Validate before touching an existing build. Development fallback never enters dist/.
+  const siteUrl = getSiteUrl({ production: true });
   console.log("Starting cross-platform production build...");
 
   // 1. Clean existing dist directory
@@ -36,7 +31,11 @@ async function build() {
   for (const file of ASSETS_TO_COPY) {
     const src = join(ROOT_DIR, file);
     const dest = join(DIST_DIR, file);
-    await copyFile(src, dest);
+    if (/\.(html|txt|xml)$/.test(file)) {
+      await writeFile(dest, renderPublicText(await readFile(src, "utf8"), siteUrl));
+    } else {
+      await copyFile(src, dest);
+    }
     console.log(`✓ Copied ${file} -> dist/${file}`);
   }
 

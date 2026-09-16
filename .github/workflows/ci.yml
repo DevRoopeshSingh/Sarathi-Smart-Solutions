@@ -34,6 +34,9 @@ jobs:
         run: npm test
 
       - name: Build static production bundle
+        # Verification only. Publishing must use the final public SITE_URL.
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://sarathi.example' }}
         run: npm run build
 
       - name: Install Playwright Chromium browser

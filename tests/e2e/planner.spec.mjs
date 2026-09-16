@@ -19,9 +19,7 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
   test("loads page with correct title, branding, and accessibility landmarks", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page).toHaveTitle(
-      "Sarathi Smart Solutions — Security • Connectivity • Automation"
-    );
+    await expect(page).toHaveTitle("CCTV Installation in Mira-Bhayandar | Wi‑Fi & Smart Security");
 
     const brand = page.locator(".brand").first();
     await expect(brand).toBeVisible();
@@ -65,6 +63,7 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("completes the 3-step solution planner happy path", async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
     // Step 1: Space selection
     const homeRadio = page.locator('input[name="space"][value="Home"]');
@@ -112,6 +111,7 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("enforces step-by-step validation and announces accessible errors", async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
     // Step 1: Click Continue without selection
     await page.locator("#nextButton").click();
@@ -141,6 +141,7 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("preserves user selections during backward and forward navigation", async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
     // Step 1: Home
     await page.locator('input[name="space"][value="Home"]').check({ force: true });
@@ -171,6 +172,7 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("resets the planner when Start again is clicked", async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
     // Complete planner
     await page.locator('input[name="space"][value="Home"]').check({ force: true });
@@ -196,11 +198,14 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
     const firstFaq = page.locator(".faq-card").first();
     await expect(firstFaq).toHaveAttribute("open", "");
+    await expect(firstFaq.locator(".faq-trigger")).toHaveAttribute("aria-expanded", "true");
 
     const secondFaq = page.locator(".faq-card").nth(1);
     await expect(secondFaq).not.toHaveAttribute("open", "");
+    await expect(secondFaq.locator(".faq-trigger")).toHaveAttribute("aria-expanded", "false");
 
-    await secondFaq.locator("summary").click();
+    await secondFaq.locator(".faq-trigger").click();
     await expect(secondFaq).toHaveAttribute("open", "");
+    await expect(secondFaq.locator(".faq-trigger")).toHaveAttribute("aria-expanded", "true");
   });
 });

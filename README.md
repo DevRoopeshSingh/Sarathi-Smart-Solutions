@@ -3,7 +3,7 @@
 > **Security • Connectivity • Automation**  
 > _Smart Technology for Homes & Businesses across Mira-Bhayandar, Thane & Mumbai MMR._
 
-The official production-ready website source code for **Sarathi Smart Solutions**, an India-based technology provider delivering turnkey CCTV surveillance, enterprise Wi-Fi networking, biometric access control, smart locks, video intercoms, and annual maintenance contracts (AMC).
+The official production-ready website source code for **Sarathi Smart Solutions**, a local security and connectivity business specializing in CCTV installation, Wi‑Fi networking, smart locks, access control and CCTV AMC. Electrical work, cooling, IT, TV mounting and EV charging remain available as additional technical services.
 
 This repository is built as a **high-performance, secure, static-first web application** using modern semantic HTML5, vanilla CSS, and standard ES modules with zero client-side framework overhead.
 
@@ -15,7 +15,7 @@ This repository is built as a **high-performance, secure, static-first web appli
 - **Direct WhatsApp & Share Dispatch**: Prospect enquiries can be shared directly via WhatsApp with auto-generated, URL-encoded enquiry summaries, copied to clipboard, or shared via native mobile share sheets.
 - **Accessible by Design (WCAG 2.2 AA Target)**: Semantic HTML landmarks, full keyboard navigability, solid high-contrast focus rings, `role="progressbar"`, live screen reader error announcements (`role="alert"`), and `prefers-reduced-motion` compliance.
 - **Hardened Security**: 100% safe DOM manipulation with zero `innerHTML` dynamic rendering, parameter sanitisation, and zero server-side storage of customer data.
-- **SEO & Social Ready**: Canonical URL link, Open Graph protocol metadata, Twitter / X card tags, `robots.txt`, XML sitemap, and `ProfessionalService` JSON-LD schema.
+- **SEO & Social Ready**: Canonical URL link, Open Graph protocol metadata, Twitter / X card tags, `robots.txt`, XML sitemap, and `HomeAndConstructionBusiness` (LocalBusiness subtype), Service and visible FAQ JSON-LD schema.
 - **Cross-Platform Tooling**: Zero-dependency Node.js build and preview scripts that run natively on Windows, macOS, and Linux.
 - **Automated Verification**: Node.js built-in unit tests, Playwright browser end-to-end testing, ESLint, Prettier, and GitHub Actions CI workflow.
 
@@ -93,10 +93,7 @@ npm run serve
 
 Open [http://127.0.0.1:8080/](http://127.0.0.1:8080/) in your browser.
 
-Alternatively, you can serve the directory using Python 3:
-
-- **macOS / Linux**: `python3 -m http.server 8080 --bind 127.0.0.1`
-- **Windows**: `py -m http.server 8080 --bind 127.0.0.1`
+Use the included Node preview server: it resolves the public URL templates and provides development-only noindex headers. A generic static server pointed at the source directory will leave SEO URL placeholders unresolved.
 
 > [!NOTE]
 > Do not open `index.html` directly via the `file://` protocol. Modern browsers require HTTP/HTTPS serving for ES module imports (`import ... from "./recommendation.mjs"`).
@@ -138,7 +135,14 @@ export const CONTACT_CONFIG = Object.freeze({
 
 ### 2. Service Definitions & Recommendations
 
-- To update service descriptions or add services, modify `NEED_LABELS` and `NEED_DETAILS` in [`recommendation.mjs`](file:///Users/rupeshsingh/Documents/WorkSpace/Sarathi_Smart_Solutions/recommendation.mjs).
+- Edit `SERVICE_CATALOGUE` in [`recommendation.mjs`](recommendation.mjs) to add or update a service. Each stable service ID defines its label, description, SVG icon path, recommendations for three sizes, and optional enquiry fields. `NEED_LABELS` is derived automatically.
+- `app.js` renders the service cards, planner checkboxes and enquiry fields from that catalogue. Do not maintain separate service lists in HTML. Metadata and the no-JavaScript contact summary in `index.html` should reflect the overall business scope.
+- Enquiry fields support `select`, `number` and bounded `text` values. They appear in step 3 only for selected services, remain optional, and are included in recommendations and WhatsApp/copy/share summaries. Answers survive back navigation and reselection; deselected answers are excluded, and Start again clears everything.
+- The `appliance` ID retains AC and refrigerator support. Additional service IDs are `electrical`, `it`, `tv` and `ev`; the six original security/networking/automation IDs remain supported.
+- Enquiries use WhatsApp, clipboard and native sharing. Lead forms prepare a message and require the customer to press Send in WhatsApp. They do not save customer details in browser storage or book a survey on a server.
+- Duplicate form preparation is suppressed in memory for 60 seconds; an explicit handoff link supports retrying blocked popups. Old `sarathi_leads` browser records are cleared when the updated site loads. Analytics events omit customer details and prepared WhatsApp URLs.
+- AMC is a core catalogue entry; both lead forms also offer CCTV AMC enquiries.
+- See [WEBSITE_REVIEW.md](WEBSITE_REVIEW.md) for changes, pending content and the manual testing checklist.
 - To update setup sizes, modify `SIZE_OPTIONS` in [`recommendation.mjs`](file:///Users/rupeshsingh/Documents/WorkSpace/Sarathi_Smart_Solutions/recommendation.mjs).
 - To adjust package card pricing and features, update the corresponding `<article class="package-card">` in [`index.html`](file:///Users/rupeshsingh/Documents/WorkSpace/Sarathi_Smart_Solutions/index.html).
 
@@ -182,14 +186,12 @@ export const CONTACT_CONFIG = Object.freeze({
 When preparing to publish this website to production:
 
 1. **Production Domain Configuration**:
-   - In [`index.html`](file:///Users/rupeshsingh/Documents/WorkSpace/Sarathi_Smart_Solutions/index.html):
-     - Replace `https://www.example.com/` in the `<link rel="canonical" ...>` tag.
-     - Replace `https://www.example.com/` in all Open Graph (`og:url`, `og:image`) and Twitter meta tags.
-     - Replace `https://www.example.com/` in the JSON-LD `image` URL.
-   - In [`robots.txt`](file:///Users/rupeshsingh/Documents/WorkSpace/Sarathi_Smart_Solutions/robots.txt):
-     - Update the `Sitemap:` URL to point to your live domain.
-   - In [`sitemap.xml`](file:///Users/rupeshsingh/Documents/WorkSpace/Sarathi_Smart_Solutions/sitemap.xml):
-     - Replace `https://www.example.com/` with your live production URL.
+   - Set `SITE_URL` to the final HTTPS origin in your hosting platform's build environment, for example `https://www.yourdomain.com`. The production domain is not yet finalized.
+   - [`.env.example`](.env.example) documents the variable. This project reads `process.env`; copying this file to `.env` does not automatically load it.
+   - [`scripts/site-config.mjs`](scripts/site-config.mjs) is the single configuration source. The server and build replace `__SITE_URL__` in canonical, Open Graph, Twitter, business/service JSON-LD, sitemap and robots text.
+   - `npm run serve` uses `http://127.0.0.1:8080` as a development fallback and sends `noindex` headers. Use this server for local development instead of serving the unresolved source templates directly.
+   - `npm run build` requires `SITE_URL` and rejects localhost or non-HTTPS production URLs before changing `dist/`. Publish only the built `dist/` directory.
+   - CI may use the reserved `https://sarathi.example` hostname to verify rendering. This is a test value, not the production domain. Build again with the real origin before publishing.
 
 2. **Google Business Profile & Analytics**:
    - Ensure the business phone (`+91 83697 04457`) matches your verified Google Business Profile.

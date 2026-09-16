@@ -6,7 +6,8 @@ import {
   buildWhatsAppUrl,
   CONTACT_CONFIG,
   NEED_LABELS,
-  SIZE_OPTIONS
+  SIZE_OPTIONS,
+  SERVICE_CATALOGUE
 } from "../recommendation.mjs";
 
 test("home and business each expose three valid size options", () => {
@@ -73,16 +74,87 @@ test("every valid space and size permutation generates a valid recommendation", 
 
   for (const space of spaces) {
     for (const size of sizes) {
-      const result = buildRecommendation({
-        space,
-        needs: [needsKeys[0]],
-        size
-      });
-      assert.ok(result.title);
-      assert.ok(result.intro);
-      assert.ok(result.summary);
-      assert.equal(result.items.length, 2);
+      for (const need of needsKeys) {
+        const result = buildRecommendation({ space, needs: [need], size });
+        assert.ok(result.title);
+        assert.ok(result.intro);
+        assert.ok(result.summary.includes(NEED_LABELS[need]));
+        assert.ok(result.items[0].detail);
+        assert.equal(result.items.length, 2);
+      }
     }
+  }
+});
+
+test("all planned services and their enquiry options reach the recommendation and message", () => {
+  for (const need of [
+    "appliance",
+    "electrical",
+    "cctv",
+    "network",
+    "it",
+    "automation",
+    "tv",
+    "ev"
+  ]) {
+    assert.ok(SERVICE_CATALOGUE[need], `Missing planned service: ${need}`);
+    const values = Object.fromEntries(
+      SERVICE_CATALOGUE[need].fields.map((field) => [
+        field.id,
+        field.type === "select"
+          ? field.options[0]
+          : field.type === "number"
+            ? "2"
+            : "Model A & B <details>"
+      ])
+    );
+    const result = buildRecommendation({
+      space: "Business",
+      needs: [need],
+      size: "Standard",
+      enquiryOptions: { [need]: values }
+    });
+    for (const value of Object.values(values)) {
+      assert.ok(result.summary.includes(value));
+      assert.ok(result.items[0].detail.includes(value));
+    }
+    const url = new URL(buildWhatsAppUrl(CONTACT_CONFIG.whatsappNumber, result.summary));
+    assert.equal(url.searchParams.get("text"), result.summary);
+    if (["appliance", "electrical", "it", "tv", "ev"].includes(need))
+      assert.doesNotMatch(result.title, /Secure Start/);
+  }
+});
+
+test("deselected service details never leak into enquiries and duplicate services are counted once", () => {
+  const result = buildRecommendation({
+    space: "Home",
+    needs: ["tv", "tv"],
+    size: "Compact",
+    enquiryOptions: {
+      appliance: { notes: "OLD AC DETAILS" },
+      tv: { work: "TV wall mounting", notes: "55 inch TV" }
+    }
+  });
+  assert.equal(result.items.length, 2);
+  assert.match(result.summary, /55 inch TV/);
+  assert.doesNotMatch(result.summary, /OLD AC DETAILS/);
+});
+
+test("invalid service-specific enquiry values are rejected", () => {
+  const base = { space: "Home", needs: ["appliance"], size: "Compact" };
+  for (const values of [
+    { quantity: "0" },
+    { quantity: "1.5" },
+    { quantity: "1000" },
+    { quantity: "NaN" },
+    { work: "Unknown job" },
+    { notes: "x".repeat(301) },
+    { unsupported: "value" }
+  ]) {
+    assert.throws(() => buildRecommendation({ ...base, enquiryOptions: { appliance: values } }));
+  }
+  for (const key of ["constructor", "toString", "__proto__", ""]) {
+    assert.throws(() => buildRecommendation({ ...base, needs: [key] }), /Unknown need/);
   }
 });
 
