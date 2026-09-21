@@ -47,7 +47,7 @@ jobs:
 
       - name: Upload test artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
@@ -87,7 +87,7 @@ jobs:
         run: npm run test:operations
       - name: Upload operations browser artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: operations-playwright-report
           path: operations/playwright-report/
