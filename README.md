@@ -183,10 +183,12 @@ export const CONTACT_CONFIG = Object.freeze({
 
 ## Production Deployment & Domain Configuration Checklist
 
+For the complete, step-by-step production deployment guide, refer to the **[Cloudflare Pages Deployment Runbook](DEPLOYMENT.md)**.
+
 When preparing to publish this website to production:
 
 1. **Production Domain Configuration**:
-   - Set `SITE_URL` to the final HTTPS origin in your hosting platform's build environment, for example `https://www.yourdomain.com`. The production domain is not yet finalized.
+   - Set `SITE_URL` to the final HTTPS origin in your hosting platform's build environment, for example `https://sarathi-smart-solutions.pages.dev` or your custom domain `https://www.sarathismartsolutions.in`.
    - [`.env.example`](.env.example) documents the variable. This project reads `process.env`; copying this file to `.env` does not automatically load it.
    - [`scripts/site-config.mjs`](scripts/site-config.mjs) is the single configuration source. The server and build replace `__SITE_URL__` in canonical, Open Graph, Twitter, business/service JSON-LD, sitemap and robots text.
    - `npm run serve` uses `http://127.0.0.1:8080` as a development fallback and sends `noindex` headers. Use this server for local development instead of serving the unresolved source templates directly.
@@ -195,17 +197,15 @@ When preparing to publish this website to production:
 
 2. **Google Business Profile & Analytics**:
    - Ensure the business phone (`+91 83697 04457`) matches your verified Google Business Profile.
-   - If adding privacy-friendly analytics (e.g. Google Analytics or Cloudflare Web Analytics), paste the tracking snippet directly before `</head>` in `index.html`.
+   - If adding privacy-friendly analytics (e.g. Cloudflare Web Analytics or Google Analytics), paste the tracking snippet directly before `</head>` in `index.html`.
 
-3. **Deploying the Static Site**:
-   - Build the distribution bundle:
-     ```bash
-     npm run build
-     ```
-   - Deploy the contents of the `dist/` directory to your chosen static host:
-     - **Cloudflare Pages / Vercel / Netlify**: Point root directory to `dist` and build command to `npm run build`.
-     - **GitHub Pages**: Deploy from the `dist` folder or configure GitHub Actions.
-     - **Firebase Hosting / AWS S3**: Deploy `dist/` as the public directory.
+3. **Deploying to Cloudflare Pages (Recommended - 100% Free)**:
+   - Connect repository `DevRoopeshSingh/Sarathi-Smart-Solutions` to Cloudflare Pages.
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+   - Environment variables: `NODE_VERSION=22`, `SITE_URL=https://<your-domain>`
+   - Edge headers (`_headers`) and canonical redirects (`_redirects`) are automatically included in `dist/`.
+   - See detailed walkthrough in **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 
 ---
 

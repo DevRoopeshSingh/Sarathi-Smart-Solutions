@@ -52,3 +52,43 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+  operations:
+    name: Operations Runtime & Authentication
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            operations/package-lock.json
+      - name: Install root and operations dependencies
+        run: |
+          npm ci
+          npm ci --prefix operations
+      - name: Install PostgreSQL server binaries
+        run: sudo apt-get update && sudo apt-get install -y postgresql
+      - name: Check operations types
+        run: npm run operations:typecheck
+      - name: Run operations unit tests
+        run: npm run operations:test
+      - name: Build operations without runtime secrets
+        run: npm run operations:build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify isolated operations runtime and authentication
+        run: npm run test:operations
+      - name: Upload operations browser artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operations-playwright-report
+          path: operations/playwright-report/
+          retention-days: 14

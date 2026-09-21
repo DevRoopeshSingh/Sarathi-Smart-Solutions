@@ -1,17 +1,26 @@
 {
   "name": "sarathi-smart-solutions",
   "version": "1.0.0",
-  "description": "Official static website for Sarathi Smart Solutions - Security, Connectivity, and Automation.",
+  "description": "Official static website and operations platform for Sarathi Smart Solutions - Security, Connectivity, and Automation.",
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "npm --prefix operations run dev",
     "build": "node scripts/build.mjs",
+    "build:app": "npm --prefix operations run build",
     "test": "node --test tests/*.test.mjs",
+    "test:db": "node scripts/test-database.mjs",
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "serve": "node scripts/serve.mjs"
+    "serve": "node scripts/serve.mjs",
+    "operations:dev": "npm --prefix operations run dev",
+    "operations:build": "npm --prefix operations run build",
+    "operations:typecheck": "npm --prefix operations run typecheck",
+    "operations:test": "npm --prefix operations test",
+    "operations:migrate": "npm --prefix operations run migrate",
+    "test:operations": "node scripts/test-operations.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

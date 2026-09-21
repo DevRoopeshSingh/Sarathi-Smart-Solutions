@@ -194,7 +194,7 @@ test("all FAQ schema answers match readable content; internal links and package 
 test("without JavaScript, forms cannot leak details into a GET URL", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
-  await page.goto("http://127.0.0.1:8080/");
+  await page.goto("/");
   for (const submit of await page.locator(".lead-submit-btn").all())
     await expect(submit).toBeDisabled();
   await expect(page.locator(".hero-actions a").first()).toHaveAttribute(

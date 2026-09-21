@@ -4,3 +4,7 @@ node_modules/
 test-results/
 playwright-report/
 .git/
+operations/.next/
+operations/node_modules/
+operations/package-lock.json
+*.tsbuildinfo

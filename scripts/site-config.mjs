@@ -1,5 +1,7 @@
 /** Shared URL configuration for the local server and production build. */
 export const PUBLIC_FILES = Object.freeze([
+  "_headers",
+  "_redirects",
   "index.html",
   "styles.css",
   "app.js",

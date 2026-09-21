@@ -4,7 +4,13 @@ import js from "@eslint/js";
 export default [
   js.configs.recommended,
   {
-    ignores: ["dist/**", "node_modules/**", "test-results/**", "playwright-report/**"]
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "test-results/**",
+      "playwright-report/**",
+      "operations/**"
+    ]
   },
   {
     files: ["app.js"],
@@ -20,7 +26,7 @@ export default [
     }
   },
   {
-    files: ["recommendation.mjs"],
+    files: ["recommendation.mjs", "server/domain/**/*.mjs"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",

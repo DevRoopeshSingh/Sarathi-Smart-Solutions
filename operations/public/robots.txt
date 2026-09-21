@@ -1,0 +1,7 @@
+# Robots.txt for Sarathi Smart Solutions
+# SITE_URL is resolved by scripts/build.mjs for production.
+
+User-agent: *
+Allow: /
+
+Sitemap: __SITE_URL__/sitemap.xml
