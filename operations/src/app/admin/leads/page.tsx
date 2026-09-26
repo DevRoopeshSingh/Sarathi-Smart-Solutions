@@ -1,19 +1,26 @@
+import { ListNavigation } from "../list-controls";
+import { readListQuery, type SearchParameters } from "@/server/lists";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAdminActor, getCustomers, getLeads } from "@/server/dal";
+import { getAdminActor, getCustomerOptions, getLeads } from "@/server/dal";
 import { LeadsManager } from "./leads-manager";
 
 export const metadata: Metadata = { title: "Leads & Enquiries" };
 export const dynamic = "force-dynamic";
 
-export default async function LeadsPage() {
+export default async function LeadsPage({
+  searchParams
+}: {
+  searchParams: Promise<SearchParameters>;
+}) {
+  const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
   if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
 
   const [leads, customers] = await Promise.all([
-    getLeads(requestHeaders),
-    getCustomers(requestHeaders)
+    getLeads(requestHeaders, query),
+    getCustomerOptions(requestHeaders)
   ]);
 
   return (
@@ -30,7 +37,8 @@ export default async function LeadsPage() {
           </p>
         </section>
 
-        <LeadsManager initialLeads={leads} customers={customers} />
+        <LeadsManager initialLeads={leads.items} customers={customers} />
+        <ListNavigation query={query} total={leads.total} next={leads.next} base="/admin/leads" />
       </main>
     </div>
   );

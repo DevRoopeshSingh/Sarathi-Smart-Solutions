@@ -7,6 +7,16 @@ export type Migration = { version: number; name: string; filename: string; sql: 
 export type AppliedMigration = { version: number; name: string };
 const directory = fileURLToPath(new URL("../../database/migrations/", import.meta.url));
 
+export function migrationConnectionString(source: NodeJS.ProcessEnv = process.env): string {
+  // Transaction poolers cannot retain the session advisory lock used by this runner.
+  if (source.NODE_ENV === "production" && !source.DATABASE_MIGRATION_URL) {
+    throw new Error("Production migrations require DATABASE_MIGRATION_URL.");
+  }
+  const connectionString = source.DATABASE_MIGRATION_URL || source.DATABASE_URL;
+  if (!connectionString) throw new Error("Database connection is required.");
+  return connectionString;
+}
+
 export async function readMigrations(path = directory): Promise<Migration[]> {
   const files = (await readdir(path)).filter((name) => name.endsWith(".sql")).sort();
   const migrations: Migration[] = [];
@@ -75,8 +85,7 @@ export async function migrate(connectionString: string): Promise<string[]> {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    const connectionString = process.env.DATABASE_MIGRATION_URL || process.env.DATABASE_URL;
-    if (!connectionString) throw new Error("Database connection is required.");
+    const connectionString = migrationConnectionString();
     const applied = await migrate(connectionString);
     console.log(
       applied.length ? `Applied: ${applied.join(", ")}` : "Database migrations are current."

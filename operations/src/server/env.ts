@@ -2,6 +2,7 @@ import "server-only";
 
 export interface ServerEnvironment {
   databaseUrl: string;
+  databasePoolMax: number;
   authOrigin: string;
   trustedOrigins: string[];
   authSecret: string;
@@ -21,6 +22,10 @@ export function readServerEnvironment(source: NodeJS.ProcessEnv = process.env): 
   }
   if (!["postgres:", "postgresql:"].includes(database.protocol)) {
     throw new Error("DATABASE_URL must use postgres or postgresql.");
+  }
+  const poolMax = source.DB_POOL_MAX ?? "2";
+  if (!/^[1-9]\d*$/.test(poolMax) || Number(poolMax) > 10) {
+    throw new Error("DB_POOL_MAX must be an integer between 1 and 10.");
   }
   const authSecret = source.BETTER_AUTH_SECRET;
   if (!authSecret || authSecret.trim().length < 32) {
@@ -88,6 +93,7 @@ export function readServerEnvironment(source: NodeJS.ProcessEnv = process.env): 
   }
   return {
     databaseUrl,
+    databasePoolMax: Number(poolMax),
     authOrigin: origin.origin,
     trustedOrigins,
     authSecret,

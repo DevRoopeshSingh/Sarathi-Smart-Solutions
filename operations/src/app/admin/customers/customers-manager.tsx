@@ -1,7 +1,10 @@
 "use client";
+import { formatIndiaDate } from "@/lib/date";
+import { ListSearch } from "../list-controls";
 
-import { useState } from "react";
-import type { CustomerRecord } from "@/server/dal";
+import { useEffect, useRef, useState } from "react";
+import type { CustomerRecord } from "@/lib/operations";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createCustomerAction } from "../actions";
 
 interface CustomersManagerProps {
@@ -9,48 +12,54 @@ interface CustomersManagerProps {
 }
 
 export function CustomersManager({ initialCustomers }: CustomersManagerProps) {
-  const [customers] = useState(initialCustomers);
-  const [search, setSearch] = useState<string>("");
+  const [customers, setCustomers] = useState(initialCustomers);
+  useEffect(() => setCustomers(initialCustomers), [initialCustomers]);
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const submittingRef = useRef(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const filteredCustomers = customers.filter(
-    (c) =>
-      search === "" ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search) ||
-      (c.address && c.address.toLowerCase().includes(search.toLowerCase()))
-  );
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    setShowNewModal(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("new");
+    router.replace(url.pathname + url.search + url.hash, { scroll: false });
+  }, [searchParams, router]);
+
+  const filteredCustomers = customers;
 
   async function handleCreateCustomer(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     setErrorMessage("");
     const formData = new FormData(e.currentTarget);
-    const result = await createCustomerAction(formData);
-    setIsSubmitting(false);
-
-    if (result.error) {
-      setErrorMessage(result.error);
-    } else {
+    try {
+      const result = await createCustomerAction(formData);
+      if ("error" in result) {
+        setErrorMessage(result.error ?? "Unable to save. Please try again.");
+        return;
+      }
       setShowNewModal(false);
-      window.location.reload();
+      router.refresh();
+    } catch {
+      setErrorMessage(
+        "Unable to confirm the save. Check your connection and reload before retrying."
+      );
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   }
 
   return (
     <div className="admin-view">
       <div className="admin-toolbar">
-        <div className="toolbar-search">
-          <input
-            type="search"
-            placeholder="Search customers by name, phone, or address..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="admin-input search-input"
-          />
-        </div>
+        <ListSearch placeholder="Search customers by name, phone, or address..." />
         <div className="toolbar-actions">
           <button
             type="button"
@@ -102,7 +111,7 @@ export function CustomersManager({ initialCustomers }: CustomersManagerProps) {
                   <td>
                     <span className="count-pill">{c.projectCount} projects</span>
                   </td>
-                  <td className="table-subtext">{c.createdAt}</td>
+                  <td className="table-subtext">{formatIndiaDate(c.createdAt)}</td>
                 </tr>
               ))}
             </tbody>
@@ -120,7 +129,11 @@ export function CustomersManager({ initialCustomers }: CustomersManagerProps) {
               </button>
             </div>
             <form onSubmit={handleCreateCustomer} className="modal-form">
-              {errorMessage && <div className="form-error-banner">{errorMessage}</div>}
+              {errorMessage && (
+                <div className="form-error-banner" role="alert">
+                  {errorMessage}
+                </div>
+              )}
               <div className="form-group">
                 <label htmlFor="customerName">Full Name / Business Name *</label>
                 <input

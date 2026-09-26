@@ -3,7 +3,26 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { pendingMigrations, readMigrations } from "../scripts/migrate";
+import { migrationConnectionString, pendingMigrations, readMigrations } from "../scripts/migrate";
+
+test("production migrations never fall back to the runtime pool connection", () => {
+  const runtime = "postgresql://runtime@localhost/app";
+  const owner = "postgresql://owner@localhost/app";
+  assert.throws(() => migrationConnectionString({ NODE_ENV: "production", DATABASE_URL: runtime }));
+  assert.equal(
+    migrationConnectionString({
+      NODE_ENV: "production",
+      DATABASE_URL: runtime,
+      DATABASE_MIGRATION_URL: owner
+    }),
+    owner
+  );
+  assert.equal(
+    migrationConnectionString({ NODE_ENV: "development", DATABASE_URL: runtime }),
+    runtime
+  );
+  assert.throws(() => migrationConnectionString({ NODE_ENV: "test" }));
+});
 
 test("numbered migrations accept the existing Phase 1 ledger and are repeatable", async () => {
   const migrations = await readMigrations();

@@ -19,6 +19,8 @@ const env = {
         !key.startsWith("PG") &&
         !key.startsWith("DATABASE_") &&
         !key.startsWith("BETTER_AUTH_") &&
+        !key.startsWith("VERCEL") &&
+        key !== "DB_POOL_MAX" &&
         key !== "PUBLIC_SITE_URL"
     )
   ),
@@ -120,6 +122,13 @@ try {
     "tsx",
     "--test",
     "tests/runtime-security.ts"
+  ]);
+  await run(process.execPath, [
+    "--conditions=react-server",
+    "--import",
+    "tsx",
+    "--test",
+    "tests/runtime-business.ts"
   ]);
   await run(
     process.execPath,

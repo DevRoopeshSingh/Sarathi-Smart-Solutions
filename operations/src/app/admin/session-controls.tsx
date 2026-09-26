@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function SessionControls() {
   const [pending, setPending] = useState<"current" | "all" | null>(null);
   const [showRevokeModal, setShowRevokeModal] = useState<boolean>(false);
   const [error, setError] = useState("");
+  const pendingRef = useRef(false);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -18,7 +19,8 @@ export function SessionControls() {
   }, []);
 
   async function signOut(scope: "current" | "all") {
-    if (pending) return;
+    if (pendingRef.current) return;
+    pendingRef.current = true;
     setPending(scope);
     setError("");
     try {
@@ -39,6 +41,7 @@ export function SessionControls() {
     } catch {
       setError("Unable to connect. Please try again.");
     } finally {
+      pendingRef.current = false;
       setPending(null);
     }
   }
@@ -97,8 +100,16 @@ export function SessionControls() {
               </button>
             </div>
             <div className="modal-form" style={{ padding: "20px 24px" }}>
-              <p style={{ margin: "0 0 16px", color: "var(--ink)", fontSize: "14px", lineHeight: 1.5 }}>
-                This action will immediately terminate all active sessions for your administrator account across all browsers, mobile devices, and computers.
+              <p
+                style={{
+                  margin: "0 0 16px",
+                  color: "var(--ink)",
+                  fontSize: "14px",
+                  lineHeight: 1.5
+                }}
+              >
+                This action will immediately terminate all active sessions for your administrator
+                account across all browsers, mobile devices, and computers.
               </p>
               <div
                 style={{
@@ -115,7 +126,9 @@ export function SessionControls() {
                 }}
               >
                 <span aria-hidden="true">⚠️</span>
-                <span>Your current session will also end and you will be returned to the sign-in page.</span>
+                <span>
+                  Your current session will also end and you will be returned to the sign-in page.
+                </span>
               </div>
 
               <div className="modal-footer" style={{ marginTop: "20px" }}>
@@ -133,6 +146,7 @@ export function SessionControls() {
                     signOut("all");
                   }}
                   className="admin-btn"
+                  disabled={pending !== null}
                   style={{
                     background: "var(--status-danger-text)",
                     color: "#FFFFFF",

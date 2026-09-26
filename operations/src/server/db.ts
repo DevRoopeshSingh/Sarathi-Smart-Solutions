@@ -8,9 +8,10 @@ const state = globalThis as typeof globalThis & { sarathiPool?: Pool };
 
 export function getPool(): Pool {
   if (!state.sarathiPool) {
+    const env = readServerEnvironment();
     state.sarathiPool = new Pool({
-      connectionString: readServerEnvironment().databaseUrl,
-      max: 10,
+      connectionString: env.databaseUrl,
+      max: env.databasePoolMax,
       connectionTimeoutMillis: 5_000,
       idleTimeoutMillis: 30_000,
       application_name: "sarathi-operations"

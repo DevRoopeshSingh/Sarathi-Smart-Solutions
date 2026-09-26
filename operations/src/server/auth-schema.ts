@@ -1,4 +1,12 @@
-import { boolean, index, pgSchema, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  index,
+  pgSchema,
+  text,
+  timestamp,
+  uniqueIndex
+} from "drizzle-orm/pg-core";
 
 const sarathi = pgSchema("sarathi");
 const time = (name: string) => timestamp(name, { withTimezone: true, mode: "date" });
@@ -8,6 +16,7 @@ export const user = sarathi.table("auth_users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   image: text("image"),
   createdAt: time("created_at").notNull().defaultNow(),
   updatedAt: time("updated_at").notNull().defaultNow()
@@ -71,4 +80,16 @@ export const verification = sarathi.table(
   (table) => [index("auth_verifications_identifier_idx").on(table.identifier)]
 );
 
-export const authSchema = { user, session, account, verification };
+export const twoFactor = sarathi.table("auth_two_factors", {
+  id: text("id").primaryKey(),
+  secret: text("secret").notNull(),
+  backupCodes: text("backup_codes").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  verified: boolean("verified").notNull().default(true),
+  failedVerificationCount: integer("failed_verification_count").notNull().default(0),
+  lockedUntil: time("locked_until")
+});
+export const authSchema = { user, session, account, verification, twoFactor };

@@ -1,3 +1,5 @@
+import { ListNavigation } from "../list-controls";
+import { readListQuery, type SearchParameters } from "@/server/lists";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -7,11 +9,16 @@ import { CustomersManager } from "./customers-manager";
 export const metadata: Metadata = { title: "Customers" };
 export const dynamic = "force-dynamic";
 
-export default async function CustomersPage() {
+export default async function CustomersPage({
+  searchParams
+}: {
+  searchParams: Promise<SearchParameters>;
+}) {
+  const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
   if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
 
-  const customers = await getCustomers(requestHeaders);
+  const customers = await getCustomers(requestHeaders, query);
 
   return (
     <div className="workspace-shell">
@@ -27,7 +34,13 @@ export default async function CustomersPage() {
           </p>
         </section>
 
-        <CustomersManager initialCustomers={customers} />
+        <CustomersManager initialCustomers={customers.items} />
+        <ListNavigation
+          query={query}
+          total={customers.total}
+          next={customers.next}
+          base="/admin/customers"
+        />
       </main>
     </div>
   );

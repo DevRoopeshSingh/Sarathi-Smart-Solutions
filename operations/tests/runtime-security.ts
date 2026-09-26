@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { after, beforeEach, test } from "node:test";
 import pg from "pg";
+import { fixtureTotp } from "./totp-fixture.mjs";
 
 if (process.env.OPERATIONS_TEST_ISOLATED !== "1")
   throw new Error("Use the isolated runtime harness.");
@@ -38,6 +39,21 @@ async function session() {
 }
 
 test("anonymous private routes reject access and auth route allowlist closes registration", async () => {
+  for (const path of ["/admin/login", "/api/admin/me"]) {
+    const response = await fetch(`${origin}${path}`);
+    assert.equal(response.headers.get("x-frame-options"), "DENY");
+    assert.equal(response.headers.get("referrer-policy"), "no-referrer");
+  }
+  for (const path of [
+    "/admin/leads",
+    "/admin/customers",
+    "/admin/projects",
+    "/admin/payments",
+    "/admin/quotes"
+  ]) {
+    const response = await fetch(`${origin}${path}`, { redirect: "manual" });
+    assert.ok([302, 303, 307].includes(response.status), path);
+  }
   const page = await fetch(`${origin}/admin`, { redirect: "manual" });
   assert.ok([307, 303, 302].includes(page.status));
   assert.match(page.headers.get("location")!, /\/login/);
@@ -252,4 +268,151 @@ test("owner provisioning creates a usable administrator and refuses silent crede
   assert.equal(after.role, "ADMIN");
   assert.equal(after.active, true);
   assert.equal((await login(email)).status, 200);
+});
+
+function mergeCookies(...sets: string[]) {
+  const jar = new Map<string, string>();
+  for (const set of sets)
+    for (const part of set.split("; ").filter(Boolean)) {
+      const split = part.indexOf("=");
+      jar.set(part.slice(0, split), part.slice(split + 1));
+    }
+  return [...jar].map(([name, value]) => `${name}=${value}`).join("; ");
+}
+
+test("optional MFA requires a verified factor, hides tokens and consumes recovery codes once", async () => {
+  const initial = await session();
+  assert.equal((await send("/api/admin/security", { action: "enable", password })).status, 401);
+  assert.equal(
+    (
+      await send(
+        "/api/admin/security",
+        { action: "enable", password },
+        { Cookie: initial, Origin: "https://attacker.example" }
+      )
+    ).status,
+    403
+  );
+  const enabled = await send(
+    "/api/admin/security",
+    { action: "enable", password },
+    { Cookie: initial }
+  );
+  assert.equal(enabled.status, 200);
+  const setup = await enabled.json();
+  assert.deepEqual(Object.keys(setup).sort(), ["backupCodes", "totpURI"]);
+  assert.ok(setup.backupCodes.length >= 2);
+  const enrollment = await send(
+    "/api/auth/two-factor/verify-totp",
+    { code: fixtureTotp(setup.totpURI) },
+    { Cookie: mergeCookies(initial, cookies(enabled)) }
+  );
+  assert.equal(enrollment.status, 200);
+  let current = mergeCookies(initial, cookies(enrollment));
+  await send("/api/auth/sign-out", {}, { Cookie: current });
+  const challenge = await login();
+  assert.equal(challenge.status, 200);
+  assert.deepEqual(await challenge.json(), { twoFactorRequired: true });
+  const pending = cookies(challenge);
+  assert.equal((await me(pending)).status, 401, "Password-only challenge is not an admin session");
+  const code = fixtureTotp(setup.totpURI);
+  const wrong = String((Number(code) + 1) % 1000000).padStart(6, "0");
+  assert.equal(
+    (await send("/api/auth/two-factor/verify-totp", { code: wrong }, { Cookie: pending })).status,
+    401
+  );
+  const verified = await send("/api/auth/two-factor/verify-totp", { code }, { Cookie: pending });
+  assert.equal(verified.status, 200);
+  assert.deepEqual(await verified.json(), { ok: true });
+  current = cookies(verified);
+  assert.equal((await me(current)).status, 200);
+  const revokedChallenge = await login();
+  assert.deepEqual(await revokedChallenge.json(), { twoFactorRequired: true });
+  assert.equal((await send("/api/admin/revoke-sessions", {}, { Cookie: current })).status, 200);
+  assert.equal((await me(current)).status, 401);
+  // Isolate revocation semantics from the plugin's three-verifications/10s quota.
+  await client.query("DELETE FROM sarathi.auth_ratelimits");
+  assert.equal(
+    (
+      await send(
+        "/api/auth/two-factor/verify-totp",
+        { code: fixtureTotp(setup.totpURI) },
+        { Cookie: cookies(revokedChallenge) }
+      )
+    ).status,
+    401
+  );
+  const backupChallenge = await login();
+  const backup = await send(
+    "/api/auth/two-factor/verify-backup-code",
+    { code: setup.backupCodes[0] },
+    { Cookie: cookies(backupChallenge) }
+  );
+  assert.equal(backup.status, 200);
+  current = cookies(backup);
+  assert.equal((await me(current)).status, 200);
+  await send("/api/auth/sign-out", {}, { Cookie: current });
+  const retry = await login();
+  assert.equal(
+    (
+      await send(
+        "/api/auth/two-factor/verify-backup-code",
+        { code: setup.backupCodes[0] },
+        { Cookie: cookies(retry) }
+      )
+    ).status,
+    401
+  );
+  const fresh = await send(
+    "/api/auth/two-factor/verify-backup-code",
+    { code: setup.backupCodes[1] },
+    { Cookie: cookies(retry) }
+  );
+  assert.equal(fresh.status, 200);
+  const disabled = await send(
+    "/api/admin/security",
+    { action: "disable", password },
+    { Cookie: cookies(fresh) }
+  );
+  assert.equal(disabled.status, 200);
+  assert.equal(
+    (
+      await client.query(
+        "SELECT two_factor_enabled FROM sarathi.auth_users WHERE email='admin@example.test'"
+      )
+    ).rows[0].two_factor_enabled,
+    false
+  );
+});
+
+test("owner recovery resets only an existing active admin and revokes sessions/challenges", async () => {
+  const email = "provisioned@example.test";
+  const before = await login(email);
+  assert.equal(before.status, 200);
+  const identity = (await client.query("SELECT id FROM sarathi.auth_users WHERE email=$1", [email]))
+    .rows[0].id;
+  await client.query(
+    "INSERT INTO sarathi.auth_verifications(id,identifier,value,expires_at) VALUES ('recovery-fixture','2fa-recovery-fixture',$1,now()+interval '5 minutes')",
+    [identity]
+  );
+  const replacement = randomBytes(32).toString("base64url");
+  const recovered = spawnSync(
+    process.execPath,
+    ["--conditions=react-server", "--import", "tsx", "scripts/recover-admin.ts"],
+    {
+      env: { ...process.env, SARATHI_ADMIN_EMAIL: email, SARATHI_RESET_MFA: "1" },
+      input: `${replacement}\n`,
+      encoding: "utf8",
+      timeout: 15000
+    }
+  );
+  assert.equal(recovered.status, 0, recovered.stderr);
+  assert.equal((await me(cookies(before))).status, 401);
+  assert.equal(
+    (await client.query("SELECT 1 FROM sarathi.auth_verifications WHERE value=$1", [identity]))
+      .rowCount,
+    0
+  );
+  assert.equal((await login(email, password)).status, 401);
+  assert.equal((await login(email, replacement)).status, 200);
 });

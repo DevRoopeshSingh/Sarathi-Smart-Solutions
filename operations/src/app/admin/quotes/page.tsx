@@ -1,3 +1,6 @@
+import { formatIndiaDate } from "@/lib/date";
+import { ListNavigation } from "../list-controls";
+import { readListQuery, type SearchParameters } from "@/server/lists";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -7,12 +10,18 @@ import { getAdminActor, getQuotations } from "@/server/dal";
 export const metadata: Metadata = { title: "Quotations" };
 export const dynamic = "force-dynamic";
 
-export default async function QuotesPage() {
+export default async function QuotesPage({
+  searchParams
+}: {
+  searchParams: Promise<SearchParameters>;
+}) {
+  const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
   if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
 
-  const quotes = await getQuotations(requestHeaders);
+  const result = await getQuotations(requestHeaders, query);
 
+  const quotes = result.items;
   return (
     <div className="workspace-shell">
       <main id="main" className="workspace-main">
@@ -27,6 +36,13 @@ export default async function QuotesPage() {
           </p>
         </section>
 
+        <ListNavigation
+          query={query}
+          total={result.total}
+          next={result.next}
+          base="/admin/quotes"
+          search
+        />
         <div className="admin-view">
           {quotes.length === 0 ? (
             <div className="empty-state">
@@ -75,7 +91,7 @@ export default async function QuotesPage() {
                       <td>
                         <strong>₹{q.quoteTotal}</strong>
                       </td>
-                      <td className="table-subtext">{q.createdAt}</td>
+                      <td className="table-subtext">{formatIndiaDate(q.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>

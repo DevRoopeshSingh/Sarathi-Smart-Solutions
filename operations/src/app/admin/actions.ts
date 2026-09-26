@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import type { MutationResult } from "@/lib/operations";
 import {
   createCustomer,
   createLead,
@@ -9,101 +10,79 @@ import {
   updateLeadStatus,
   updateProjectStatus
 } from "@/server/dal";
+import { customerForm, leadForm, projectForm } from "@/server/input";
+import { mutationFailure } from "@/server/mutation-errors";
 
-export async function createLeadAction(formData: FormData) {
-  const requestHeaders = await headers();
-  const contactName = String(formData.get("contactName") || "").trim();
-  const phone = String(formData.get("phone") || "").trim();
-  const serviceRequested = String(formData.get("serviceRequested") || "").trim();
-  const source = String(formData.get("source") || "MANUAL").trim();
-  const notes = String(formData.get("notes") || "").trim();
-
-  if (!contactName || !phone || !serviceRequested) {
-    return { error: "Please provide a contact name, phone number, and service requested." };
-  }
-
+export async function createLeadAction(formData: FormData): Promise<MutationResult> {
   try {
-    await createLead(requestHeaders, { contactName, phone, serviceRequested, source, notes });
+    await createLead(await headers(), leadForm(formData));
     revalidatePath("/admin");
     revalidatePath("/admin/leads");
     return { success: true };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to create lead." };
+    return mutationFailure(error);
   }
 }
 
-export async function updateLeadStatusAction(leadId: number, status: string) {
-  const requestHeaders = await headers();
+export async function updateLeadStatusAction(
+  leadId: string,
+  status: string,
+  expectedStatus: string
+): Promise<MutationResult> {
   try {
-    await updateLeadStatus(requestHeaders, leadId, status);
+    await updateLeadStatus(await headers(), leadId, status, expectedStatus);
     revalidatePath("/admin");
     revalidatePath("/admin/leads");
     return { success: true };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to update lead status." };
+    return mutationFailure(error);
   }
 }
 
-export async function createCustomerAction(formData: FormData) {
-  const requestHeaders = await headers();
-  const name = String(formData.get("name") || "").trim();
-  const phone = String(formData.get("phone") || "").trim();
-  const email = String(formData.get("email") || "").trim();
-  const address = String(formData.get("address") || "").trim();
-
-  if (!name || !phone) {
-    return { error: "Please provide customer name and phone number." };
-  }
-
+export async function createCustomerAction(formData: FormData): Promise<MutationResult> {
   try {
-    await createCustomer(requestHeaders, { name, phone, email, address });
+    await createCustomer(await headers(), customerForm(formData));
     revalidatePath("/admin");
+    revalidatePath("/admin/customers");
+    revalidatePath("/admin/leads");
+    revalidatePath("/admin/projects");
+    return { success: true };
+  } catch (error) {
+    return mutationFailure(error);
+  }
+}
+
+export async function createProjectAction(formData: FormData): Promise<MutationResult> {
+  try {
+    await createProject(await headers(), projectForm(formData));
+    revalidatePath("/admin");
+    revalidatePath("/admin/projects");
+    revalidatePath("/admin/leads");
     revalidatePath("/admin/customers");
     return { success: true };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to create customer." };
+    return mutationFailure(error);
   }
 }
 
-export async function createProjectAction(formData: FormData) {
-  const requestHeaders = await headers();
-  const customerId = Number(formData.get("customerId"));
-  const name = String(formData.get("name") || "").trim();
-  const siteAddress = String(formData.get("siteAddress") || "").trim();
-  const scope = String(formData.get("scope") || "").trim();
-  const leadIdRaw = formData.get("leadId");
-  const leadId = leadIdRaw ? Number(leadIdRaw) : undefined;
-
-  if (!customerId || !name || !siteAddress) {
-    return { error: "Customer, project name, and site address are required." };
-  }
-
+export async function updateProjectStatusAction(
+  projectId: string,
+  operationalStatus: string,
+  expectedStatus: string,
+  reason?: string
+): Promise<MutationResult> {
   try {
-    await createProject(requestHeaders, {
-      customerId,
-      name,
-      siteAddress,
-      scope,
-      leadId,
-      serviceTypes: ["cctv"]
-    });
-    revalidatePath("/admin");
-    revalidatePath("/admin/projects");
-    revalidatePath("/admin/leads");
-    return { success: true };
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to create project." };
-  }
-}
-
-export async function updateProjectStatusAction(projectId: number, operationalStatus: string) {
-  const requestHeaders = await headers();
-  try {
-    await updateProjectStatus(requestHeaders, projectId, operationalStatus);
+    await updateProjectStatus(
+      await headers(),
+      projectId,
+      operationalStatus,
+      expectedStatus,
+      reason
+    );
     revalidatePath("/admin");
     revalidatePath("/admin/projects");
     return { success: true };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to update project status." };
+    return mutationFailure(error);
   }
 }

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readServerEnvironment } from "../src/server/env";
 import { readBoundedJson, rejectUnsafeMutation, RequestBodyError } from "../src/server/http";
+import { getClientIp, authRequestHeaders } from "../src/server/client-ip";
 
 const valid = {
   DATABASE_URL: "postgresql://local@localhost/sarathi",
@@ -53,6 +54,95 @@ test("optional public website link rejects executable URLs, credentials and remo
       .publicSiteUrl,
     "https://sarathi.example/contact"
   );
+});
+
+test("runtime database pools are small and explicitly bounded", () => {
+  assert.equal(readServerEnvironment(valid).databasePoolMax, 2);
+  assert.equal(readServerEnvironment({ ...valid, DB_POOL_MAX: "5" }).databasePoolMax, 5);
+  for (const value of ["", "0", "11", "2.5", "-1", "NaN", "2junk", "Infinity"]) {
+    assert.throws(() => readServerEnvironment({ ...valid, DB_POOL_MAX: value }));
+  }
+});
+
+test("Vercel client IP accepts only its trusted header and normalizes IPv6", () => {
+  const request = (ip?: string) =>
+    new Request("https://operations.example.test", {
+      headers: {
+        "x-forwarded-for": "192.0.2.99",
+        "x-real-ip": "192.0.2.98",
+        "x-sarathi-auth-client-ip": "192.0.2.97",
+        ...(ip === undefined ? {} : { "x-vercel-forwarded-for": ip })
+      }
+    });
+  const source = { ...valid, VERCEL: "1" };
+  assert.equal(getClientIp(request("192.0.2.1"), source), "192.0.2.1");
+  assert.notEqual(
+    getClientIp(request("192.0.2.1"), source),
+    getClientIp(request("192.0.2.2"), source)
+  );
+  assert.equal(
+    getClientIp(request("2001:0DB8:0000:0000:0000:0000:0000:0001"), source),
+    "2001:db8::1"
+  );
+  for (const ip of [
+    undefined,
+    "",
+    "unknown",
+    "192.0.2.1, 192.0.2.2",
+    "192.0.2.1:1234",
+    "[2001:db8::1]"
+  ]) {
+    assert.throws(() => getClientIp(request(ip), source));
+  }
+});
+
+test("loopback fallback uses configured origin, never caller Host or forwarding headers", () => {
+  const request = new Request("https://localhost/api/auth/sign-in/email", {
+    headers: {
+      host: "localhost",
+      "x-forwarded-host": "localhost",
+      "x-vercel-forwarded-for": "192.0.2.1"
+    }
+  });
+  assert.throws(() => getClientIp(request, valid));
+  assert.equal(
+    getClientIp(request, { ...valid, BETTER_AUTH_URL: "https://127.0.0.1:3000" }),
+    "127.0.0.1"
+  );
+  assert.throws(() =>
+    getClientIp(new Request("https://localhost"), {
+      ...valid,
+      VERCEL: "1",
+      BETTER_AUTH_URL: "https://localhost"
+    })
+  );
+});
+
+test("auth forwarding replaces injected internal IP and removes other address headers", () => {
+  const supplied = new Headers({
+    "x-sarathi-auth-client-ip": "192.0.2.99",
+    "x-forwarded-for": "192.0.2.98",
+    "x-vercel-forwarded-for": "192.0.2.97",
+    "x-real-ip": "192.0.2.96",
+    forwarded: "for=192.0.2.95",
+    "content-length": "999",
+    cookie: "session=test",
+    origin: valid.BETTER_AUTH_URL
+  });
+  const forwarded = authRequestHeaders(supplied, "192.0.2.1");
+  assert.equal(forwarded.get("x-sarathi-auth-client-ip"), "192.0.2.1");
+  for (const name of [
+    "x-forwarded-for",
+    "x-vercel-forwarded-for",
+    "x-real-ip",
+    "forwarded",
+    "content-length"
+  ]) {
+    assert.equal(forwarded.has(name), false);
+  }
+  assert.equal(forwarded.get("cookie"), "session=test");
+  assert.equal(forwarded.get("origin"), valid.BETTER_AUTH_URL);
+  assert.equal(supplied.get("x-sarathi-auth-client-ip"), "192.0.2.99");
 });
 
 test("mutations require exact origin, same-origin fetch metadata and JSON", () => {

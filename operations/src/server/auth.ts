@@ -1,5 +1,6 @@
 import "server-only";
 import { betterAuth } from "better-auth";
+import { twoFactor } from "better-auth/plugins";
 import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { authSchema } from "./auth-schema";
@@ -15,6 +16,8 @@ function createAuth() {
     secret: env.authSecret,
     trustedOrigins: env.trustedOrigins,
     database: drizzleAdapter(getDatabase(), { provider: "pg", schema: authSchema }),
+    // Pinned plugin schema/flow: https://better-auth.com/docs/plugins/2fa
+    plugins: [twoFactor({ issuer: "Sarathi Operations", skipVerificationOnEnable: false })],
     emailAndPassword: {
       enabled: true,
       disableSignUp: true,
@@ -32,8 +35,7 @@ function createAuth() {
       useSecureCookies: env.secureCookies,
       cookiePrefix: "sarathi",
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax", path: "/" },
-      // Only our route wrapper supplies this constant server-owned header. Deployment
-      // proxy trust is deliberately unconfigured; the initial quota is shared globally.
+      // Our route wrapper replaces caller input with a validated platform client IP.
       ipAddress: { ipAddressHeaders: ["x-sarathi-auth-client-ip"] }
     },
     rateLimit: {

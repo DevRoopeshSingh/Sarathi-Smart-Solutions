@@ -10,7 +10,8 @@ export function ThemeToggle() {
     setMounted(true);
     // Read currently applied theme from DOM attribute or localStorage
     try {
-      const currentTheme = document.documentElement.getAttribute("data-theme") as "light" | "dark" | null;
+      const currentTheme = document.documentElement.getAttribute("data-theme") as
+        "light" | "dark" | null;
       if (currentTheme === "dark" || currentTheme === "light") {
         setTheme(currentTheme);
       } else {

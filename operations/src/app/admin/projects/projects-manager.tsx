@@ -1,13 +1,22 @@
 "use client";
+import { formatIndiaDate } from "@/lib/date";
+import { CustomerSelect } from "../customer-select";
+import { ListSearch, useListFilters } from "../list-controls";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { CustomerRecord, ProjectRecord } from "@/server/dal";
+import {
+  requiresProjectTransitionReason,
+  type CustomerOption,
+  type ProjectRecord
+} from "@/lib/operations";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createProjectAction, updateProjectStatusAction } from "../actions";
 
 interface ProjectsManagerProps {
   initialProjects: ProjectRecord[];
-  customers: CustomerRecord[];
+  customers: CustomerOption[];
+  statusCounts: Record<string, number>;
 }
 
 const ALL_STATUS_OPTIONS = [
@@ -59,16 +68,43 @@ function getStatusBadgeClass(status: string): string {
   return `badge-${status.toLowerCase()}`;
 }
 
-export function ProjectsManager({ initialProjects, customers }: ProjectsManagerProps) {
+export function ProjectsManager({
+  initialProjects,
+  customers,
+  statusCounts
+}: ProjectsManagerProps) {
   const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
-  const [search, setSearch] = useState<string>("");
-  const [filter, setFilter] = useState<string>("ALL");
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
   const [showQuotationInfoModal, setShowQuotationInfoModal] = useState<boolean>(false);
   const [selectedProjectForView, setSelectedProjectForView] = useState<ProjectRecord | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const submittingRef = useRef(false);
+  const updatingRef = useRef(false);
+  const [statusError, setStatusError] = useState("");
+  const [pendingTransition, setPendingTransition] = useState<{
+    project: ProjectRecord;
+    status: string;
+  } | null>(null);
+  const [transitionError, setTransitionError] = useState("");
+  const transitionDialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = transitionDialogRef.current;
+    if (pendingTransition && !dialog?.open) dialog?.showModal();
+    if (!pendingTransition && dialog?.open) dialog.close();
+  }, [pendingTransition]);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    setShowNewModal(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("new");
+    router.replace(url.pathname + url.search + url.hash, { scroll: false });
+  }, [searchParams, router]);
 
   // Sync with prop if updated
   useEffect(() => {
@@ -88,73 +124,111 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Summary counts calculated genuinely from active records
-  const metrics = useMemo(() => {
-    const total = projects.length;
-    const active = projects.filter((p) => p.operationalStatus !== "COMPLETED" && p.operationalStatus !== "CANCELLED").length;
-    const surveysDue = projects.filter((p) => p.operationalStatus === "SURVEY_PENDING").length;
-    const installationsInProgress = projects.filter((p) => p.operationalStatus === "INSTALLATION_IN_PROGRESS").length;
-    const completed = projects.filter((p) => p.operationalStatus === "COMPLETED").length;
-    return { total, active, surveysDue, installationsInProgress, completed };
-  }, [projects]);
-
-  // Dynamic counts for each lifecycle filter tab
-  const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      ALL: projects.length,
-      SURVEY_PENDING: projects.filter((p) => p.operationalStatus === "SURVEY_PENDING").length,
-      COSTING: projects.filter((p) => p.operationalStatus === "COSTING").length,
-      INSTALLATION_IN_PROGRESS: projects.filter((p) => p.operationalStatus === "INSTALLATION_IN_PROGRESS").length,
-      COMPLETED: projects.filter((p) => p.operationalStatus === "COMPLETED").length
-    };
-    return counts;
-  }, [projects]);
-
-  // Filtered and searched list
-  const filteredProjects = useMemo(() => {
-    return projects.filter((p) => {
-      const matchesFilter = filter === "ALL" || p.operationalStatus === filter;
-      const q = search.trim().toLowerCase();
-      const matchesSearch =
-        q === "" ||
-        p.name.toLowerCase().includes(q) ||
-        p.customerName.toLowerCase().includes(q) ||
-        p.siteAddress.toLowerCase().includes(q) ||
-        (p.scope && p.scope.toLowerCase().includes(q));
-      return matchesFilter && matchesSearch;
-    });
-  }, [projects, filter, search]);
+  const { search, filter, setFilter, clearFilters } = useListFilters();
+  const tabCounts = statusCounts;
+  const metrics = {
+    total: statusCounts.ALL || 0,
+    active: (statusCounts.ALL || 0) - (statusCounts.COMPLETED || 0) - (statusCounts.CANCELLED || 0),
+    surveysDue: statusCounts.SURVEY_PENDING || 0,
+    installationsInProgress: statusCounts.INSTALLATION_IN_PROGRESS || 0,
+    completed: statusCounts.COMPLETED || 0
+  };
+  const filteredProjects = projects;
 
   async function handleCreateProject(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     setErrorMessage("");
     const formData = new FormData(e.currentTarget);
-    const result = await createProjectAction(formData);
-    setIsSubmitting(false);
-
-    if (result.error) {
-      setErrorMessage(result.error);
-    } else {
+    try {
+      const result = await createProjectAction(formData);
+      if ("error" in result) {
+        setErrorMessage(result.error ?? "Unable to save. Please try again.");
+        return;
+      }
       setShowNewModal(false);
-      window.location.reload();
+      router.refresh();
+    } catch {
+      setErrorMessage(
+        "Unable to confirm the save. Check your connection and reload before retrying."
+      );
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   }
 
-  async function handleStatusChange(projectId: number, newStatus: string) {
-    setUpdatingId(projectId);
+  function handleStatusChange(projectId: string, newStatus: string) {
+    if (updatingRef.current) return;
+    const project = projects.find((item) => item.id === projectId);
+    if (!project || project.operationalStatus === newStatus) return;
+    setStatusError("");
+    if (requiresProjectTransitionReason(project.operationalStatus, newStatus)) {
+      setTransitionError("");
+      setPendingTransition({ project, status: newStatus });
+      return;
+    }
+    void saveStatusChange(project, newStatus);
+  }
+
+  async function saveStatusChange(project: ProjectRecord, newStatus: string, reason?: string) {
+    if (updatingRef.current) return;
+    updatingRef.current = true;
+    setUpdatingId(project.id);
+    setStatusError("");
+    setTransitionError("");
     try {
-      await updateProjectStatusAction(projectId, newStatus);
-      setProjects((prev) =>
-        prev.map((p) => (p.id === projectId ? { ...p, operationalStatus: newStatus } : p))
+      const result = await updateProjectStatusAction(
+        project.id,
+        newStatus,
+        project.operationalStatus,
+        reason
       );
+      if ("error" in result) {
+        setStatusError(result.error ?? "Unable to update the status. Please try again.");
+        setTransitionError(result.error ?? "Unable to update the stage. Please try again.");
+        return;
+      }
+      setProjects((prev) =>
+        prev.map((item) =>
+          item.id === project.id
+            ? { ...item, operationalStatus: newStatus as ProjectRecord["operationalStatus"] }
+            : item
+        )
+      );
+      setPendingTransition(null);
+      router.refresh();
+    } catch {
+      const message =
+        "Unable to confirm the stage change. Reload to check the latest stage before retrying.";
+      setStatusError(message);
+      setTransitionError(message);
     } finally {
+      updatingRef.current = false;
       setUpdatingId(null);
     }
   }
 
+  function handleExceptionalTransition(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!pendingTransition || updatingRef.current) return;
+    const reason = String(new FormData(e.currentTarget).get("reason") ?? "").trim();
+    if (!reason) {
+      setTransitionError("Enter a reason for this stage change.");
+      return;
+    }
+    void saveStatusChange(pendingTransition.project, pendingTransition.status, reason);
+  }
+
   return (
     <div className="admin-view">
+      {statusError && (
+        <p className="form-error-banner" role="alert">
+          {statusError}
+        </p>
+      )}
       {/* Operational Summary Section (Calculated live from real records) */}
       <section className="ops-metrics-grid" aria-label="Operational Summary">
         <button
@@ -166,7 +240,16 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
           <div className="ops-metric-top">
             <span className="ops-metric-label">Active Projects</span>
             <div className="ops-metric-icon active-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
               </svg>
@@ -187,7 +270,16 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
           <div className="ops-metric-top">
             <span className="ops-metric-label">Surveys Due</span>
             <div className="ops-metric-icon survey-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -209,7 +301,16 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
           <div className="ops-metric-top">
             <span className="ops-metric-label">Installations in Progress</span>
             <div className="ops-metric-icon install-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
               </svg>
             </div>
@@ -229,7 +330,16 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
           <div className="ops-metric-top">
             <span className="ops-metric-label">Completed Projects</span>
             <div className="ops-metric-icon completed-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
@@ -244,31 +354,7 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
 
       {/* Toolbar & Action Controls */}
       <div className="admin-toolbar">
-        <div className="toolbar-search">
-          <svg className="search-icon-inside" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="search"
-            placeholder="Search projects by title, customer, or address..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-            aria-label="Search projects"
-          />
-          {search && (
-            <button
-              type="button"
-              className="search-clear-btn"
-              onClick={() => setSearch("")}
-              title="Clear search"
-              aria-label="Clear search"
-            >
-              ✕
-            </button>
-          )}
-        </div>
+        <ListSearch placeholder="Search projects by title, customer, or address..." />
 
         <div className="toolbar-actions">
           {/* Secondary Action: Create from Quotation (Pending backend quotation conversion) */}
@@ -278,7 +364,17 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
             className="admin-btn admin-btn-secondary"
             title="Create project from an existing quotation"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
               <line x1="12" y1="18" x2="12" y2="12" />
@@ -296,7 +392,17 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
             }}
             className="admin-btn admin-btn-primary"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -333,10 +439,19 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
       </div>
 
       {/* Empty State 1: When no projects exist in the entire database */}
-      {projects.length === 0 ? (
+      {metrics.total === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon-wrap" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polygon points="12 2 2 7 12 12 22 7 12 2" />
               <polyline points="2 17 12 22 22 17" />
               <polyline points="2 12 12 17 22 12" />
@@ -371,7 +486,16 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
         /* Empty State 2: When records exist but query or filter returns zero matches */
         <div className="empty-state">
           <div className="empty-state-icon-wrap" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -379,18 +503,23 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
           <h3>No projects match your filters</h3>
           <p>
             {search ? (
-              <>No active projects matching <strong>&ldquo;{search}&rdquo;</strong> in stage <strong>{LIFECYCLE_TABS.find(t => t.id === filter)?.label || filter}</strong>.</>
+              <>
+                No active projects matching <strong>&ldquo;{search}&rdquo;</strong> in stage{" "}
+                <strong>{LIFECYCLE_TABS.find((t) => t.id === filter)?.label || filter}</strong>.
+              </>
             ) : (
-              <>No projects currently found in stage <strong>{LIFECYCLE_TABS.find(t => t.id === filter)?.label || filter}</strong>.</>
-            )}
-            {" "}Try clearing filters to view all records.
+              <>
+                No projects currently found in stage{" "}
+                <strong>{LIFECYCLE_TABS.find((t) => t.id === filter)?.label || filter}</strong>.
+              </>
+            )}{" "}
+            Try clearing filters to view all records.
           </p>
           <div className="empty-state-actions">
             <button
               type="button"
               onClick={() => {
-                setSearch("");
-                setFilter("ALL");
+                clearFilters();
               }}
               className="admin-btn admin-btn-secondary"
             >
@@ -429,11 +558,19 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                               type="button"
                               onClick={() => setSelectedProjectForView(p)}
                               className="project-title-link"
-                              style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                padding: 0,
+                                textAlign: "left",
+                                cursor: "pointer"
+                              }}
                             >
                               {p.name}
                             </button>
-                            <div className="project-id-tag">#PRJ-{String(p.id).padStart(4, "0")}</div>
+                            <div className="project-id-tag">
+                              #PRJ-{String(p.id).padStart(4, "0")}
+                            </div>
                             {p.scope && <div className="table-notes">{p.scope}</div>}
                           </div>
                         </td>
@@ -447,7 +584,12 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                           <div style={{ position: "relative", display: "inline-block" }}>
                             <select
                               value={p.operationalStatus}
-                              disabled={updatingId === p.id}
+                              disabled={updatingId !== null || p.onHold}
+                              title={
+                                p.onHold
+                                  ? "Project is on hold. Resume it before changing stage."
+                                  : undefined
+                              }
                               onChange={(e) => handleStatusChange(p.id, e.target.value)}
                               className={`status-select status-badge ${badgeClass}`}
                               aria-label={`Update operational stage for project ${p.name}`}
@@ -461,7 +603,10 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                           </div>
                         </td>
                         <td>
-                          <span className="table-subtext" title="Technicians are deployed according to the current operational milestone">
+                          <span
+                            className="table-subtext"
+                            title="Technicians are deployed according to the current operational milestone"
+                          >
                             Operations Team
                           </span>
                         </td>
@@ -469,7 +614,7 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                           <span className="milestone-badge">{milestone}</span>
                         </td>
                         <td className="table-subtext" style={{ whiteSpace: "nowrap" }}>
-                          {p.createdAt}
+                          {formatIndiaDate(p.createdAt)}
                         </td>
                         <td style={{ textAlign: "right" }}>
                           <button
@@ -479,7 +624,17 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                             title="Inspect project details"
                           >
                             <span>View</span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
                               <polyline points="9 18 15 12 9 6" />
                             </svg>
                           </button>
@@ -508,7 +663,17 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                   </div>
 
                   <div className="mobile-card-address">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
@@ -518,12 +683,26 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                   {p.scope && <div className="mobile-card-scope">{p.scope}</div>}
 
                   <div>
-                    <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "4px" }}>
+                    <label
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "var(--muted)",
+                        display: "block",
+                        marginBottom: "4px"
+                      }}
+                    >
                       CURRENT STAGE
                     </label>
                     <select
                       value={p.operationalStatus}
-                      disabled={updatingId === p.id}
+                      disabled={updatingId !== null || p.onHold}
+                      aria-label={`Update operational stage for project ${p.name}`}
+                      title={
+                        p.onHold
+                          ? "Project is on hold. Resume it before changing stage."
+                          : undefined
+                      }
                       onChange={(e) => handleStatusChange(p.id, e.target.value)}
                       className={`status-select status-badge ${badgeClass}`}
                       style={{ width: "100%" }}
@@ -555,6 +734,78 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
         </>
       )}
 
+      <dialog
+        ref={transitionDialogRef}
+        className="modal-dialog"
+        aria-labelledby="transition-title"
+        aria-describedby="transition-description"
+        onCancel={(event) => {
+          if (updatingRef.current) event.preventDefault();
+          else setPendingTransition(null);
+        }}
+        style={{ margin: "auto", padding: 0 }}
+      >
+        {pendingTransition && (
+          <form
+            onSubmit={handleExceptionalTransition}
+            className="modal-form"
+            key={`${pendingTransition.project.id}-${pendingTransition.status}`}
+          >
+            <h3 id="transition-title">Record a stage change</h3>
+            <p id="transition-description">
+              Change <strong>{pendingTransition.project.name}</strong> from{" "}
+              {
+                ALL_STATUS_OPTIONS.find(
+                  (option) => option.value === pendingTransition.project.operationalStatus
+                )?.label
+              }{" "}
+              to{" "}
+              {
+                ALL_STATUS_OPTIONS.find((option) => option.value === pendingTransition.status)
+                  ?.label
+              }
+              . Skipping stages, moving backwards, cancelling or reopening requires a reason in the
+              project history.
+            </p>
+            {transitionError && (
+              <p className="form-error-banner" role="alert">
+                {transitionError}
+              </p>
+            )}
+            <div className="form-group">
+              <label htmlFor="transition-reason">Reason for this change *</label>
+              <textarea
+                id="transition-reason"
+                name="reason"
+                className="admin-input"
+                required
+                maxLength={1000}
+                rows={3}
+                autoFocus
+                disabled={updatingId !== null}
+              />
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary"
+                disabled={updatingId !== null}
+                onClick={() => setPendingTransition(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="admin-btn admin-btn-primary"
+                disabled={updatingId !== null}
+              >
+                {updatingId ? "Saving..." : "Save stage & reason"}
+              </button>
+            </div>
+          </form>
+        )}
+      </dialog>
+
       {/* Modal 1: Create New Project */}
       {showNewModal && (
         <div className="modal-backdrop" onClick={() => setShowNewModal(false)}>
@@ -577,18 +828,14 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
               </button>
             </div>
             <form onSubmit={handleCreateProject} className="modal-form">
-              {errorMessage && <div className="form-error-banner" role="alert">{errorMessage}</div>}
+              {errorMessage && (
+                <div className="form-error-banner" role="alert">
+                  {errorMessage}
+                </div>
+              )}
 
               <div className="form-group">
-                <label htmlFor="customerId">Select Customer *</label>
-                <select id="customerId" name="customerId" required className="admin-input">
-                  <option value="">-- Choose Customer --</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.phone})
-                    </option>
-                  ))}
-                </select>
+                <CustomerSelect initial={customers} label="Select Customer *" />
               </div>
 
               <div className="form-group">
@@ -683,7 +930,16 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                   }}
                   aria-hidden="true"
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                     <line x1="16" y1="13" x2="8" y2="13" />
@@ -691,25 +947,64 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                     <polyline points="10 9 9 9 8 9" />
                   </svg>
                 </div>
-                <h4 style={{ fontSize: "17px", fontWeight: 700, margin: "0 0 8px", color: "var(--primary)" }}>
+                <h4
+                  style={{
+                    fontSize: "17px",
+                    fontWeight: 700,
+                    margin: "0 0 8px",
+                    color: "var(--primary)"
+                  }}
+                >
                   Operational Workflow Architecture
                 </h4>
-                <p style={{ fontSize: "14px", color: "var(--muted)", lineHeight: 1.6, margin: "0 auto", maxWidth: "440px" }}>
-                  In Sarathi&apos;s workflow, quotations are prepared from site survey findings and BOM costings linked to active projects.
-                  To convert an approved quote or create a new installation:
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "var(--muted)",
+                    lineHeight: 1.6,
+                    margin: "0 auto",
+                    maxWidth: "440px"
+                  }}
+                >
+                  In Sarathi&apos;s workflow, quotations are prepared from site survey findings and
+                  BOM costings linked to active projects. To convert an approved quote or create a
+                  new installation:
                 </p>
               </div>
 
-              <div style={{ background: "var(--surface-subtle)", border: "1px solid var(--line)", borderRadius: "6px", padding: "16px", marginBottom: "20px" }}>
-                <ol style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "var(--ink)", lineHeight: 1.6 }}>
+              <div
+                style={{
+                  background: "var(--surface-subtle)",
+                  border: "1px solid var(--line)",
+                  borderRadius: "6px",
+                  padding: "16px",
+                  marginBottom: "20px"
+                }}
+              >
+                <ol
+                  style={{
+                    margin: 0,
+                    paddingLeft: "20px",
+                    fontSize: "13px",
+                    color: "var(--ink)",
+                    lineHeight: 1.6
+                  }}
+                >
                   <li>Create or select an active project for your customer.</li>
                   <li>Perform the site survey and record measurements.</li>
                   <li>Generate a commercial quote with version control.</li>
                 </ol>
               </div>
 
-              <div className="modal-footer" style={{ justifyContent: "space-between", alignItems: "center" }}>
-                <Link href="/admin/quotes" className="admin-btn admin-btn-secondary" onClick={() => setShowQuotationInfoModal(false)}>
+              <div
+                className="modal-footer"
+                style={{ justifyContent: "space-between", alignItems: "center" }}
+              >
+                <Link
+                  href="/admin/quotes"
+                  className="admin-btn admin-btn-secondary"
+                  onClick={() => setShowQuotationInfoModal(false)}
+                >
                   View All Quotations →
                 </Link>
                 <button
@@ -765,9 +1060,12 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                 <div className="detail-item">
                   <span className="detail-label">Current Stage</span>
                   <div>
-                    <span className={`status-badge ${getStatusBadgeClass(selectedProjectForView.operationalStatus)}`}>
-                      {ALL_STATUS_OPTIONS.find((s) => s.value === selectedProjectForView.operationalStatus)?.label ||
-                        selectedProjectForView.operationalStatus.replace(/_/g, " ")}
+                    <span
+                      className={`status-badge ${getStatusBadgeClass(selectedProjectForView.operationalStatus)}`}
+                    >
+                      {ALL_STATUS_OPTIONS.find(
+                        (s) => s.value === selectedProjectForView.operationalStatus
+                      )?.label || selectedProjectForView.operationalStatus.replace(/_/g, " ")}
                     </span>
                   </div>
                 </div>
@@ -777,25 +1075,57 @@ export function ProjectsManager({ initialProjects, customers }: ProjectsManagerP
                 </div>
                 <div className="detail-item" style={{ gridColumn: "1 / -1" }}>
                   <span className="detail-label">Scope of Work</span>
-                  <div style={{ background: "var(--surface-subtle)", border: "1px solid var(--line)", padding: "12px", borderRadius: "4px", fontSize: "13px", color: "var(--ink)", lineHeight: 1.5, marginTop: "4px" }}>
+                  <div
+                    style={{
+                      background: "var(--surface-subtle)",
+                      border: "1px solid var(--line)",
+                      padding: "12px",
+                      borderRadius: "4px",
+                      fontSize: "13px",
+                      color: "var(--ink)",
+                      lineHeight: 1.5,
+                      marginTop: "4px"
+                    }}
+                  >
                     {selectedProjectForView.scope || "No specific scope notes provided."}
                   </div>
                 </div>
                 <div className="detail-item">
                   <span className="detail-label">Next Milestone</span>
-                  <span className="detail-val">{getNextMilestone(selectedProjectForView.operationalStatus)}</span>
+                  <span className="detail-val">
+                    {getNextMilestone(selectedProjectForView.operationalStatus)}
+                  </span>
                 </div>
                 <div className="detail-item">
                   <span className="detail-label">Created Date</span>
-                  <span className="detail-val">{selectedProjectForView.createdAt}</span>
+                  <span className="detail-val">
+                    {formatIndiaDate(selectedProjectForView.createdAt)}
+                  </span>
                 </div>
               </div>
 
-              <div style={{ borderTop: "1px solid var(--line)", paddingTop: "16px", marginTop: "16px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                <Link href="/admin/quotes" className="admin-btn admin-btn-action" onClick={() => setSelectedProjectForView(null)}>
+              <div
+                style={{
+                  borderTop: "1px solid var(--line)",
+                  paddingTop: "16px",
+                  marginTop: "16px",
+                  display: "flex",
+                  gap: "10px",
+                  flexWrap: "wrap"
+                }}
+              >
+                <Link
+                  href="/admin/quotes"
+                  className="admin-btn admin-btn-action"
+                  onClick={() => setSelectedProjectForView(null)}
+                >
                   Check Quotations →
                 </Link>
-                <Link href="/admin/payments" className="admin-btn admin-btn-action" onClick={() => setSelectedProjectForView(null)}>
+                <Link
+                  href="/admin/payments"
+                  className="admin-btn admin-btn-action"
+                  onClick={() => setSelectedProjectForView(null)}
+                >
                   Audit Payments →
                 </Link>
               </div>

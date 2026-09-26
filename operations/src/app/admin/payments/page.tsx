@@ -1,3 +1,6 @@
+import { formatIndiaDate } from "@/lib/date";
+import { ListNavigation } from "../list-controls";
+import { readListQuery, type SearchParameters } from "@/server/lists";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -6,12 +9,18 @@ import { getAdminActor, getPayments } from "@/server/dal";
 export const metadata: Metadata = { title: "Payments" };
 export const dynamic = "force-dynamic";
 
-export default async function PaymentsPage() {
+export default async function PaymentsPage({
+  searchParams
+}: {
+  searchParams: Promise<SearchParameters>;
+}) {
+  const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
   if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
 
-  const payments = await getPayments(requestHeaders);
+  const result = await getPayments(requestHeaders, query);
 
+  const payments = result.items;
   return (
     <div className="workspace-shell">
       <main id="main" className="workspace-main">
@@ -26,6 +35,13 @@ export default async function PaymentsPage() {
           </p>
         </section>
 
+        <ListNavigation
+          query={query}
+          total={result.total}
+          next={result.next}
+          base="/admin/payments"
+          search
+        />
         <div className="admin-view">
           {payments.length === 0 ? (
             <div className="empty-state">
@@ -67,7 +83,7 @@ export default async function PaymentsPage() {
                       </td>
                       <td>{pay.paymentMethod}</td>
                       <td>{pay.reference || "—"}</td>
-                      <td className="table-subtext">{pay.createdAt}</td>
+                      <td className="table-subtext">{formatIndiaDate(pay.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>

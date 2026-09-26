@@ -13,6 +13,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --conditions=react-server --import tsx --test tests/*.test.ts",
     "admin:provision": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/provision-admin.ts",
+    "admin:recover": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/recover-admin.ts",
     "migrate": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/migrate.ts"
   },
   "dependencies": {

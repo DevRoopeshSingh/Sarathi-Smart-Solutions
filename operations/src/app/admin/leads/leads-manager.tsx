@@ -1,92 +1,134 @@
 "use client";
+import { formatIndiaDate } from "@/lib/date";
+import { CustomerSelect } from "../customer-select";
+import { ListSearch, useListFilters } from "../list-controls";
 
-import { useState } from "react";
-import type { CustomerRecord, LeadRecord } from "@/server/dal";
+import { useEffect, useRef, useState } from "react";
+import type { CustomerOption, LeadRecord } from "@/lib/operations";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createLeadAction, createProjectAction, updateLeadStatusAction } from "../actions";
 
 interface LeadsManagerProps {
   initialLeads: LeadRecord[];
-  customers: CustomerRecord[];
+  customers: CustomerOption[];
 }
 
 export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
+  const { filter, setFilter } = useListFilters();
   const [leads, setLeads] = useState(initialLeads);
-  const [filter, setFilter] = useState<string>("ALL");
-  const [search, setSearch] = useState<string>("");
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
   const [convertingLead, setConvertingLead] = useState<LeadRecord | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const submittingRef = useRef(false);
+  const updatingRef = useRef(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesFilter = filter === "ALL" || lead.status === filter;
-    const matchesSearch =
-      search === "" ||
-      lead.contactName.toLowerCase().includes(search.toLowerCase()) ||
-      lead.phone.includes(search) ||
-      lead.serviceRequested.toLowerCase().includes(search.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    setShowNewModal(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("new");
+    router.replace(url.pathname + url.search + url.hash, { scroll: false });
+  }, [searchParams, router]);
+
+  useEffect(() => setLeads(initialLeads), [initialLeads]);
+
+  const filteredLeads = leads;
 
   async function handleCreateLead(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     setErrorMessage("");
     const formData = new FormData(e.currentTarget);
-    const result = await createLeadAction(formData);
-    setIsSubmitting(false);
-
-    if (result.error) {
-      setErrorMessage(result.error);
-    } else {
+    try {
+      const result = await createLeadAction(formData);
+      if ("error" in result) {
+        setErrorMessage(result.error ?? "Unable to save. Please try again.");
+        return;
+      }
       setShowNewModal(false);
-      window.location.reload();
+      router.refresh();
+    } catch {
+      setErrorMessage(
+        "Unable to confirm the save. Check your connection and reload before retrying."
+      );
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   }
 
-  async function handleStatusChange(leadId: number, newStatus: string) {
-    await updateLeadStatusAction(leadId, newStatus);
-    setLeads((prev) =>
-      prev.map((lead) =>
-        lead.id === leadId ? { ...lead, status: newStatus as LeadRecord["status"] } : lead
-      )
-    );
+  async function handleStatusChange(leadId: string, newStatus: string) {
+    if (updatingRef.current) return;
+    const lead = leads.find((item) => item.id === leadId);
+    if (!lead || lead.status === newStatus) return;
+    updatingRef.current = true;
+    setUpdatingId(leadId);
+    setStatusError("");
+    try {
+      const result = await updateLeadStatusAction(leadId, newStatus, lead.status);
+      if ("error" in result) {
+        setStatusError(result.error ?? "Unable to update the status. Please try again.");
+        return;
+      }
+      setLeads((prev) =>
+        prev.map((item) =>
+          item.id === leadId ? { ...item, status: newStatus as LeadRecord["status"] } : item
+        )
+      );
+    } catch {
+      setStatusError(
+        "Unable to confirm the status change. Reload to check the latest status before retrying."
+      );
+    } finally {
+      updatingRef.current = false;
+      setUpdatingId(null);
+    }
   }
 
   async function handleConvertProject(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!convertingLead) return;
+    if (!convertingLead || submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     setErrorMessage("");
     const formData = new FormData(e.currentTarget);
-    formData.append("leadId", String(convertingLead.id));
-    const result = await createProjectAction(formData);
-    setIsSubmitting(false);
-
-    if (result.error) {
-      setErrorMessage(result.error);
-    } else {
+    formData.append("leadId", convertingLead.id);
+    try {
+      const result = await createProjectAction(formData);
+      if ("error" in result) {
+        setErrorMessage(result.error ?? "Unable to save. Please try again.");
+        return;
+      }
       setConvertingLead(null);
-      window.location.href = "/admin/projects";
+      router.push("/admin/projects");
+    } catch {
+      setErrorMessage(
+        "Unable to confirm the conversion. Reload to check the lead before retrying."
+      );
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   }
 
   return (
     <div className="admin-view">
       <div className="admin-toolbar">
-        <div className="toolbar-search">
-          <input
-            type="search"
-            placeholder="Search leads by name, phone, or service..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="admin-input search-input"
-          />
-        </div>
+        <ListSearch placeholder="Search leads by name, phone, or service..." />
         <div className="toolbar-actions">
           <button
             type="button"
-            onClick={() => setShowNewModal(true)}
+            onClick={() => {
+              setErrorMessage("");
+              setShowNewModal(true);
+            }}
             className="admin-btn admin-btn-primary"
           >
             + Add New Lead
@@ -94,7 +136,11 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
         </div>
       </div>
 
-      <div className="filter-pills flex flex-wrap gap-3 mb-6" role="group" aria-label="Filter leads by status">
+      <div
+        className="filter-pills flex flex-wrap gap-3 mb-6"
+        role="group"
+        aria-label="Filter leads by status"
+      >
         {["ALL", "NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"].map((status) => (
           <button
             key={status}
@@ -107,12 +153,21 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
         ))}
       </div>
 
+      {statusError && (
+        <p className="form-error-banner" role="alert">
+          {statusError}
+        </p>
+      )}
+
       {filteredLeads.length === 0 ? (
         <div className="empty-state">
           <p>No leads found matching your filter.</p>
           <button
             type="button"
-            onClick={() => setShowNewModal(true)}
+            onClick={() => {
+              setErrorMessage("");
+              setShowNewModal(true);
+            }}
             className="admin-btn admin-btn-small"
           >
             + Add Lead
@@ -153,22 +208,29 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
                     <td>
                       <select
                         value={lead.status}
+                        disabled={updatingId !== null || lead.status === "CONVERTED"}
+                        aria-label={`Update status for ${lead.contactName}`}
                         onChange={(e) => handleStatusChange(lead.id, e.target.value)}
                         className={`status-select badge-${lead.status.toLowerCase()}`}
                       >
                         <option value="NEW">NEW</option>
                         <option value="CONTACTED">CONTACTED</option>
                         <option value="QUALIFIED">QUALIFIED</option>
-                        <option value="CONVERTED">CONVERTED</option>
+                        <option value="CONVERTED" disabled>
+                          CONVERTED (via project)
+                        </option>
                         <option value="LOST">LOST</option>
                       </select>
                     </td>
-                    <td className="table-subtext">{lead.createdAt}</td>
+                    <td className="table-subtext">{formatIndiaDate(lead.createdAt)}</td>
                     <td>
                       {lead.status !== "CONVERTED" && (
                         <button
                           type="button"
-                          onClick={() => setConvertingLead(lead)}
+                          onClick={() => {
+                            setErrorMessage("");
+                            setConvertingLead(lead);
+                          }}
                           className="admin-btn-action"
                           title="Convert into an active project"
                         >
@@ -194,7 +256,11 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
               </button>
             </div>
             <form onSubmit={handleCreateLead} className="modal-form">
-              {errorMessage && <div className="form-error-banner">{errorMessage}</div>}
+              {errorMessage && (
+                <div className="form-error-banner" role="alert">
+                  {errorMessage}
+                </div>
+              )}
               <div className="form-group">
                 <label htmlFor="contactName">Customer / Contact Name *</label>
                 <input
@@ -279,24 +345,20 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
               </button>
             </div>
             <form onSubmit={handleConvertProject} className="modal-form">
-              {errorMessage && <div className="form-error-banner">{errorMessage}</div>}
+              {errorMessage && (
+                <div className="form-error-banner" role="alert">
+                  {errorMessage}
+                </div>
+              )}
               <p className="lead-copy">
                 Converting enquiry from <strong>{convertingLead.contactName}</strong> (
                 {convertingLead.phone}).
               </p>
               <div className="form-group">
-                <label htmlFor="customerId">Assign to Customer *</label>
-                <select id="customerId" name="customerId" required className="admin-input">
-                  <option value="">-- Choose existing customer or create first --</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.phone})
-                    </option>
-                  ))}
-                </select>
+                <CustomerSelect initial={customers} label="Assign to Customer *" />
                 <div className="input-hint">
                   Need a new customer?{" "}
-                  <a href="/admin/customers?new=1" target="_blank">
+                  <a href="/admin/customers?new=1" target="_blank" rel="noopener noreferrer">
                     Add customer first ↗
                   </a>
                 </div>
