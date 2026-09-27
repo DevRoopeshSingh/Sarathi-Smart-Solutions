@@ -9,50 +9,99 @@ import type {
   CustomerRecord,
   ProjectRecord,
   QuotationRecord,
-  PaymentRecord
+  PaymentRecord,
+  ManagedUser
 } from "../lib/operations";
+import type { Permission, Role } from "./permissions";
+import { hasPermission, isRole } from "./permissions";
+import { databaseId } from "./input";
 export type {
   AdminActor,
   LeadRecord,
   CustomerRecord,
   ProjectRecord,
   QuotationRecord,
-  PaymentRecord
+  PaymentRecord,
+  ManagedUser
 } from "../lib/operations";
-import { AccessDeniedError } from "./mutation-errors";
+import { AccessDeniedError, InputError } from "./mutation-errors";
 export { AccessDeniedError } from "./mutation-errors";
 import * as business from "./business";
 import type { CreateLeadInput, CreateCustomerInput, CreateProjectInput } from "./input";
 
-export async function getAdminActor(headers: Headers): Promise<AdminActor | null> {
+export async function getActor(headers: Headers): Promise<AdminActor | null> {
   const session = await getAuth().api.getSession({ headers, query: { disableCookieCache: true } });
   if (!session) return null;
   const result = await getPool().query<AdminActor>(
     `
-    SELECT actor.id::text AS id, actor.display_name AS "displayName", identity.email
+    SELECT actor.id::text AS id, actor.display_name AS "displayName", identity.email,
+           actor.role
     FROM sarathi.users actor
     JOIN sarathi.auth_users identity ON identity.id = actor.identity_subject
-    WHERE actor.identity_subject = $1 AND actor.active AND actor.role = 'ADMIN'
+    WHERE actor.identity_subject = $1 AND actor.active
   `,
     [session.user.id]
   );
-  return result.rows[0] ?? null;
+  const actor = result.rows[0];
+  return actor && isRole(actor.role) ? actor : null;
 }
 
-export async function requireAdmin(headers: Headers): Promise<AdminActor> {
-  const actor = await getAdminActor(headers);
-  if (!actor) throw new AccessDeniedError();
+export const getAdminActor = getActor;
+
+export async function requireRole(headers: Headers, roles: readonly Role[]): Promise<AdminActor> {
+  const actor = await getActor(headers);
+  if (!actor || !roles.includes(actor.role)) throw new AccessDeniedError();
   return actor;
 }
 
-export async function getAdminOverview(headers: Headers) {
+export async function requirePermission(
+  headers: Headers,
+  permission: Permission
+): Promise<AdminActor> {
+  const actor = await getActor(headers);
+  if (!actor || !hasPermission(actor.role, permission)) throw new AccessDeniedError();
+  return actor;
+}
+
+export async function requireAdmin(headers: Headers): Promise<AdminActor> {
+  return requireRole(headers, ["ADMIN"]);
+}
+
+export async function getManagedUsers(headers: Headers): Promise<ManagedUser[]> {
+  await requireAdmin(headers);
+  const result = await getPool().query<ManagedUser>(`
+    SELECT actor.id::text AS id, actor.display_name AS "displayName", identity.email,
+           actor.role, actor.active
+    FROM sarathi.users actor
+    JOIN sarathi.auth_users identity ON identity.id = actor.identity_subject
+    ORDER BY actor.display_name, identity.email
+  `);
+  return result.rows.filter((user) => isRole(user.role));
+}
+
+export async function setManagedUserRole(
+  headers: Headers,
+  targetUserId: string,
+  nextRole: string
+): Promise<void> {
   const actor = await requireAdmin(headers);
+  const targetId = databaseId(targetUserId, "User");
+  if (!isRole(nextRole)) throw new InputError("Choose a valid role.");
+  await getPool().query("SELECT sarathi.admin_set_user_role($1, $2, $3)", [
+    actor.id,
+    targetId,
+    nextRole
+  ]);
+}
+
+export async function getAdminOverview(headers: Headers) {
+  const actor = await requirePermission(headers, "dashboard.read");
   const result = await getPool().query<{ leads: string; projects: string; quotations: string }>(
     `
     SELECT (SELECT count(*)::text FROM sarathi.leads) AS leads,
            (SELECT count(*)::text FROM sarathi.projects) AS projects,
            (SELECT count(*)::text FROM sarathi.quotations) AS quotations
-    FROM sarathi.users WHERE id = $1 AND active AND role = 'ADMIN'
+    FROM sarathi.users WHERE id = $1 AND active
   `,
     [actor.id]
   );
@@ -102,12 +151,12 @@ export async function getAdminOverview(headers: Headers) {
 }
 
 export async function getLeads(headers: Headers, query: ListQuery = {}) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "leads.read");
   return getListPage(getPool(), "leads", query);
 }
 
 export async function createLead(headers: Headers, data: CreateLeadInput) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "leads.create");
   return business.createLead(getPool(), data);
 }
 
@@ -117,27 +166,27 @@ export async function updateLeadStatus(
   status: string,
   expectedStatus: string
 ) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "leads.update");
   return business.updateLeadStatus(getPool(), leadId, status, expectedStatus);
 }
 
 export async function getCustomers(headers: Headers, query: ListQuery = {}) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "customers.read");
   return getListPage(getPool(), "customers", query);
 }
 
 export async function createCustomer(headers: Headers, data: CreateCustomerInput) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "customers.create");
   return business.createCustomer(getPool(), data);
 }
 
 export async function getProjects(headers: Headers, query: ListQuery = {}) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "projects.read");
   return getListPage(getPool(), "projects", query);
 }
 
 export async function createProject(headers: Headers, data: CreateProjectInput) {
-  const actor = await requireAdmin(headers);
+  const actor = await requirePermission(headers, "projects.create");
   return business.createProject(getPool(), actor.id, data);
 }
 
@@ -148,7 +197,7 @@ export async function updateProjectStatus(
   expectedStatus: string,
   reason?: string
 ) {
-  const actor = await requireAdmin(headers);
+  const actor = await requirePermission(headers, "projects.update");
   return business.updateProjectStatus(
     getPool(),
     actor.id,
@@ -160,20 +209,20 @@ export async function updateProjectStatus(
 }
 
 export async function getQuotations(headers: Headers, query: ListQuery = {}) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "quotations.read");
   return getListPage(getPool(), "quotes", query);
 }
 
 export async function getPayments(headers: Headers, query: ListQuery = {}) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "payments.read");
   return getListPage(getPool(), "payments", query);
 }
 
 export async function getCustomerOptions(headers: Headers, query = "") {
-  await requireAdmin(headers);
+  await requirePermission(headers, "customers.read");
   return customerOptions(getPool(), query);
 }
 export async function getProjectCounts(headers: Headers) {
-  await requireAdmin(headers);
+  await requirePermission(headers, "projects.read");
   return projectCounts(getPool());
 }

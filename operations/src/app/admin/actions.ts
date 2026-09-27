@@ -7,6 +7,7 @@ import {
   createCustomer,
   createLead,
   createProject,
+  setManagedUserRole,
   updateLeadStatus,
   updateProjectStatus
 } from "@/server/dal";
@@ -81,6 +82,20 @@ export async function updateProjectStatusAction(
     );
     revalidatePath("/admin");
     revalidatePath("/admin/projects");
+    return { success: true };
+  } catch (error) {
+    return mutationFailure(error);
+  }
+}
+
+export async function setManagedUserRoleAction(
+  userId: string,
+  role: string
+): Promise<MutationResult> {
+  try {
+    await setManagedUserRole(await headers(), userId, role);
+    revalidatePath("/admin/users");
+    revalidatePath("/admin");
     return { success: true };
   } catch (error) {
     return mutationFailure(error);

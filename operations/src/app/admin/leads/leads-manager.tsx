@@ -11,9 +11,10 @@ import { createLeadAction, createProjectAction, updateLeadStatusAction } from ".
 interface LeadsManagerProps {
   initialLeads: LeadRecord[];
   customers: CustomerOption[];
+  canWrite: boolean;
 }
 
-export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
+export function LeadsManager({ initialLeads, customers, canWrite }: LeadsManagerProps) {
   const { filter, setFilter } = useListFilters();
   const [leads, setLeads] = useState(initialLeads);
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
@@ -28,12 +29,12 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
   const router = useRouter();
 
   useEffect(() => {
-    if (searchParams.get("new") !== "1") return;
+    if (!canWrite || searchParams.get("new") !== "1") return;
     setShowNewModal(true);
     const url = new URL(window.location.href);
     url.searchParams.delete("new");
     router.replace(url.pathname + url.search + url.hash, { scroll: false });
-  }, [searchParams, router]);
+  }, [canWrite, searchParams, router]);
 
   useEffect(() => setLeads(initialLeads), [initialLeads]);
 
@@ -122,18 +123,20 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
     <div className="admin-view">
       <div className="admin-toolbar">
         <ListSearch placeholder="Search leads by name, phone, or service..." />
-        <div className="toolbar-actions">
-          <button
-            type="button"
-            onClick={() => {
-              setErrorMessage("");
-              setShowNewModal(true);
-            }}
-            className="admin-btn admin-btn-primary"
-          >
-            + Add New Lead
-          </button>
-        </div>
+        {canWrite && (
+          <div className="toolbar-actions">
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMessage("");
+                setShowNewModal(true);
+              }}
+              className="admin-btn admin-btn-primary"
+            >
+              + Add New Lead
+            </button>
+          </div>
+        )}
       </div>
 
       <div
@@ -162,16 +165,18 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
       {filteredLeads.length === 0 ? (
         <div className="empty-state">
           <p>No leads found matching your filter.</p>
-          <button
-            type="button"
-            onClick={() => {
-              setErrorMessage("");
-              setShowNewModal(true);
-            }}
-            className="admin-btn admin-btn-small"
-          >
-            + Add Lead
-          </button>
+          {canWrite && (
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMessage("");
+                setShowNewModal(true);
+              }}
+              className="admin-btn admin-btn-small"
+            >
+              + Add Lead
+            </button>
+          )}
         </div>
       ) : (
         <div className="leads-table-card">
@@ -206,25 +211,31 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
                       <span className="source-tag">{lead.source}</span>
                     </td>
                     <td>
-                      <select
-                        value={lead.status}
-                        disabled={updatingId !== null || lead.status === "CONVERTED"}
-                        aria-label={`Update status for ${lead.contactName}`}
-                        onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                        className={`status-select badge-${lead.status.toLowerCase()}`}
-                      >
-                        <option value="NEW">NEW</option>
-                        <option value="CONTACTED">CONTACTED</option>
-                        <option value="QUALIFIED">QUALIFIED</option>
-                        <option value="CONVERTED" disabled>
-                          CONVERTED (via project)
-                        </option>
-                        <option value="LOST">LOST</option>
-                      </select>
+                      {canWrite ? (
+                        <select
+                          value={lead.status}
+                          disabled={updatingId !== null || lead.status === "CONVERTED"}
+                          aria-label={`Update status for ${lead.contactName}`}
+                          onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                          className={`status-select badge-${lead.status.toLowerCase()}`}
+                        >
+                          <option value="NEW">NEW</option>
+                          <option value="CONTACTED">CONTACTED</option>
+                          <option value="QUALIFIED">QUALIFIED</option>
+                          <option value="CONVERTED" disabled>
+                            CONVERTED (via project)
+                          </option>
+                          <option value="LOST">LOST</option>
+                        </select>
+                      ) : (
+                        <span className={`status-badge badge-${lead.status.toLowerCase()}`}>
+                          {lead.status}
+                        </span>
+                      )}
                     </td>
                     <td className="table-subtext">{formatIndiaDate(lead.createdAt)}</td>
                     <td>
-                      {lead.status !== "CONVERTED" && (
+                      {canWrite && lead.status !== "CONVERTED" && (
                         <button
                           type="button"
                           onClick={() => {
@@ -246,7 +257,7 @@ export function LeadsManager({ initialLeads, customers }: LeadsManagerProps) {
         </div>
       )}
 
-      {showNewModal && (
+      {canWrite && showNewModal && (
         <div className="modal-backdrop" onClick={() => setShowNewModal(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">

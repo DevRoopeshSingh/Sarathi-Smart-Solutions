@@ -21,9 +21,11 @@ npm --prefix operations run migrate
 
 The authoritative migration history is in `database/migrations/`. Do not run Drizzle schema push or create an independent ORM migration history. See [database instructions](../database/README.md) for database ownership and migration details.
 
+The migration runner verifies stored SHA-256 file checksums before applying changes and commits each checksum with its SQL. Existing databases without checksums stop until an operator verifies the original applied files and runs `npm --prefix operations run migrate -- --baseline-checksums` once. The flag fills missing hashes only; it cannot override a mismatch. Fresh installations use the normal command. See the [baseline procedure](../database/README.md#one-time-baseline-for-existing-databases) before upgrading an existing database.
+
 ## Administrator provisioning
 
-There is no public registration endpoint. An operator with database access provisions an account using the pinned authentication library's password hashing. Supply `DATABASE_URL` (or a separate `DATABASE_MIGRATION_URL`), `SARATHI_ADMIN_EMAIL`, and `SARATHI_ADMIN_NAME` through your shell/environment manager. The password must arrive on standard input as a single line of 12–128 characters. Never put a password in a command argument, shell history, or tracked file.
+There is no public registration endpoint. An operator with database-owner access provisions an account using the pinned authentication library's password hashing. Supply `DATABASE_URL` (or a separate `DATABASE_MIGRATION_URL`), `SARATHI_ADMIN_EMAIL`, and `SARATHI_ADMIN_NAME` through your shell/environment manager. Set optional `SARATHI_USER_ROLE` to `ADMIN` (default), `OPERATOR`, or `VIEWER`. The password must arrive on standard input as a single line of 12–128 characters. Never put a password in a command argument, shell history, or tracked file.
 
 Run `npm --prefix operations run admin:provision` with password input piped from a trusted secret manager. The command creates the authentication identity and administrator mapping in one transaction. An existing email is rejected without resetting its password or changing permissions. No account is created by application startup or a build.
 
@@ -34,6 +36,12 @@ npm --prefix operations run dev
 ```
 
 Open the exact origin configured in `BETTER_AUTH_URL`, followed by `/admin/login`. The development server binds to the local machine. Anonymous visitors to `/admin` are redirected to sign-in. The sign-in form sends same-origin requests, and sessions are validated again at data access. Errors displayed in the browser do not disclose database or authentication internals.
+
+## Roles and access control
+
+Migration `004_role_based_access.sql` enables `ADMIN`, `OPERATOR`, and `VIEWER`; existing `TECHNICIAN` mappings become `OPERATOR`. Each account has one role in `sarathi.users.role`. The server permission map is in `src/server/permissions.ts`; DAL checks enforce it for every protected read and mutation. Operators can use existing operational write actions, while viewers can read the dashboard, leads, customers, projects, and quotations. Viewers cannot access payments. Only administrators can access `/admin/users`, `/admin/security`, and session revocation. The user screen changes roles for existing accounts; create accounts with the owner-only provision command and the selected `SARATHI_USER_ROLE`.
+
+The runtime database role must not receive direct `UPDATE` privileges on `sarathi.users`. Apply the updated `database/runtime-grants.sql` after migration 004; it grants execution only on `sarathi.admin_set_user_role`, which checks the active administrator actor, role allowlist, and last-admin/self-demotion constraints. No deletion permission is granted. All authorization remains server-side; hiding navigation/actions is not an access control boundary.
 
 ## Verification
 
@@ -59,7 +67,7 @@ Login/logout quotas use Vercel's `x-vercel-forwarded-for` only when the platform
 
 ## Authenticator enrollment and recovery
 
-Apply migration `003_admin_two_factor.sql` and reapply runtime grants before deploying this version. No additional runtime secret or paid service is needed. Keep `BETTER_AUTH_SECRET` stable and backed up securely: authenticator secrets and recovery codes are encrypted with it.
+Apply numbered migrations through `004_role_based_access.sql` and reapply runtime grants before deploying this version. No additional runtime secret or paid service is needed. Keep `BETTER_AUTH_SECRET` stable and backed up securely: authenticator secrets and recovery codes are encrypted with it.
 
 Administrators can enroll at `/admin/security` using their current password, a time-based authenticator app and a confirmation code. Enrollment is optional initially. Save the displayed one-use recovery codes in a password manager before confirming enrollment. Future sign-ins require the authenticator or one unused recovery code. The same page can replace recovery codes or disable the authenticator after password verification. Setup keys and codes are displayed only during setup/replacement; no third-party QR service receives them.
 

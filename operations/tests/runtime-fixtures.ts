@@ -13,15 +13,16 @@ try {
   );
   await client.query("BEGIN");
   for (const fixture of [
-    { email: "admin@example.test", role: "ADMIN", active: true },
-    { email: "technician@example.test", role: "TECHNICIAN", active: true },
-    { email: "inactive@example.test", role: "ADMIN", active: false },
-    { email: "unmapped@example.test", role: null, active: true }
+    { email: "admin@example.test", name: "Test administrator", role: "ADMIN", active: true },
+    { email: "operator@example.test", name: "Test operator", role: "OPERATOR", active: true },
+    { email: "viewer@example.test", name: "Test viewer", role: "VIEWER", active: true },
+    { email: "inactive@example.test", name: "Inactive user", role: "ADMIN", active: false },
+    { email: "unmapped@example.test", name: "Unmapped user", role: null, active: true }
   ]) {
     const id = randomUUID();
     await client.query(
       "INSERT INTO sarathi.auth_users(id,name,email,email_verified) VALUES ($1,$2,$3,true)",
-      [id, "Test administrator", fixture.email]
+      [id, fixture.name, fixture.email]
     );
     await client.query(
       "INSERT INTO sarathi.auth_accounts(id,user_id,account_id,provider_id,password) VALUES ($1,$2,$2,'credential',$3)",
@@ -30,7 +31,7 @@ try {
     if (fixture.role)
       await client.query(
         "INSERT INTO sarathi.users(identity_subject,display_name,role,active) VALUES ($1,$2,$3,$4)",
-        [id, "Test administrator", fixture.role, fixture.active]
+        [id, fixture.name, fixture.role, fixture.active]
       );
   }
   await client.query("COMMIT");

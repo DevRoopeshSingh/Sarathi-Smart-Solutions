@@ -30,10 +30,17 @@ export function requiresProjectTransitionReason(from: string, to: string): boole
 
 export type MutationResult = { success: true; error?: never } | { error: string; success?: never };
 
+export type UserRole = "ADMIN" | "OPERATOR" | "VIEWER";
+
 export interface AdminActor {
   id: string;
   displayName: string;
   email: string;
+  role: UserRole;
+}
+
+export interface ManagedUser extends AdminActor {
+  active: boolean;
 }
 
 export interface LeadRecord {

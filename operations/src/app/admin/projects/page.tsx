@@ -16,7 +16,8 @@ export default async function ProjectsPage({
 }) {
   const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
-  if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
+  const actor = await getAdminActor(requestHeaders);
+  if (!actor) redirect("/admin/login");
 
   const [projects, customers, statusCounts] = await Promise.all([
     getProjects(requestHeaders, query),
@@ -43,6 +44,7 @@ export default async function ProjectsPage({
           initialProjects={projects.items}
           customers={customers}
           statusCounts={statusCounts}
+          canWrite={actor.role !== "VIEWER"}
         />
         <ListNavigation
           query={query}

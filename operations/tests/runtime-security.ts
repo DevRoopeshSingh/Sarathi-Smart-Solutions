@@ -49,7 +49,8 @@ test("anonymous private routes reject access and auth route allowlist closes reg
     "/admin/customers",
     "/admin/projects",
     "/admin/payments",
-    "/admin/quotes"
+    "/admin/quotes",
+    "/admin/users"
   ]) {
     const response = await fetch(`${origin}${path}`, { redirect: "manual" });
     assert.ok([302, 303, 307].includes(response.status), path);
@@ -83,11 +84,10 @@ test("sign-in mutations require exact origin, JSON and same-origin fetch metadat
   assert.equal(form.status, 415);
 });
 
-test("wrong credentials, technicians, inactive and unmapped identities cannot create admin sessions", async () => {
+test("wrong credentials, inactive and unmapped identities cannot create sessions", async () => {
   for (const email of [
     "admin@example.test",
     "missing@example.test",
-    "technician@example.test",
     "inactive@example.test",
     "unmapped@example.test"
   ]) {
@@ -98,6 +98,38 @@ test("wrong credentials, technicians, inactive and unmapped identities cannot cr
     assert.equal(response.status, 401, email);
     assert.deepEqual(await response.json(), { error: "Invalid email or password." });
     assert.equal(cookies(response), "");
+  }
+});
+
+test("operators and viewers get only the routes assigned to their role", async () => {
+  for (const [email, role] of [
+    ["operator@example.test", "OPERATOR"],
+    ["viewer@example.test", "VIEWER"]
+  ]) {
+    const response = await login(email);
+    assert.equal(response.status, 200, email);
+    const cookie = cookies(response);
+    const actor = await (await me(cookie)).json();
+    assert.equal(actor.actor.role, role);
+    assert.equal(
+      (await fetch(`${origin}/admin/leads`, { headers: { Cookie: cookie } })).status,
+      200
+    );
+    assert.equal(
+      (await send("/api/admin/security", { action: "disable" }, { Cookie: cookie })).status,
+      401
+    );
+    assert.equal((await send("/api/admin/revoke-sessions", {}, { Cookie: cookie })).status, 401);
+    const payments = await fetch(`${origin}/admin/payments`, {
+      headers: { Cookie: cookie },
+      redirect: "manual"
+    });
+    assert.equal(payments.status, role === "OPERATOR" ? 200 : 307);
+    const users = await fetch(`${origin}/admin/users`, {
+      headers: { Cookie: cookie },
+      redirect: "manual"
+    });
+    assert.equal(users.status, 307);
   }
 });
 
@@ -121,7 +153,7 @@ test("valid login sets secure HTTP-only cookies, safe actor DTO and private no-s
   assert.match(actor.headers.get("cache-control")!, /no-store/);
   const body = await actor.json();
   assert.deepEqual(Object.keys(body), ["actor"]);
-  assert.deepEqual(Object.keys(body.actor).sort(), ["displayName", "email", "id"]);
+  assert.deepEqual(Object.keys(body.actor).sort(), ["displayName", "email", "id", "role"]);
   assert.equal(body.actor.email, "admin@example.test");
   const page = await fetch(`${origin}/admin`, { headers: { Cookie: cookie } });
   assert.equal(page.status, 200);
@@ -150,13 +182,22 @@ test("authenticated mutations reject cross-origin logout and revocation", async 
   }
 });
 
-test("role changes and deactivation invalidate admin access on existing sessions", async () => {
+test("role changes update existing session access and deactivation revokes it", async () => {
   const cookie = await session();
   try {
     await client.query(
-      "UPDATE sarathi.users SET role = 'TECHNICIAN' WHERE identity_subject = (SELECT id FROM sarathi.auth_users WHERE email = 'admin@example.test')"
+      "UPDATE sarathi.users SET role = 'OPERATOR' WHERE identity_subject = (SELECT id FROM sarathi.auth_users WHERE email = 'admin@example.test')"
     );
-    assert.equal((await me(cookie)).status, 401);
+    const operator = await me(cookie);
+    assert.equal(operator.status, 200);
+    assert.equal((await operator.json()).actor.role, "OPERATOR");
+    assert.equal((await send("/api/admin/revoke-sessions", {}, { Cookie: cookie })).status, 401);
+    await client.query(
+      "UPDATE sarathi.users SET role = 'VIEWER' WHERE identity_subject = (SELECT id FROM sarathi.auth_users WHERE email = 'admin@example.test')"
+    );
+    const viewer = await me(cookie);
+    assert.equal(viewer.status, 200);
+    assert.equal((await viewer.json()).actor.role, "VIEWER");
     await client.query(
       "UPDATE sarathi.users SET role = 'ADMIN', active = false WHERE identity_subject = (SELECT id FROM sarathi.auth_users WHERE email = 'admin@example.test')"
     );
@@ -218,6 +259,7 @@ test("runtime role cannot own schema, mutate commercial records or read purchase
       "CREATE TABLE sarathi.must_not_exist(id int)",
       "SELECT * FROM sarathi.bom_items",
       "SELECT * FROM sarathi.project_costings",
+      "UPDATE sarathi.users SET role = 'ADMIN' WHERE id = 1",
       "DELETE FROM sarathi.users",
       "TRUNCATE sarathi.auth_sessions"
     ]) {

@@ -50,7 +50,7 @@ function createAuth() {
         create: {
           before: async (session) => {
             const result = await getPool().query(
-              "SELECT 1 FROM sarathi.users WHERE identity_subject = $1 AND active AND role = 'ADMIN'",
+              "SELECT 1 FROM sarathi.users WHERE identity_subject = $1 AND active AND role IN ('ADMIN', 'OPERATOR', 'VIEWER')",
               [session.userId]
             );
             if (!result.rowCount) {

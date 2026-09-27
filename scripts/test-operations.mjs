@@ -63,6 +63,13 @@ for (const signal of ["SIGINT", "SIGTERM"])
 try {
   tls = await temporaryHttps(3107, 3108);
   env.NODE_EXTRA_CA_CERTS = tls.certificate;
+  await run(process.execPath, [
+    "--conditions=react-server",
+    "--import",
+    "tsx",
+    "--test",
+    "tests/runtime-migrations.ts"
+  ]);
   // Both processes race on a new database; the advisory lock must serialize them.
   await Promise.all([
     run(process.execPath, ["--conditions=react-server", "--import", "tsx", "scripts/migrate.ts"]),

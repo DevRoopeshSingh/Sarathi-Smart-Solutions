@@ -94,76 +94,78 @@ export default async function AdminPage() {
         </section>
 
         {/* Quick Actions with Primary / Secondary Hierarchy */}
-        <div className="quick-actions-bar" role="region" aria-label="Quick operations actions">
-          <Link
-            href="/admin/leads?new=1"
-            className="admin-btn admin-btn-primary"
-            title="Record incoming customer enquiry"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+        {actor.role !== "VIEWER" && (
+          <div className="quick-actions-bar" role="region" aria-label="Quick operations actions">
+            <Link
+              href="/admin/leads?new=1"
+              className="admin-btn admin-btn-primary"
+              title="Record incoming customer enquiry"
             >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span>New Lead</span>
-          </Link>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>New Lead</span>
+            </Link>
 
-          <Link
-            href="/admin/customers?new=1"
-            className="admin-btn admin-btn-secondary"
-            title="Create customer profile directly"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+            <Link
+              href="/admin/customers?new=1"
+              className="admin-btn admin-btn-secondary"
+              title="Create customer profile directly"
             >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <line x1="19" y1="8" x2="19" y2="14" />
-              <line x1="22" y1="11" x2="16" y2="11" />
-            </svg>
-            <span>New Customer</span>
-          </Link>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <line x1="19" y1="8" x2="19" y2="14" />
+                <line x1="22" y1="11" x2="16" y2="11" />
+              </svg>
+              <span>New Customer</span>
+            </Link>
 
-          <Link
-            href="/admin/projects?new=1"
-            className="admin-btn admin-btn-secondary"
-            title="Initiate a project directly"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+            <Link
+              href="/admin/projects?new=1"
+              className="admin-btn admin-btn-secondary"
+              title="Initiate a project directly"
             >
-              <polygon points="12 2 2 7 12 12 22 7 12 2" />
-              <polyline points="2 17 12 22 22 17" />
-              <polyline points="2 12 12 17 22 12" />
-            </svg>
-            <span>New Project</span>
-          </Link>
-        </div>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+              <span>New Project</span>
+            </Link>
+          </div>
+        )}
 
         {/* Business Overview Cards */}
         <section aria-labelledby="records-heading" className="records-section">
@@ -574,16 +576,20 @@ export default async function AdminPage() {
             <div className="account-title-group">
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <h3 id="account-heading" style={{ margin: 0 }}>
-                  Administrator Session
+                  {actor.role === "ADMIN"
+                    ? "Administrator Session"
+                    : actor.role === "OPERATOR"
+                      ? "Operator Session"
+                      : "Viewer Session"}
                 </h3>
-                <span className="account-role-badge">Administrator</span>
+                <span className="account-role-badge">{actor.role}</span>
               </div>
               <p className="account-email" style={{ margin: "2px 0 0" }}>
                 {actor.email}
               </p>
             </div>
           </div>
-          <SessionControls />
+          {actor.role === "ADMIN" && <SessionControls />}
         </section>
       </main>
     </div>

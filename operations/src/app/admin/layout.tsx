@@ -23,7 +23,12 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
         Skip to content
       </a>
       {actor ? (
-        <AdminNav displayName={actor.displayName} email={actor.email} publicSiteUrl={publicSiteUrl}>
+        <AdminNav
+          displayName={actor.displayName}
+          email={actor.email}
+          role={actor.role}
+          publicSiteUrl={publicSiteUrl}
+        >
           {children}
         </AdminNav>
       ) : (

@@ -17,6 +17,7 @@ interface ProjectsManagerProps {
   initialProjects: ProjectRecord[];
   customers: CustomerOption[];
   statusCounts: Record<string, number>;
+  canWrite: boolean;
 }
 
 const ALL_STATUS_OPTIONS = [
@@ -71,7 +72,8 @@ function getStatusBadgeClass(status: string): string {
 export function ProjectsManager({
   initialProjects,
   customers,
-  statusCounts
+  statusCounts,
+  canWrite
 }: ProjectsManagerProps) {
   const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
@@ -99,12 +101,12 @@ export function ProjectsManager({
   const router = useRouter();
 
   useEffect(() => {
-    if (searchParams.get("new") !== "1") return;
+    if (!canWrite || searchParams.get("new") !== "1") return;
     setShowNewModal(true);
     const url = new URL(window.location.href);
     url.searchParams.delete("new");
     router.replace(url.pathname + url.search + url.hash, { scroll: false });
-  }, [searchParams, router]);
+  }, [canWrite, searchParams, router]);
 
   // Sync with prop if updated
   useEffect(() => {
@@ -356,59 +358,61 @@ export function ProjectsManager({
       <div className="admin-toolbar">
         <ListSearch placeholder="Search projects by title, customer, or address..." />
 
-        <div className="toolbar-actions">
-          {/* Secondary Action: Create from Quotation (Pending backend quotation conversion) */}
-          <button
-            type="button"
-            onClick={() => setShowQuotationInfoModal(true)}
-            className="admin-btn admin-btn-secondary"
-            title="Create project from an existing quotation"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+        {canWrite && (
+          <div className="toolbar-actions">
+            {/* Secondary Action: Create from Quotation (Pending backend quotation conversion) */}
+            <button
+              type="button"
+              onClick={() => setShowQuotationInfoModal(true)}
+              className="admin-btn admin-btn-secondary"
+              title="Create project from an existing quotation"
             >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="12" y1="18" x2="12" y2="12" />
-              <line x1="9" y1="15" x2="15" y2="15" />
-            </svg>
-            <span>Create from Quotation</span>
-          </button>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+              <span>Create from Quotation</span>
+            </button>
 
-          {/* Primary Action: Create New Project */}
-          <button
-            type="button"
-            onClick={() => {
-              setErrorMessage("");
-              setShowNewModal(true);
-            }}
-            className="admin-btn admin-btn-primary"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+            {/* Primary Action: Create New Project */}
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMessage("");
+                setShowNewModal(true);
+              }}
+              className="admin-btn admin-btn-primary"
             >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span>Create New Project</span>
-          </button>
-        </div>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Create New Project</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Lifecycle Filter Tabs with Title Case & Real Counts */}
@@ -463,23 +467,27 @@ export function ProjectsManager({
             procurement, installation, and handover.
           </p>
           <div className="empty-state-actions">
-            <button
-              type="button"
-              onClick={() => {
-                setErrorMessage("");
-                setShowNewModal(true);
-              }}
-              className="admin-btn admin-btn-primary"
-            >
-              + Create Project
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowQuotationInfoModal(true)}
-              className="admin-btn admin-btn-secondary"
-            >
-              Create from Quotation
-            </button>
+            {canWrite && (
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorMessage("");
+                  setShowNewModal(true);
+                }}
+                className="admin-btn admin-btn-primary"
+              >
+                + Create Project
+              </button>
+            )}
+            {canWrite && (
+              <button
+                type="button"
+                onClick={() => setShowQuotationInfoModal(true)}
+                className="admin-btn admin-btn-secondary"
+              >
+                Create from Quotation
+              </button>
+            )}
           </div>
         </div>
       ) : filteredProjects.length === 0 ? (
@@ -584,7 +592,7 @@ export function ProjectsManager({
                           <div style={{ position: "relative", display: "inline-block" }}>
                             <select
                               value={p.operationalStatus}
-                              disabled={updatingId !== null || p.onHold}
+                              disabled={!canWrite || updatingId !== null || p.onHold}
                               title={
                                 p.onHold
                                   ? "Project is on hold. Resume it before changing stage."
@@ -696,7 +704,7 @@ export function ProjectsManager({
                     </label>
                     <select
                       value={p.operationalStatus}
-                      disabled={updatingId !== null || p.onHold}
+                      disabled={!canWrite || updatingId !== null || p.onHold}
                       aria-label={`Update operational stage for project ${p.name}`}
                       title={
                         p.onHold
@@ -807,7 +815,7 @@ export function ProjectsManager({
       </dialog>
 
       {/* Modal 1: Create New Project */}
-      {showNewModal && (
+      {canWrite && showNewModal && (
         <div className="modal-backdrop" onClick={() => setShowNewModal(false)}>
           <div
             className="modal-dialog"

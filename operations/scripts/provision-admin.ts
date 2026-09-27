@@ -5,16 +5,18 @@ import { Pool } from "pg";
 async function main() {
   const email = (process.env.SARATHI_ADMIN_EMAIL ?? "").trim().toLowerCase();
   const name = (process.env.SARATHI_ADMIN_NAME ?? "").trim();
+  const role = process.env.SARATHI_USER_ROLE ?? "ADMIN";
   const databaseUrl = process.env.DATABASE_MIGRATION_URL ?? process.env.DATABASE_URL;
   if (
     !databaseUrl ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
     email.length > 254 ||
     !name ||
-    name.length > 200
+    name.length > 200 ||
+    !["ADMIN", "OPERATOR", "VIEWER"].includes(role)
   ) {
     throw new Error(
-      "Set DATABASE_MIGRATION_URL (or DATABASE_URL), SARATHI_ADMIN_EMAIL and SARATHI_ADMIN_NAME."
+      "Set DATABASE_MIGRATION_URL (or DATABASE_URL), SARATHI_ADMIN_EMAIL and SARATHI_ADMIN_NAME; SARATHI_USER_ROLE must be ADMIN, OPERATOR or VIEWER."
     );
   }
   if (process.stdin.isTTY)
@@ -46,11 +48,11 @@ async function main() {
       [randomUUID(), identity, passwordHash]
     );
     await client.query(
-      "INSERT INTO sarathi.users (identity_subject, display_name, role, active) VALUES ($1, $2, 'ADMIN', true)",
-      [identity, name]
+      "INSERT INTO sarathi.users (identity_subject, display_name, role, active) VALUES ($1, $2, $3, true)",
+      [identity, name, role]
     );
     await client.query("COMMIT");
-    console.log("Administrator created. Existing accounts are never changed by this command.");
+    console.log(`${role} account created. Existing accounts are never changed by this command.`);
   } catch (error) {
     await client.query("ROLLBACK");
     if (error && typeof error === "object" && "code" in error && error.code === "23505") {

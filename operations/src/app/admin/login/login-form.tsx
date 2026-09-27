@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 export function LoginForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [twoFactor, setTwoFactor] = useState(false);
   const [backup, setBackup] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState("");
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -14,6 +17,7 @@ export function LoginForm() {
     const form = new FormData(event.currentTarget);
     setPending(true);
     setError("");
+    setShowPassword(false);
     try {
       const response = await fetch(
         twoFactor
@@ -43,6 +47,7 @@ export function LoginForm() {
       }
       const result: { twoFactorRequired?: boolean } = await response.json();
       if (result.twoFactorRequired) {
+        setPassword("");
         setTwoFactor(true);
         return;
       }
@@ -100,6 +105,8 @@ export function LoginForm() {
           className="admin-btn"
           disabled={pending}
           onClick={() => {
+            setPassword("");
+            setShowPassword(false);
             setTwoFactor(false);
             setError("");
           }}
@@ -127,16 +134,33 @@ export function LoginForm() {
       </div>
       <div className="field">
         <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          maxLength={128}
-          disabled={pending}
-          aria-describedby="sign-in-note"
-        />
+        <div className="password-input">
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            required
+            maxLength={128}
+            disabled={pending}
+            aria-describedby="sign-in-note"
+          />
+          <button
+            type="button"
+            className="password-visibility"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            disabled={pending}
+            onClick={() => setShowPassword((visible) => !visible)}
+          >
+            {showPassword ? (
+              <EyeOff aria-hidden="true" size={18} strokeWidth={1.8} />
+            ) : (
+              <Eye aria-hidden="true" size={18} strokeWidth={1.8} />
+            )}
+          </button>
+        </div>
       </div>
       <div aria-live="polite" aria-atomic="true">
         {error && (

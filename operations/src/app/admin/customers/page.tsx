@@ -16,7 +16,8 @@ export default async function CustomersPage({
 }) {
   const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
-  if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
+  const actor = await getAdminActor(requestHeaders);
+  if (!actor) redirect("/admin/login");
 
   const customers = await getCustomers(requestHeaders, query);
 
@@ -34,7 +35,7 @@ export default async function CustomersPage({
           </p>
         </section>
 
-        <CustomersManager initialCustomers={customers.items} />
+        <CustomersManager initialCustomers={customers.items} canWrite={actor.role !== "VIEWER"} />
         <ListNavigation
           query={query}
           total={customers.total}

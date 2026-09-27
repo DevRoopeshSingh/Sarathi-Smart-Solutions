@@ -16,7 +16,8 @@ export default async function LeadsPage({
 }) {
   const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
-  if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
+  const actor = await getAdminActor(requestHeaders);
+  if (!actor) redirect("/admin/login");
 
   const [leads, customers] = await Promise.all([
     getLeads(requestHeaders, query),
@@ -37,7 +38,11 @@ export default async function LeadsPage({
           </p>
         </section>
 
-        <LeadsManager initialLeads={leads.items} customers={customers} />
+        <LeadsManager
+          initialLeads={leads.items}
+          customers={customers}
+          canWrite={actor.role !== "VIEWER"}
+        />
         <ListNavigation query={query} total={leads.total} next={leads.next} base="/admin/leads" />
       </main>
     </div>

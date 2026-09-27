@@ -9,9 +9,10 @@ import { createCustomerAction } from "../actions";
 
 interface CustomersManagerProps {
   initialCustomers: CustomerRecord[];
+  canWrite: boolean;
 }
 
-export function CustomersManager({ initialCustomers }: CustomersManagerProps) {
+export function CustomersManager({ initialCustomers, canWrite }: CustomersManagerProps) {
   const [customers, setCustomers] = useState(initialCustomers);
   useEffect(() => setCustomers(initialCustomers), [initialCustomers]);
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
@@ -22,12 +23,12 @@ export function CustomersManager({ initialCustomers }: CustomersManagerProps) {
   const router = useRouter();
 
   useEffect(() => {
-    if (searchParams.get("new") !== "1") return;
+    if (!canWrite || searchParams.get("new") !== "1") return;
     setShowNewModal(true);
     const url = new URL(window.location.href);
     url.searchParams.delete("new");
     router.replace(url.pathname + url.search + url.hash, { scroll: false });
-  }, [searchParams, router]);
+  }, [canWrite, searchParams, router]);
 
   const filteredCustomers = customers;
 
@@ -60,27 +61,31 @@ export function CustomersManager({ initialCustomers }: CustomersManagerProps) {
     <div className="admin-view">
       <div className="admin-toolbar">
         <ListSearch placeholder="Search customers by name, phone, or address..." />
-        <div className="toolbar-actions">
-          <button
-            type="button"
-            onClick={() => setShowNewModal(true)}
-            className="admin-btn admin-btn-primary"
-          >
-            + Add New Customer
-          </button>
-        </div>
+        {canWrite && (
+          <div className="toolbar-actions">
+            <button
+              type="button"
+              onClick={() => setShowNewModal(true)}
+              className="admin-btn admin-btn-primary"
+            >
+              + Add New Customer
+            </button>
+          </div>
+        )}
       </div>
 
       {filteredCustomers.length === 0 ? (
         <div className="empty-state">
           <p>No customer profiles found.</p>
-          <button
-            type="button"
-            onClick={() => setShowNewModal(true)}
-            className="admin-btn admin-btn-small"
-          >
-            + Add Customer
-          </button>
+          {canWrite && (
+            <button
+              type="button"
+              onClick={() => setShowNewModal(true)}
+              className="admin-btn admin-btn-small"
+            >
+              + Add Customer
+            </button>
+          )}
         </div>
       ) : (
         <div className="table-responsive">
@@ -119,7 +124,7 @@ export function CustomersManager({ initialCustomers }: CustomersManagerProps) {
         </div>
       )}
 
-      {showNewModal && (
+      {canWrite && showNewModal && (
         <div className="modal-backdrop" onClick={() => setShowNewModal(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">

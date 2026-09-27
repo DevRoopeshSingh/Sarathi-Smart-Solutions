@@ -26,4 +26,5 @@ GRANT INSERT (customer_id, lead_id, name, site_address, scope, service_types, op
 GRANT UPDATE (operational_status, updated_at) ON sarathi.projects TO :"runtime_role";
 GRANT INSERT (project_id, from_status, to_status, was_on_hold, is_on_hold, reason, changed_by)
   ON sarathi.status_history TO :"runtime_role";
+GRANT EXECUTE ON FUNCTION sarathi.admin_set_user_role(bigint, bigint, text) TO :"runtime_role";
 COMMIT;

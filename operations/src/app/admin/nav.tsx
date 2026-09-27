@@ -4,10 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
+import { Users } from "lucide-react";
+import type { UserRole } from "@/lib/operations";
 
 interface AdminNavProps {
   displayName: string;
   email: string;
+  role: UserRole;
   publicSiteUrl?: string;
   children: React.ReactNode;
 }
@@ -15,28 +18,12 @@ interface AdminNavProps {
 interface NavItem {
   href: string;
   label: string;
+  adminOnly?: boolean;
+  viewerHidden?: boolean;
   icon: (active: boolean) => React.ReactNode;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  {
-    href: "/admin/security",
-    label: "Account security",
-    icon: () => (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        aria-hidden="true"
-      >
-        <path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z" />
-        <path d="m8 12 3 3 5-6" />
-      </svg>
-    )
-  },
   {
     href: "/admin",
     label: "Dashboard",
@@ -150,6 +137,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     href: "/admin/payments",
     label: "Payments",
+    viewerHidden: true,
     icon: () => (
       <svg
         width="18"
@@ -166,10 +154,35 @@ const NAV_ITEMS: NavItem[] = [
         <line x1="1" y1="10" x2="23" y2="10" />
       </svg>
     )
+  },
+  {
+    href: "/admin/users",
+    label: "Users & roles",
+    adminOnly: true,
+    icon: () => <Users size={18} strokeWidth={2} aria-hidden="true" />
+  },
+  {
+    href: "/admin/security",
+    label: "Account security",
+    adminOnly: true,
+    icon: () => (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        aria-hidden="true"
+      >
+        <path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z" />
+        <path d="m8 12 3 3 5-6" />
+      </svg>
+    )
   }
 ];
 
-export function AdminNav({ displayName, email, publicSiteUrl, children }: AdminNavProps) {
+export function AdminNav({ displayName, email, role, publicSiteUrl, children }: AdminNavProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
@@ -289,7 +302,10 @@ export function AdminNav({ displayName, email, publicSiteUrl, children }: AdminN
         <nav className="sidebar-nav">
           <div className="sidebar-nav-section-title">Operations Suite</div>
           <ul className="sidebar-nav-list">
-            {NAV_ITEMS.map(({ href, label, icon }) => {
+            {NAV_ITEMS.filter(
+              ({ adminOnly, viewerHidden }) =>
+                (!adminOnly || role === "ADMIN") && !(viewerHidden && role === "VIEWER")
+            ).map(({ href, label, icon }) => {
               const isActive =
                 href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
               return (
@@ -421,7 +437,7 @@ export function AdminNav({ displayName, email, publicSiteUrl, children }: AdminN
                 </div>
                 <div className="user-btn-details">
                   <span className="user-btn-name">{displayName}</span>
-                  <span className="user-btn-role">Administrator</span>
+                  <span className="user-btn-role">{role}</span>
                 </div>
                 <svg
                   width="12"

@@ -21,6 +21,28 @@ async function signIn(page) {
   await expect(page).toHaveURL(/\/admin$/);
 }
 
+test("restarting MFA clears the password even after using the visibility toggle", async ({
+  page
+}) => {
+  await page.route("**/api/auth/sign-in/email", (route) =>
+    route.fulfill({ status: 200, json: { twoFactorRequired: true } })
+  );
+  await page.goto("/admin/login");
+  await page.getByLabel("Email address", { exact: true }).fill("review@example.test");
+  const password = page.getByLabel("Password", { exact: true });
+  await password.fill("Dummy-review-password");
+  await page.getByRole("button", { name: "Show password", exact: true }).click();
+  await expect(password).toHaveAttribute("type", "text");
+  await expect(password).toHaveValue("Dummy-review-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByLabel("Authenticator code", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Start again", exact: true }).click();
+  await expect(password).toHaveValue("");
+  await expect(password).toHaveAttribute("type", "password");
+  await page.getByRole("button", { name: "Show password", exact: true }).click();
+  await expect(password).toHaveValue("");
+});
+
 test("administrator enrolls an authenticator and completes a two-step sign-in", async ({
   page
 }) => {
@@ -68,6 +90,53 @@ test("administrator enrolls an authenticator and completes a two-step sign-in", 
       await client.query("DELETE FROM sarathi.auth_ratelimits");
     });
   }
+});
+
+test("administrator assigns a role to an existing user", async ({ page }) => {
+  await signIn(page);
+  try {
+    await page.goto("/admin/users");
+    await expect(page.getByRole("heading", { name: "Users & roles" })).toBeVisible();
+    const operator = page.getByRole("row").filter({ hasText: "operator@example.test" });
+    await operator.getByLabel("Role for Test operator").selectOption("VIEWER");
+    await operator.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByRole("status")).toContainText("Role updated.");
+    const role = await database(async (client) =>
+      client.query(
+        "SELECT role FROM sarathi.users WHERE identity_subject = (SELECT id FROM sarathi.auth_users WHERE email = 'operator@example.test')"
+      )
+    );
+    expect(role.rows[0].role).toBe("VIEWER");
+  } finally {
+    await database((client) =>
+      client.query(
+        "UPDATE sarathi.users SET role = 'OPERATOR' WHERE identity_subject = (SELECT id FROM sarathi.auth_users WHERE email = 'operator@example.test')"
+      )
+    );
+  }
+});
+
+test("viewer navigation and pages remain read-only", async ({ page }) => {
+  await database((client) => client.query("DELETE FROM sarathi.auth_ratelimits"));
+  await page.goto("/admin/login");
+  await page.getByLabel("Email address", { exact: true }).fill("viewer@example.test");
+  await page.getByLabel("Password", { exact: true }).fill(process.env.OPERATIONS_TEST_PASSWORD);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.locator('.sidebar-nav a[href="/admin/payments"]')).toHaveCount(0);
+  await expect(page.locator('.sidebar-nav a[href="/admin/security"]')).toHaveCount(0);
+  await expect(page.locator('.sidebar-nav a[href="/admin/users"]')).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "New Lead" })).toHaveCount(0);
+
+  await page.goto("/admin/leads?new=1");
+  await expect(page.getByRole("heading", { name: "Leads & Enquiries" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "+ Add New Lead" })).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: /Update status for/ })).toHaveCount(0);
+
+  await page.goto("/admin/payments");
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.goto("/admin/security");
+  await expect(page).toHaveURL(/\/admin$/);
 });
 
 test("administrator signs in, sees live counts and signs out on all viewport sizes", async ({

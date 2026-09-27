@@ -16,7 +16,9 @@ export default async function PaymentsPage({
 }) {
   const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
-  if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
+  const actor = await getAdminActor(requestHeaders);
+  if (!actor) redirect("/admin/login");
+  if (actor.role === "VIEWER") redirect("/admin");
 
   const result = await getPayments(requestHeaders, query);
 

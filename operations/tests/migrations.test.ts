@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { migrationConnectionString, pendingMigrations, readMigrations } from "../scripts/migrate";
 
 test("production migrations never fall back to the runtime pool connection", () => {
@@ -55,4 +56,15 @@ test("migration files reject missing numbers and missing atomic transaction", as
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("migration checksums detect edits even when version and name stay unchanged", async () => {
+  const migrations = await readMigrations();
+  assert.equal(
+    migrations[0].checksum,
+    createHash("sha256").update(migrations[0].sql).digest("hex")
+  );
+  const changed = [{ ...migrations[0], checksum: "0".repeat(64) }, ...migrations.slice(1)];
+  assert.throws(() => pendingMigrations(migrations, changed), /Applied migration content changed/);
+  assert.deepEqual(pendingMigrations(migrations, migrations), []);
 });

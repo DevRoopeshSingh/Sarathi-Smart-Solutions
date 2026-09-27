@@ -7,7 +7,9 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Account security" };
 export default async function SecurityPage() {
   const requestHeaders = await headers();
-  if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
+  const actor = await getAdminActor(requestHeaders);
+  if (!actor) redirect("/admin/login");
+  if (actor.role !== "ADMIN") redirect("/admin");
   const session = await getAuth().api.getSession({ headers: requestHeaders });
   return (
     <main id="main" className="workspace-main">
