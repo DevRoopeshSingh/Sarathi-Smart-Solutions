@@ -39,3 +39,6 @@ coverage/
 # Operations runtime artifacts
 operations/.next/
 *.tsbuildinfo
+
+# Cloudflare Wrangler
+.wrangler/

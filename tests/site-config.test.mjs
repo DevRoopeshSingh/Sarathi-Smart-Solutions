@@ -9,10 +9,7 @@ test("development fallback is isolated from strict production URL configuration"
     getSiteUrl({ production: true, env: { SITE_URL: "https://sarathi.example/" } }),
     "https://sarathi.example"
   );
-  assert.equal(
-    getSiteUrl({ production: true, env: {} }),
-    "https://sarathismartsolutions.in"
-  );
+  assert.equal(getSiteUrl({ production: true, env: {} }), "https://sarathismartsolutions.in");
   for (const value of [
     "http://example.com",
     "https://localhost",
