@@ -31,7 +31,13 @@ export const PUBLIC_FILES = Object.freeze([
 ]);
 
 export function getSiteUrl({ production = false, env = process.env } = {}) {
-  const configured = env.SITE_URL?.trim();
+  let configured = env.SITE_URL?.trim();
+  if (!configured && env.CF_PAGES === "1") {
+    configured =
+      env.CF_PAGES_BRANCH === "main"
+        ? "https://sarathi-smart-solutions.pages.dev"
+        : env.CF_PAGES_URL?.trim();
+  }
   if (!configured && production) {
     throw new Error(
       "SITE_URL is required for production builds. Set the final HTTPS public origin in your hosting environment; see .env.example."
