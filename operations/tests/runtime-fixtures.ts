@@ -13,6 +13,7 @@ try {
   );
   await client.query("BEGIN");
   for (const fixture of [
+    { email: "newcomer@example.test", name: "New viewer", role: "VIEWER", active: true },
     { email: "admin@example.test", name: "Test administrator", role: "ADMIN", active: true },
     { email: "operator@example.test", name: "Test operator", role: "OPERATOR", active: true },
     { email: "viewer@example.test", name: "Test viewer", role: "VIEWER", active: true },
@@ -34,6 +35,8 @@ try {
         [id, fixture.name, fixture.role, fixture.active]
       );
   }
+  await client.query(`UPDATE sarathi.users SET onboarding_completed_at=now() WHERE identity_subject IN
+    (SELECT id FROM sarathi.auth_users WHERE email <> 'newcomer@example.test')`);
   await client.query("COMMIT");
 } catch (error) {
   await client.query("ROLLBACK");

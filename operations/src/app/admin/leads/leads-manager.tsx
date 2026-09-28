@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import { StageTooltip } from "@/components/workflow/stage-tooltip";
 import { formatIndiaDate } from "@/lib/date";
 import { CustomerSelect } from "../customer-select";
 import { ListSearch, useListFilters } from "../list-controls";
@@ -196,7 +198,9 @@ export function LeadsManager({ initialLeads, customers, canWrite }: LeadsManager
                 {filteredLeads.map((lead) => (
                   <tr key={lead.id}>
                     <td>
-                      <strong>{lead.contactName}</strong>
+                      <strong>
+                        <Link href={`/admin/leads/${lead.id}`}>{lead.contactName}</Link>
+                      </strong>
                       <div className="table-subtext">
                         <a href={`tel:${lead.phone}`} className="phone-link">
                           {lead.phone}
@@ -232,6 +236,7 @@ export function LeadsManager({ initialLeads, customers, canWrite }: LeadsManager
                           {lead.status}
                         </span>
                       )}
+                      <StageTooltip kind="lead" status={lead.status} />
                     </td>
                     <td className="table-subtext">{formatIndiaDate(lead.createdAt)}</td>
                     <td>

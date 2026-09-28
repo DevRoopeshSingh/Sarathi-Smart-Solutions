@@ -1,3 +1,5 @@
+import { StageTooltip } from "@/components/workflow/stage-tooltip";
+import { LifecycleDiagram } from "@/components/workflow/lifecycle-diagram";
 import { formatIndiaDate } from "@/lib/date";
 import { ListNavigation } from "../list-controls";
 import { readListQuery, type SearchParameters } from "@/server/lists";
@@ -36,6 +38,11 @@ export default async function QuotesPage({
           </p>
         </section>
 
+        <LifecycleDiagram current="quote" />
+        <p className="lead-copy">
+          Review recorded quotations here. Creating, editing and sending quotations are not
+          available in this workspace yet.
+        </p>
         <ListNavigation
           query={query}
           total={result.total}
@@ -74,7 +81,11 @@ export default async function QuotesPage({
                   {quotes.map((q) => (
                     <tr key={q.id}>
                       <td>
-                        <strong>{q.projectName}</strong>
+                        <strong>
+                          <Link href={`/admin/quotes/${q.id}`}>
+                            {q.projectName} · v{q.version}
+                          </Link>
+                        </strong>
                       </td>
                       <td>{q.customerName}</td>
                       <td>
@@ -84,6 +95,7 @@ export default async function QuotesPage({
                         <span className={`status-badge badge-${q.status.toLowerCase()}`}>
                           {q.status}
                         </span>
+                        <StageTooltip kind="quote" status={q.status} />
                       </td>
                       <td>₹{q.subtotal}</td>
                       <td>{q.discount !== "0.00" ? `-₹${q.discount}` : "—"}</td>

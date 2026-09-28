@@ -1,0 +1,107 @@
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme) prefix(tw);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(tw);
+@source "../components";
+@source "./admin";
+
+/* Utilities are prefixed and Preflight is omitted to preserve existing screens. */
+.workflow-panel {
+  margin-block: 20px;
+  padding: clamp(16px, 3vw, 24px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workflow-panel h2,
+.workflow-panel h3,
+.workflow-panel h4 {
+  color: var(--ink);
+}
+.workflow-panel h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+.workflow-panel h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.workflow-panel p {
+  line-height: 1.65;
+}
+.workflow-panel a:not(.admin-btn) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.workflow-stage-help {
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+  margin: 4px;
+}
+.workflow-stage-help button {
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  min-width: 28px;
+  min-height: 28px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: help;
+}
+.workflow-tooltip {
+  display: block;
+  position: fixed;
+  z-index: 1000;
+  width: min(250px, calc(100vw - 32px));
+  white-space: normal;
+  text-align: left;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 400;
+}
+.workflow-tour {
+  width: min(580px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  overflow: auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.workflow-tour::backdrop {
+  background: var(--modal-backdrop);
+}
+.workflow-tour .workflow-panel {
+  margin: 0;
+  border: 0;
+}
+.workflow-definition {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-block: 20px;
+}
+.workflow-definition dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.workflow-definition dd {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 640px) {
+  .workflow-definition {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

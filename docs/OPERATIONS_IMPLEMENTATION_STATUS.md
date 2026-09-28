@@ -1,4 +1,4 @@
-# Operations review implementation status — updated 27 September 2026
+# Operations review implementation status — updated 28 September 2026
 
 This records the local implementation following [the original review](OPERATIONS_REVIEW_2026-09-25.md). The review's snippets and line numbers describe the earlier snapshot; use the current source for deployment. Nothing has been deployed or applied to a remote database.
 
@@ -23,8 +23,10 @@ The integration harness creates and removes its own PostgreSQL cluster and HTTPS
 
 ## Apply and verify
 
+The subsequent [workflow UX implementation](ADMIN_WORKFLOW_UX.md) adds the process guide, linked detail pages, stage help, saved activity and account-level onboarding. Its full local suite passed 61 tests; see that guide for verification details and component examples.
+
 1. Follow [the staging deployment checklist](OPERATIONS_DEPLOYMENT.md). Supply a separate owner connection to the release shell and a restricted pooled connection to Vercel.
-2. Apply migrations through **004** for the current role-management changes, then reapply `database/runtime-grants.sql` as owner before deploying this app version. If existing history lacks checksums, first verify original applied SQL and follow the [one-time baseline procedure](../database/README.md#one-time-baseline-for-existing-databases). Fresh databases need no baseline flag.
+2. Apply migrations through **005** for role management and workflow onboarding, then reapply `database/runtime-grants.sql` as owner before deploying this app version. If existing history lacks checksums, first verify original applied SQL and follow the [one-time baseline procedure](../database/README.md#one-time-baseline-for-existing-databases). Fresh databases need no baseline flag.
 3. Set `DB_POOL_MAX=2`, the exact HTTPS `BETTER_AUTH_URL` and a strong stable `BETTER_AUTH_SECRET`. Keep owner credentials out of the runtime. Back up the auth secret securely because MFA records depend on it.
 4. Provision an administrator; test login, optional MFA, recovery codes, all-device revocation and operator recovery in staging. Re-enroll after any explicit MFA reset.
 5. Verify restricted business writes, rollback, stale edits, stage reasons, paginated search and India date display. Run the public edge IP/header checks and a modest concurrency check.

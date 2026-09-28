@@ -50,7 +50,11 @@ test("anonymous private routes reject access and auth route allowlist closes reg
     "/admin/projects",
     "/admin/payments",
     "/admin/quotes",
-    "/admin/users"
+    "/admin/users",
+    "/admin/how-it-works",
+    "/admin/leads/1",
+    "/admin/projects/1",
+    "/admin/quotes/1"
   ]) {
     const response = await fetch(`${origin}${path}`, { redirect: "manual" });
     assert.ok([302, 303, 307].includes(response.status), path);
@@ -60,6 +64,7 @@ test("anonymous private routes reject access and auth route allowlist closes reg
   assert.match(page.headers.get("location")!, /\/login/);
   assert.equal((await me("")).status, 401);
   assert.equal((await send("/api/admin/revoke-sessions")).status, 401);
+  assert.equal((await send("/api/admin/onboarding")).status, 401);
   for (const path of ["sign-up/email", "reset-password", "update-user", "get-session"]) {
     assert.equal((await send(`/api/auth/${path}`)).status, 404);
     assert.equal((await fetch(`${origin}/api/auth/${path}`)).status, 404);
@@ -321,6 +326,128 @@ function mergeCookies(...sets: string[]) {
     }
   return [...jar].map(([name, value]) => `${name}=${value}`).join("; ");
 }
+
+test("onboarding acknowledgement is same-origin and scoped to the authenticated user", async () => {
+  const cookie = cookies(await login("viewer@example.test"));
+  await client.query(
+    "UPDATE sarathi.users SET onboarding_completed_at=NULL WHERE identity_subject IN (SELECT id FROM sarathi.auth_users WHERE email IN ('viewer@example.test','operator@example.test'))"
+  );
+  assert.equal(
+    (
+      await send(
+        "/api/admin/onboarding",
+        {},
+        { Cookie: cookie, Origin: "https://attacker.example" }
+      )
+    ).status,
+    403
+  );
+  assert.equal(
+    (await send("/api/admin/onboarding", { userId: "another-user" }, { Cookie: cookie })).status,
+    200
+  );
+  const rows = (
+    await client.query(
+      `SELECT i.email, u.onboarding_completed_at AS completed FROM sarathi.users u JOIN sarathi.auth_users i ON i.id=u.identity_subject WHERE i.email IN ('viewer@example.test','operator@example.test') ORDER BY i.email`
+    )
+  ).rows;
+  assert.equal(rows[0].completed, null);
+  assert.ok(rows[1].completed);
+  await send("/api/admin/onboarding", {}, { Cookie: cookie });
+  assert.equal(
+    (
+      await client.query(
+        "SELECT onboarding_completed_at AS completed FROM sarathi.users WHERE identity_subject=(SELECT id FROM sarathi.auth_users WHERE email='viewer@example.test')"
+      )
+    ).rows[0].completed.toISOString(),
+    rows[1].completed.toISOString()
+  );
+  await client.query(
+    "UPDATE sarathi.users SET onboarding_completed_at=now() WHERE identity_subject=(SELECT id FROM sarathi.auth_users WHERE email='operator@example.test')"
+  );
+});
+
+test("record details expose linked activity to workspace roles without private costs", async () => {
+  const actor = (
+    await client.query(
+      "SELECT id FROM sarathi.users WHERE identity_subject=(SELECT id FROM sarathi.auth_users WHERE email='admin@example.test')"
+    )
+  ).rows[0].id;
+  const customer = (
+    await client.query(
+      "INSERT INTO sarathi.customers(name,phone) VALUES ('Workflow customer','9999999999') RETURNING id"
+    )
+  ).rows[0].id;
+  const lead = (
+    await client.query(
+      "INSERT INTO sarathi.leads(contact_name,phone,service_requested,status,customer_id) VALUES ('Workflow enquiry','9999999999','CCTV','CONVERTED',$1) RETURNING id",
+      [customer]
+    )
+  ).rows[0].id;
+  const project = (
+    await client.query(
+      "INSERT INTO sarathi.projects(customer_id,lead_id,name,site_address,operational_status) VALUES ($1,$2,'Workflow fixture','Pune','COSTING') RETURNING id",
+      [customer, lead]
+    )
+  ).rows[0].id;
+  const quote = (
+    await client.query(
+      `INSERT INTO sarathi.quotations(project_id,customer_id,version,created_by,customer_name,customer_phone,site_address,subtotal,total,recommended_advance,terms,valid_until)
+    VALUES ($1,$2,1,$3,'Workflow customer','9999999999','Pune',100,100,0,'Fixture terms',CURRENT_DATE+30) RETURNING id`,
+      [project, customer, actor]
+    )
+  ).rows[0].id;
+  await client.query(
+    "UPDATE sarathi.quotations SET status='SENT',sent_at=now(),frozen_at=now() WHERE id=$1",
+    [quote]
+  );
+  await client.query(
+    `INSERT INTO sarathi.status_history(project_id,from_status,to_status,was_on_hold,is_on_hold,reason,changed_by)
+    VALUES ($1,'SURVEY_PENDING','COSTING',false,false,'Survey already completed with the customer',$2)`,
+    [project, actor]
+  );
+  for (const email of ["admin@example.test", "operator@example.test", "viewer@example.test"]) {
+    const cookie = cookies(await login(email));
+    for (const [path, match] of [
+      [`/admin/leads/${lead}`, /Workflow enquiry/],
+      [`/admin/projects/${project}`, /Survey already completed with the customer/],
+      [`/admin/quotes/${quote}`, /Quotation v1 sent/],
+      ["/admin/how-it-works", /How it works/]
+    ] as const) {
+      const page = await fetch(`${origin}${path}`, { headers: { Cookie: cookie } });
+      assert.equal(page.status, 200, path);
+      const html = await page.text();
+      assert.match(html, match);
+      assert.doesNotMatch(html, /password_hash|unit_cost|purchase_cost|BETTER_AUTH_SECRET/);
+      if (email === "viewer@example.test")
+        assert.doesNotMatch(html, /Manage stage in project list|Manage lead in list/);
+    }
+  }
+  const cookie = await session();
+  for (const id of ["invalid", "9223372036854775808", "9223372036854775807"]) {
+    assert.equal(
+      (await fetch(`${origin}/admin/projects/${id}`, { headers: { Cookie: cookie } })).status,
+      404
+    );
+  }
+  const largeHistory = (
+    await client.query(
+      "INSERT INTO sarathi.projects(customer_id,name,site_address) VALUES ($1,'Timeline limit fixture','Pune') RETURNING id",
+      [customer]
+    )
+  ).rows[0].id;
+  await client.query(
+    `INSERT INTO sarathi.status_history(project_id,from_status,to_status,was_on_hold,is_on_hold,reason,changed_by,changed_at)
+    SELECT $1,'COSTING','PROCUREMENT',false,false,'Timeline event ' || n || '.',$2,now()+n*interval '1 second' FROM generate_series(1,55) n`,
+    [largeHistory, actor]
+  );
+  const bounded = await (
+    await fetch(`${origin}/admin/projects/${largeHistory}`, { headers: { Cookie: cookie } })
+  ).text();
+  assert.match(bounded, /Showing the latest 50 events/);
+  assert.match(bounded, /Timeline event 55\./);
+  assert.doesNotMatch(bounded, /Timeline event 1\./);
+});
 
 test("optional MFA requires a verified factor, hides tokens and consumes recovery codes once", async () => {
   const initial = await session();

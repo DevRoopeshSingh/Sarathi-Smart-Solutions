@@ -27,4 +27,7 @@ GRANT UPDATE (operational_status, updated_at) ON sarathi.projects TO :"runtime_r
 GRANT INSERT (project_id, from_status, to_status, was_on_hold, is_on_hold, reason, changed_by)
   ON sarathi.status_history TO :"runtime_role";
 GRANT EXECUTE ON FUNCTION sarathi.admin_set_user_role(bigint, bigint, text) TO :"runtime_role";
+-- Read recorded project activity and acknowledge only the current user's introduction.
+GRANT SELECT ON sarathi.status_history TO :"runtime_role";
+GRANT UPDATE (onboarding_completed_at) ON sarathi.users TO :"runtime_role";
 COMMIT;

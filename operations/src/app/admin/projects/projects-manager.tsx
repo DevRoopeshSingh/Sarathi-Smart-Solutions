@@ -1,4 +1,5 @@
 "use client";
+import { StageTooltip } from "@/components/workflow/stage-tooltip";
 import { formatIndiaDate } from "@/lib/date";
 import { CustomerSelect } from "../customer-select";
 import { ListSearch, useListFilters } from "../list-controls";
@@ -78,7 +79,6 @@ export function ProjectsManager({
   const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
   const [showQuotationInfoModal, setShowQuotationInfoModal] = useState<boolean>(false);
-  const [selectedProjectForView, setSelectedProjectForView] = useState<ProjectRecord | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -119,7 +119,6 @@ export function ProjectsManager({
       if (e.key === "Escape") {
         setShowNewModal(false);
         setShowQuotationInfoModal(false);
-        setSelectedProjectForView(null);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -360,12 +359,12 @@ export function ProjectsManager({
 
         {canWrite && (
           <div className="toolbar-actions">
-            {/* Secondary Action: Create from Quotation (Pending backend quotation conversion) */}
+            {/* Secondary action: Explain quotation preparation */}
             <button
               type="button"
               onClick={() => setShowQuotationInfoModal(true)}
               className="admin-btn admin-btn-secondary"
-              title="Create project from an existing quotation"
+              title="Understand how quotations fit into a project"
             >
               <svg
                 width="16"
@@ -383,7 +382,7 @@ export function ProjectsManager({
                 <line x1="12" y1="18" x2="12" y2="12" />
                 <line x1="9" y1="15" x2="15" y2="15" />
               </svg>
-              <span>Create from Quotation</span>
+              <span>Quotation workflow</span>
             </button>
 
             {/* Primary Action: Create New Project */}
@@ -463,8 +462,8 @@ export function ProjectsManager({
           </div>
           <h3>No projects yet</h3>
           <p>
-            Create a project manually or start from an approved quotation to track survey, costing,
-            procurement, installation, and handover.
+            Create a project directly or convert a lead. Use it to track survey and costing before
+            quotation approval, then procurement, installation and handover.
           </p>
           <div className="empty-state-actions">
             {canWrite && (
@@ -485,7 +484,7 @@ export function ProjectsManager({
                 onClick={() => setShowQuotationInfoModal(true)}
                 className="admin-btn admin-btn-secondary"
               >
-                Create from Quotation
+                Quotation workflow
               </button>
             )}
           </div>
@@ -564,7 +563,7 @@ export function ProjectsManager({
                           <div className="project-title-cell">
                             <button
                               type="button"
-                              onClick={() => setSelectedProjectForView(p)}
+                              onClick={() => router.push(`/admin/projects/${p.id}`)}
                               className="project-title-link"
                               style={{
                                 background: "none",
@@ -608,6 +607,7 @@ export function ProjectsManager({
                                 </option>
                               ))}
                             </select>
+                            <StageTooltip kind="project" status={p.operationalStatus} />
                           </div>
                         </td>
                         <td>
@@ -627,7 +627,7 @@ export function ProjectsManager({
                         <td style={{ textAlign: "right" }}>
                           <button
                             type="button"
-                            onClick={() => setSelectedProjectForView(p)}
+                            onClick={() => router.push(`/admin/projects/${p.id}`)}
                             className="admin-btn-action"
                             title="Inspect project details"
                           >
@@ -721,6 +721,7 @@ export function ProjectsManager({
                         </option>
                       ))}
                     </select>
+                    <StageTooltip kind="project" status={p.operationalStatus} />
                   </div>
 
                   <div className="mobile-card-footer">
@@ -729,7 +730,7 @@ export function ProjectsManager({
                     </div>
                     <button
                       type="button"
-                      onClick={() => setSelectedProjectForView(p)}
+                      onClick={() => router.push(`/admin/projects/${p.id}`)}
                       className="admin-btn-action"
                     >
                       View Details →
@@ -902,7 +903,7 @@ export function ProjectsManager({
         </div>
       )}
 
-      {/* Modal 2: Create from Quotation Workflow Helper Modal */}
+      {/* Modal 2: Quotation workflow guide */}
       {showQuotationInfoModal && (
         <div className="modal-backdrop" onClick={() => setShowQuotationInfoModal(false)}>
           <div
@@ -913,7 +914,7 @@ export function ProjectsManager({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
-              <h3 id="quotation-workflow-title">Create from Quotation</h3>
+              <h3 id="quotation-workflow-title">Quotation workflow</h3>
               <button
                 type="button"
                 className="modal-close"
@@ -963,7 +964,7 @@ export function ProjectsManager({
                     color: "var(--primary)"
                   }}
                 >
-                  Operational Workflow Architecture
+                  How quotations fit into a project
                 </h4>
                 <p
                   style={{
@@ -975,8 +976,8 @@ export function ProjectsManager({
                   }}
                 >
                   In Sarathi&apos;s workflow, quotations are prepared from site survey findings and
-                  BOM costings linked to active projects. To convert an approved quote or create a
-                  new installation:
+                  BOM costings linked to an existing project. Quotation preparation and sending are
+                  not available in this workspace yet. Follow these steps with your team:
                 </p>
               </div>
 
@@ -1000,7 +1001,10 @@ export function ProjectsManager({
                 >
                   <li>Create or select an active project for your customer.</li>
                   <li>Perform the site survey and record measurements.</li>
-                  <li>Generate a commercial quote with version control.</li>
+                  <li>
+                    Prepare the quotation through your team’s current process, then continue
+                    delivery in the same project.
+                  </li>
                 </ol>
               </div>
 
@@ -1024,127 +1028,6 @@ export function ProjectsManager({
                   className="admin-btn admin-btn-primary"
                 >
                   + Create Project Now
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 3: View Project Details Drawer/Dialog */}
-      {selectedProjectForView && (
-        <div className="modal-backdrop" onClick={() => setSelectedProjectForView(null)}>
-          <div
-            className="modal-dialog"
-            role="dialog"
-            aria-labelledby="view-project-title"
-            aria-modal="true"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <div>
-                <span className="eyebrow" style={{ color: "var(--accent)" }}>
-                  #PRJ-{String(selectedProjectForView.id).padStart(4, "0")}
-                </span>
-                <h3 id="view-project-title" style={{ marginTop: "4px" }}>
-                  {selectedProjectForView.name}
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setSelectedProjectForView(null)}
-                aria-label="Close dialog"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="modal-form">
-              <div className="detail-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Customer</span>
-                  <span className="detail-val">{selectedProjectForView.customerName}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Current Stage</span>
-                  <div>
-                    <span
-                      className={`status-badge ${getStatusBadgeClass(selectedProjectForView.operationalStatus)}`}
-                    >
-                      {ALL_STATUS_OPTIONS.find(
-                        (s) => s.value === selectedProjectForView.operationalStatus
-                      )?.label || selectedProjectForView.operationalStatus.replace(/_/g, " ")}
-                    </span>
-                  </div>
-                </div>
-                <div className="detail-item" style={{ gridColumn: "1 / -1" }}>
-                  <span className="detail-label">Site Address</span>
-                  <span className="detail-val">{selectedProjectForView.siteAddress}</span>
-                </div>
-                <div className="detail-item" style={{ gridColumn: "1 / -1" }}>
-                  <span className="detail-label">Scope of Work</span>
-                  <div
-                    style={{
-                      background: "var(--surface-subtle)",
-                      border: "1px solid var(--line)",
-                      padding: "12px",
-                      borderRadius: "4px",
-                      fontSize: "13px",
-                      color: "var(--ink)",
-                      lineHeight: 1.5,
-                      marginTop: "4px"
-                    }}
-                  >
-                    {selectedProjectForView.scope || "No specific scope notes provided."}
-                  </div>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Next Milestone</span>
-                  <span className="detail-val">
-                    {getNextMilestone(selectedProjectForView.operationalStatus)}
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Created Date</span>
-                  <span className="detail-val">
-                    {formatIndiaDate(selectedProjectForView.createdAt)}
-                  </span>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  borderTop: "1px solid var(--line)",
-                  paddingTop: "16px",
-                  marginTop: "16px",
-                  display: "flex",
-                  gap: "10px",
-                  flexWrap: "wrap"
-                }}
-              >
-                <Link
-                  href="/admin/quotes"
-                  className="admin-btn admin-btn-action"
-                  onClick={() => setSelectedProjectForView(null)}
-                >
-                  Check Quotations →
-                </Link>
-                <Link
-                  href="/admin/payments"
-                  className="admin-btn admin-btn-action"
-                  onClick={() => setSelectedProjectForView(null)}
-                >
-                  Audit Payments →
-                </Link>
-              </div>
-
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  onClick={() => setSelectedProjectForView(null)}
-                  className="admin-btn admin-btn-secondary"
-                >
-                  Close
                 </button>
               </div>
             </div>

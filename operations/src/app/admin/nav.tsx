@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
-import { Users } from "lucide-react";
+import { Users, BookOpen } from "lucide-react";
 import type { UserRole } from "@/lib/operations";
 
 interface AdminNavProps {
@@ -154,6 +154,11 @@ const NAV_ITEMS: NavItem[] = [
         <line x1="1" y1="10" x2="23" y2="10" />
       </svg>
     )
+  },
+  {
+    href: "/admin/how-it-works",
+    label: "How it works",
+    icon: () => <BookOpen size={18} aria-hidden="true" />
   },
   {
     href: "/admin/users",

@@ -22,6 +22,8 @@ For an existing database created with the older runner, follow the [one-time che
 
 ## Verify staging before first production release
 
+- For workflow guidance, apply migration **005** and the latest runtime grants before deploying. Check first-login introduction, account-level completion/replay, role-aware detail links and recorded activity. Follow the [workflow UX checklist](ADMIN_WORKFLOW_UX.md#apply-and-verify-checklist). No additional environment variables are needed.
+
 - Run `npm --prefix operations test`, `npm --prefix operations run typecheck`, `npm --prefix operations run build`, and the repository's isolated operations integration suite.
 - Confirm `/admin/login`, protected admin pages and `/api/admin/me` return `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, and the intended noindex policy.
 - Exercise login, logout, all-device revocation, unauthenticated access, a disabled admin, and cross-origin mutation rejection. Missing environment configuration must produce a generic service error.

@@ -12,14 +12,138 @@ async function database(work) {
   }
 }
 
-async function signIn(page) {
+async function signIn(page, email = "admin@example.test") {
   await database((client) => client.query("DELETE FROM sarathi.auth_ratelimits"));
   await page.goto("/admin/login");
-  await page.getByRole("textbox", { name: "Email address" }).fill("admin@example.test");
+  await page.getByRole("textbox", { name: "Email address" }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(process.env.OPERATIONS_TEST_PASSWORD);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/admin$/);
 }
+
+test("first-login introduction persists per account and can be replayed", async ({
+  page
+}, testInfo) => {
+  await database((client) =>
+    client.query(
+      "UPDATE sarathi.users SET onboarding_completed_at=NULL WHERE identity_subject=(SELECT id FROM sarathi.auth_users WHERE email='newcomer@example.test')"
+    )
+  );
+  await signIn(page, "newcomer@example.test");
+  const tour = page.getByRole("dialog");
+  await expect(tour.getByRole("heading", { name: "Welcome to Sarathi" })).toBeVisible();
+  await page.screenshot({
+    path: `/tmp/sarathi-workflow-tour-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+  await page.keyboard.press("Tab");
+  expect(await tour.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+  await tour.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(tour.getByRole("heading", { name: "Start with the lead" })).toBeVisible();
+  await tour.getByRole("button", { name: "Back", exact: true }).click();
+  await page.route("**/api/admin/onboarding", (route) =>
+    route.fulfill({ status: 503, json: { error: "Unavailable" } })
+  );
+  await tour.getByRole("button", { name: "Skip introduction" }).click();
+  await expect(tour.getByRole("alert")).toContainText("couldn’t save");
+  await expect(tour).toBeVisible();
+  await page.unroute("**/api/admin/onboarding");
+  for (let step = 0; step < 3; step++)
+    await tour.getByRole("button", { name: "Next", exact: true }).click();
+  await tour.getByRole("button", { name: "Start exploring" }).click();
+  await expect(tour).not.toBeVisible();
+  await page.reload();
+  await expect(tour).not.toBeVisible();
+  await page.goto("/admin/how-it-works");
+  await expect(page.getByRole("heading", { name: "How it works", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Capture an enquiry" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Replay introduction" }).click();
+  await expect(tour).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(tour).not.toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+  await page.screenshot({
+    path: `/tmp/sarathi-workflow-guide-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+  await page.context().clearCookies();
+  await signIn(page, "newcomer@example.test");
+  await expect(tour).not.toBeVisible();
+});
+
+test("linked detail pages explain stages and show real activity on desktop and mobile", async ({
+  page
+}, testInfo) => {
+  await signIn(page, "operator@example.test");
+  const row = await database(
+    async (client) =>
+      (
+        await client.query(
+          "SELECT id::text, lead_id::text AS lead FROM sarathi.projects WHERE name='Workflow fixture'"
+        )
+      ).rows[0]
+  );
+  await page.goto(`/admin/leads/${row.lead}`);
+  await expect(page.getByRole("heading", { name: "Workflow enquiry", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "About Converted", exact: true }).focus();
+  await expect(page.getByRole("tooltip")).toContainText("does not mean a quotation was approved");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  await page.getByRole("link", { name: "Continue in linked project" }).click();
+  await expect(page).toHaveURL(new RegExp(`/admin/projects/${row.id}$`));
+  await expect(page.getByRole("region", { name: "Previous and next steps" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Activity timeline" })).toContainText(
+    "Survey already completed with the customer"
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+  await page.screenshot({
+    path: `/tmp/sarathi-workflow-project-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+  await page.evaluate(() => {
+    document.documentElement.setAttribute("data-theme", "dark");
+    document.documentElement.classList.add("dark");
+  });
+  await page.waitForTimeout(350); // Let the existing colour transition finish for visual review.
+  await page.screenshot({
+    path: `/tmp/sarathi-workflow-project-dark-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+  await page.getByRole("link", { name: "Quotation v1 · Sent", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Workflow fixture · Quotation v1", exact: true })
+  ).toBeVisible();
+  await expect(page.getByRole("region", { name: "Activity timeline" })).toContainText(
+    "Quotation v1 sent"
+  );
+  await expect(page.getByRole("region", { name: "Previous and next steps" })).toContainText(
+    "current quotation process"
+  );
+  try {
+    await database((client) =>
+      client.query(
+        "UPDATE sarathi.projects SET on_hold=true,hold_reason='Awaiting customer access' WHERE id=$1",
+        [row.id]
+      )
+    );
+    await page.goto(`/admin/projects/${row.id}`);
+    await expect(page.getByRole("heading", { name: "On hold — pause progression" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Previous and next steps" })).toContainText(
+      "Awaiting customer access"
+    );
+    await expect(page.getByRole("link", { name: "Manage stage in project list" })).toHaveCount(0);
+  } finally {
+    await database((client) =>
+      client.query("UPDATE sarathi.projects SET on_hold=false,hold_reason=NULL WHERE id=$1", [
+        row.id
+      ])
+    );
+  }
+});
 
 test("restarting MFA clears the password even after using the visibility toggle", async ({
   page

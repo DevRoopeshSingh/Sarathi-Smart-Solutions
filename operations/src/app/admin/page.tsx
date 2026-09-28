@@ -1,3 +1,4 @@
+import { LifecycleDiagram } from "@/components/workflow/lifecycle-diagram";
 import { formatIndiaDate } from "@/lib/date";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -168,6 +169,7 @@ export default async function AdminPage() {
         )}
 
         {/* Business Overview Cards */}
+        <LifecycleDiagram />
         <section aria-labelledby="records-heading" className="records-section">
           <div className="section-heading">
             <h2 id="records-heading">Business Overview</h2>

@@ -43,7 +43,13 @@ Migration `004_role_based_access.sql` enables `ADMIN`, `OPERATOR`, and `VIEWER`;
 
 The runtime database role must not receive direct `UPDATE` privileges on `sarathi.users`. Apply the updated `database/runtime-grants.sql` after migration 004; it grants execution only on `sarathi.admin_set_user_role`, which checks the active administrator actor, role allowlist, and last-admin/self-demotion constraints. No deletion permission is granted. All authorization remains server-side; hiding navigation/actions is not an access control boundary.
 
-## Verification
+## Workflow guidance
+
+The dashboard and [How it works](/admin/how-it-works) explain the business journey from lead to quotation to project delivery. Lead, quotation and project detail routes show stage explanations, previous/next guidance, linked records and recorded activity in India time. The account-level introduction can be skipped or replayed from the guide. See [the UX implementation guide and component examples](../docs/ADMIN_WORKFLOW_UX.md).
+
+Apply migration **005_workflow_guidance.sql** and updated runtime grants before deploying this feature. It adds the account's onboarding completion timestamp and read access to project activity. No new environment variables are needed. Existing accounts see the introduction once on their next authenticated visit. Tailwind/PostCSS build dependencies are required during installation/build; prefixed utilities omit Preflight to preserve existing styles.
+
+## Verification commands
 
 ```sh
 npm --prefix operations run typecheck
