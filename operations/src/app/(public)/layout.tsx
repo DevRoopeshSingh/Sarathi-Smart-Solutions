@@ -21,10 +21,10 @@ export const metadata: Metadata = {
     locale: "en_IN",
     images: [
       {
-        url: "/01_icon_primary.png",
-        width: 192,
-        height: 192,
-        alt: "Sarathi Smart Solutions Logo"
+        url: "/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png",
+        width: 2048,
+        height: 2048,
+        alt: "Sarathi Smart Solutions — CCTV and security"
       }
     ]
   },
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     title: "CCTV Installation in Mira-Bhayandar | Wi‑Fi & Smart Security",
     description:
       "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
-    images: ["/01_icon_primary.png"]
+    images: ["/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png"]
   }
 };
 
@@ -43,7 +43,7 @@ const businessJsonLd = {
   name: "Sarathi Smart Solutions",
   description:
     "Turnkey CCTV camera installation, structured Wi‑Fi networking, and smart security systems for homes, shops, offices, and housing societies in Mira-Bhayandar, Thane, and Mumbai MMR.",
-  image: `${siteUrl}/01_icon_primary.png`,
+  image: `${siteUrl}/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png`,
   telephone: "+918369704457",
   email: "sarathismartsolutions@gmail.com",
   address: {

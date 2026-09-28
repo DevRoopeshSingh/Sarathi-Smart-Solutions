@@ -7,6 +7,13 @@ export const PUBLIC_FILES = Object.freeze([
   "app.js",
   "recommendation.mjs",
   "01_icon_primary.png",
+  "assets/brand/sarathi-cctv-logo-pack/sarathi-logo-dark.svg",
+  "assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png",
+  "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light.svg",
+  "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-dark.svg",
+  "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-32.png",
+  "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-256.png",
+
   "robots.txt",
   "sitemap.xml",
   "privacy.html",

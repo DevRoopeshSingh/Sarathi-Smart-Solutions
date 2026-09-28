@@ -1,7 +1,31 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.PUBLIC_SITE_URL || "https://sarathi-smart-solutions.pages.dev")
+  metadataBase: new URL(process.env.PUBLIC_SITE_URL || "https://sarathi-smart-solutions.pages.dev"),
+  icons: {
+    icon: [
+      {
+        url: "/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-32.png",
+        type: "image/png",
+        sizes: "32x32"
+      },
+      {
+        url: "/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light.svg",
+        type: "image/svg+xml"
+      },
+      {
+        url: "/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-dark.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)"
+      }
+    ],
+    apple: [
+      {
+        url: "/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-256.png",
+        sizes: "256x256"
+      }
+    ]
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -19,7 +43,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" type="image/png" href="/01_icon_primary.png" />
       </head>
       <body>{children}</body>
     </html>
