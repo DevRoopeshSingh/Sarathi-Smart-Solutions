@@ -30,18 +30,12 @@ export const PUBLIC_FILES = Object.freeze([
   "assets/images/cable-management-after.jpg"
 ]);
 
+export const DEFAULT_PRODUCTION_URL = "https://sarathismartsolutions.in";
+
 export function getSiteUrl({ production = false, env = process.env } = {}) {
   let configured = env.SITE_URL?.trim();
-  if (!configured && env.CF_PAGES === "1") {
-    configured =
-      env.CF_PAGES_BRANCH === "main"
-        ? "https://sarathi-smart-solutions.pages.dev"
-        : env.CF_PAGES_URL?.trim();
-  }
   if (!configured && production) {
-    throw new Error(
-      "SITE_URL is required for production builds. Set the final HTTPS public origin in your hosting environment; see .env.example."
-    );
+    configured = DEFAULT_PRODUCTION_URL;
   }
   const url = new URL(configured || "http://127.0.0.1:8080");
   if (

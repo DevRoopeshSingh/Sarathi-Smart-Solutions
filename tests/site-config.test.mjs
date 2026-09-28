@@ -9,8 +9,11 @@ test("development fallback is isolated from strict production URL configuration"
     getSiteUrl({ production: true, env: { SITE_URL: "https://sarathi.example/" } }),
     "https://sarathi.example"
   );
+  assert.equal(
+    getSiteUrl({ production: true, env: {} }),
+    "https://sarathismartsolutions.in"
+  );
   for (const value of [
-    undefined,
     "http://example.com",
     "https://localhost",
     "https://127.0.0.1",
@@ -22,20 +25,6 @@ test("development fallback is isolated from strict production URL configuration"
   ]) {
     assert.throws(() => getSiteUrl({ production: true, env: { SITE_URL: value } }));
   }
-  assert.equal(
-    getSiteUrl({
-      production: true,
-      env: { CF_PAGES: "1", CF_PAGES_BRANCH: "main" }
-    }),
-    "https://sarathi-smart-solutions.pages.dev"
-  );
-  assert.equal(
-    getSiteUrl({
-      production: true,
-      env: { CF_PAGES: "1", CF_PAGES_BRANCH: "preview", CF_PAGES_URL: "https://preview.pages.dev" }
-    }),
-    "https://preview.pages.dev"
-  );
 });
 
 test("public URL templates consistently resolve for HTML, sitemap and robots without localhost", async () => {
