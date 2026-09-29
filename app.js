@@ -830,17 +830,25 @@ function initAnalytics() {
     });
   });
 
-  document
-    .querySelectorAll('a[href*="google.com/maps"], a[href*="g.page"], a[href*="review"]')
-    .forEach((link) => {
-      link.addEventListener("click", () => {
-        window.dispatchEvent(
-          new CustomEvent("sarathi:event", {
-            detail: { event: "google_review_link_click", href: link.href }
-          })
-        );
-      });
+  document.querySelectorAll('a[href*="g.page"], a[href*="review"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      window.dispatchEvent(
+        new CustomEvent("sarathi:event", {
+          detail: { event: "google_review_link_click", href: link.href }
+        })
+      );
     });
+  });
+
+  document.querySelectorAll('a[href*="google.com/maps"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      window.dispatchEvent(
+        new CustomEvent("sarathi:event", {
+          detail: { event: "location_map_click", href: link.href }
+        })
+      );
+    });
+  });
 }
 
 // Initialise page

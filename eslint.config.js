@@ -13,7 +13,7 @@ export default [
     ]
   },
   {
-    files: ["app.js"],
+    files: ["app.js", "locator.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",

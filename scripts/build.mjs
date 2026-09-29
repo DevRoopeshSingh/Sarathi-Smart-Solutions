@@ -5,6 +5,7 @@
  * or shell-specific commands like 'rm -rf' or 'cp'.
  */
 
+import "./load-local-env.mjs";
 import { rm, mkdir, copyFile, readFile, writeFile } from "node:fs/promises";
 import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

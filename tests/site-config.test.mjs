@@ -33,3 +33,24 @@ test("public URL templates consistently resolve for HTML, sitemap and robots wit
       assert.match(rendered, /https:\/\/sarathi\.example/);
   }
 });
+
+test("optional browser map key cannot inject HTML into the built page", () => {
+  const source = '<meta name="google-maps-api-key" content="__GOOGLE_MAPS_API_KEY__">';
+  assert.equal(
+    renderPublicText(source, "https://example.com", {}),
+    '<meta name="google-maps-api-key" content="">'
+  );
+  assert.match(
+    renderPublicText(source, "https://example.com", {
+      GOOGLE_MAPS_API_KEY: "AIza-test_key"
+    }),
+    /content="AIza-test_key"/
+  );
+  assert.throws(
+    () =>
+      renderPublicText(source, "https://example.com", {
+        GOOGLE_MAPS_API_KEY: '"><script>alert(1)</script>'
+      }),
+    /invalid characters/
+  );
+});

@@ -5,6 +5,7 @@ export const PUBLIC_FILES = Object.freeze([
   "index.html",
   "styles.css",
   "app.js",
+  "locator.js",
   "recommendation.mjs",
   "01_icon_primary.png",
   "assets/brand/sarathi-cctv-logo-pack/sarathi-logo-dark.svg",
@@ -64,6 +65,12 @@ export function getSiteUrl({ production = false, env = process.env } = {}) {
   return url.origin;
 }
 
-export function renderPublicText(source, siteUrl) {
-  return source.replaceAll("__SITE_URL__", siteUrl);
+export function renderPublicText(source, siteUrl, env = process.env) {
+  const mapsApiKey = env.GOOGLE_MAPS_API_KEY?.trim() || "";
+  if (mapsApiKey && !/^[A-Za-z0-9_-]+$/.test(mapsApiKey)) {
+    throw new Error("GOOGLE_MAPS_API_KEY contains invalid characters.");
+  }
+  return source
+    .replaceAll("__SITE_URL__", siteUrl)
+    .replaceAll("__GOOGLE_MAPS_API_KEY__", mapsApiKey);
 }

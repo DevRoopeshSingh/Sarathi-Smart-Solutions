@@ -5,6 +5,7 @@
  * Runs natively on Windows, macOS, and Linux without external packages.
  */
 
+import "./load-local-env.mjs";
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -54,7 +55,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(found ? 200 : 404, {
       "Content-Type": MIME_TYPES[ext] || "application/octet-stream",
       "X-Robots-Tag": "noindex, nofollow",
-      "Referrer-Policy": "no-referrer",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
       "X-Content-Type-Options": "nosniff"
     });
     res.end(req.method === "HEAD" ? undefined : data);
