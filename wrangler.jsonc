@@ -2,6 +2,17 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sarathi-smart-solutions",
   "compatibility_date": "2026-09-26",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "sarathismartsolutions.in",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.sarathismartsolutions.in",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   },
