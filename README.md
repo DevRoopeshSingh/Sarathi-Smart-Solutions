@@ -213,3 +213,9 @@ When preparing to publish this website to production:
 
 **Licensing must be selected and configured by the business owner.**  
 All original content, branding, trademarks, and graphics are the proprietary property of Sarathi Smart Solutions. For open-source or commercial terms, please consult the repository owner.
+
+## Digital Seva Kendra
+
+`/digital-seva-kendra` is a standalone static page for Sarathi Digital Seva Kendra. It works with the Cloudflare Worker static assets configured in `wrangler.jsonc` (`dist/`) and the local Next.js runtime; the same static build also supports Pages. Enquiry forms prepare WhatsApp messages for customers to send; booking confirmation and status updates come from staff.
+
+After editing the Seva generator, catalogue, browser script or shared stylesheet, run `npm run generate:seva` to format the generated page and synchronize its assets into `operations/public/`. Python 3 is needed only for regeneration; the public hosting build remains Node-only. See [database-free delivery and QA notes](docs/DIGITAL_SEVA_KENDRA_QA.md) for the workflow and test coverage.

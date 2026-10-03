@@ -37,7 +37,10 @@ const server = http.createServer((req, res) => {
     return;
   }
   const pathname = new URL(req.url, "http://127.0.0.1").pathname;
-  const filename = pathname === "/" ? "index.html" : pathname.slice(1);
+  let filename = pathname === "/" ? "index.html" : pathname.slice(1);
+  if (!PUBLIC_FILES.includes(filename) && PUBLIC_FILES.includes(filename + ".html")) {
+    filename = filename + ".html";
+  }
   const found = PUBLIC_FILES.includes(filename);
   const publicFile = found ? filename : "404.html";
   fs.readFile(path.join(ROOT_DIR, publicFile), (err, data) => {

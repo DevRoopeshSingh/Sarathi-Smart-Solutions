@@ -22,13 +22,18 @@ export const PUBLIC_FILES = Object.freeze([
   "warranty-policy.html",
   "amc-policy.html",
   "cancellation-refund.html",
+  "digital-seva-kendra.html",
+  "digital-seva-kendra.js",
   "404.html",
   "assets/images/camera-mounting.jpg",
   "assets/images/dvr-nvr-rack.jpg",
   "assets/images/cable-casing-finish.jpg",
   "assets/images/wifi-ap-installation.jpg",
   "assets/images/cable-management-before.jpg",
-  "assets/images/cable-management-after.jpg"
+  "assets/images/cable-management-after.jpg",
+  "assets/images/seva-citizen-services.jpg",
+  "assets/images/seva-business-gst.jpg",
+  "assets/images/seva-pharmacy-fda.jpg"
 ]);
 
 export const DEFAULT_PRODUCTION_URL = "https://sarathismartsolutions.in";

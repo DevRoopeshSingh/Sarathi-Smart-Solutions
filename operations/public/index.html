@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#07131f" />
+    <meta name="google-maps-api-key" content="__GOOGLE_MAPS_API_KEY__" />
     <meta
       name="description"
       content="CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations."
@@ -278,6 +279,16 @@
   <body>
     <a class="skip-link" href="#planner">Skip to solution planner</a>
 
+    <!-- Top Notice Banner: Division Cross-Link -->
+    <aside class="seva-top-announcement" aria-label="Division notice">
+      <div class="seva-announcement-container">
+        <span>Looking for Government, Business or Citizen Services in Bhayander East?</span>
+        <a class="seva-announcement-link" href="/digital-seva-kendra"
+          >Visit Sarathi Digital Seva Kendra (153 Services) &rarr;</a
+        >
+      </div>
+    </aside>
+
     <header class="site-header">
       <a class="brand" href="#top" aria-label="Sarathi Smart Solutions home">
         <img
@@ -300,6 +311,12 @@
         <a class="header-link" href="#services">Services</a>
         <a class="header-link" href="#faq">FAQ</a>
         <a class="header-link" href="#survey-form">Free Survey</a>
+        <a
+          class="header-link header-link--division"
+          href="/digital-seva-kendra"
+          title="Visit Sarathi Digital Seva Kendra"
+          >Digital Seva Kendra</a
+        >
       </nav>
       <div class="header-actions">
         <a class="header-phone" href="tel:+918369704457" aria-label="Call +91 83697 04457">
@@ -1193,6 +1210,36 @@
             requirements. Enable JavaScript to use the solution planner.
           </p>
         </noscript>
+      </section>
+
+      <!-- Sarathi Digital Seva Kendra Feature Showcase -->
+      <section class="seva-home-showcase-wrap" aria-label="Digital Seva Kendra Division">
+        <div class="seva-home-showcase">
+          <div class="seva-home-showcase-brand">
+            <img
+              src="01_icon_primary.png"
+              alt="Sarathi Digital Seva Kendra emblem"
+              width="64"
+              height="64"
+              class="seva-home-showcase-logo"
+            />
+          </div>
+          <div class="seva-home-showcase-copy">
+            <span class="tag-core tag-seva-saffron">New Sister Division</span>
+            <h3>Sarathi Digital Seva Kendra — Citizen, Business &amp; Digital Services</h3>
+            <p>
+              Looking for PAN card, Aadhaar appointment guidance, Udyam MSME, GST, Gumasta Shop Act,
+              FSSAI, MahaRERA, or FDA drug licence documentation? Visit our neighbourhood digital
+              centre at RNP Park Bhayander East for 153 services with 100% transparent pricing and
+              direct WhatsApp support.
+            </p>
+          </div>
+          <div class="seva-home-showcase-action">
+            <a class="button button--seva-primary" href="/digital-seva-kendra">
+              <span>Explore 153 Services &rarr;</span>
+            </a>
+          </div>
+        </div>
       </section>
 
       <section class="planner" id="planner" aria-labelledby="planner-title">
@@ -2324,6 +2371,62 @@
           </div>
         </div>
       </section>
+      <section
+        class="trust-section location-section"
+        id="location"
+        aria-labelledby="location-title"
+      >
+        <div class="section-heading">
+          <div>
+            <span class="kicker">Local service &amp; support</span>
+            <h2 id="location-title">Find Sarathi Smart Solutions</h2>
+          </div>
+          <p>Based in Bhayander East, serving Mira-Bhayandar, Thane and Mumbai MMR.</p>
+        </div>
+        <div class="location-card">
+          <div class="location-details">
+            <h3>Sarathi Smart Solutions</h3>
+            <address>RNP Park, Bhayander East<br />Thane, Maharashtra, India — 401105</address>
+            <p>Call ahead to confirm availability or arrange a site survey at your property.</p>
+            <div class="location-actions">
+              <a
+                class="button primary"
+                href="https://www.google.com/maps/search/?api=1&amp;query=Sarathi%20Smart%20Solutions&amp;query_place_id=ChIJ4Ydlu3av5zsRPe9y8mQmG0Y"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Open in Google Maps <span class="sr-only">(opens in a new tab)</span></a
+              >
+              <a class="button ghost" href="tel:+918369704457">Call 83697 04457</a>
+              <button
+                class="button ghost"
+                id="load-location-map"
+                type="button"
+                aria-controls="location-map"
+                hidden
+              >
+                Load interactive map
+              </button>
+            </div>
+            <p class="location-map-note" id="location-map-note" hidden>
+              The interactive map is provided by Google. Loading it connects to Google Maps.
+            </p>
+            <p
+              id="location-map-status"
+              class="location-map-status"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
+          <div
+            id="location-map"
+            class="location-map"
+            role="region"
+            aria-label="Sarathi Smart Solutions interactive location map"
+            tabindex="-1"
+            hidden
+          ></div>
+        </div>
+      </section>
     </main>
 
     <aside class="floating-contact" aria-label="Quick contact shortcuts">
@@ -2401,10 +2504,16 @@
           <ul>
             <li><a href="#packages">CCTV Packages</a></li>
             <li><a href="#services">Our Services</a></li>
+            <li>
+              <a href="/digital-seva-kendra" style="color: #ff9933; font-weight: 700"
+                >Digital Seva Kendra (153 Services)</a
+              >
+            </li>
             <li><a href="#advantages">Why Choose Us</a></li>
             <li><a href="#planner">Solution Planner</a></li>
             <li><a href="#faq">Frequently Asked Questions</a></li>
             <li><a href="#survey-form">Book Site Survey</a></li>
+            <li><a href="#location">Find Us</a></li>
           </ul>
         </div>
 
@@ -2486,5 +2595,6 @@
     </footer>
 
     <script type="module" src="app.js"></script>
+    <script type="module" src="locator.js"></script>
   </body>
 </html>

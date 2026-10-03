@@ -1,0 +1,152 @@
+[
+  [
+    "Package",
+    "Segment",
+    "Customer Price (\u20b9)",
+    "Estimated Internal Cost (\u20b9)",
+    "Gross Margin (\u20b9)",
+    "Margin %",
+    "Included Services",
+    "Conditions / Exclusions"
+  ],
+  [
+    "New Medical Store Setup",
+    "Pharmacy / Healthcare",
+    "5499",
+    "500",
+    "4999",
+    "0.9090743771594836",
+    "Drug licence documentation assistance + Gumasta + GST assistance + business document folder + shop-board design + Google Business setup",
+    "Authority/government fees, pharmacist/legal/professional fees and inspection-related costs extra."
+  ],
+  [
+    "Restaurant Startup",
+    "Food / Restaurant",
+    "4999",
+    "400",
+    "4599",
+    "0.9199839967993598",
+    "FSSAI assistance + Gumasta + GST assistance + Google Business + menu design + WhatsApp Business setup",
+    "Government/portal fees and specialised permissions extra."
+  ],
+  [
+    "Cloud Kitchen Starter",
+    "Food / Restaurant",
+    "3999",
+    "320",
+    "3679",
+    "0.9199799949987497",
+    "FSSAI assistance + Gumasta + GST assistance + Google Business + QR menu",
+    "Government/portal fees extra."
+  ],
+  [
+    "Real Estate Broker Starter",
+    "Property / Real Estate",
+    "4999",
+    "400",
+    "4599",
+    "0.9199839967993598",
+    "MahaRERA agent documentation + business setup + visiting card + Google Business + quotation templates",
+    "MahaRERA statutory fee and competency/training expenses extra."
+  ],
+  [
+    "Online Seller Starter",
+    "E-commerce",
+    "3999",
+    "320",
+    "3679",
+    "0.9199799949987497",
+    "GST assistance + marketplace setup + 10 product listings + invoice template + basic catalogue",
+    "Marketplace/GST requirements depend on selling model."
+  ],
+  [
+    "Import Export Starter",
+    "Import / Export",
+    "4999",
+    "400",
+    "4599",
+    "0.9199839967993598",
+    "IEC assistance + GST/business documentation + quotation/proforma invoice + company profile",
+    "DGFT/other statutory or bank charges extra."
+  ],
+  [
+    "Small Business Launch",
+    "General Business",
+    "6999",
+    "550",
+    "6449",
+    "0.9214173453350478",
+    "GST + applicable business registrations + logo + visiting card + letterhead + quotation + invoice + Google Business + WhatsApp setup",
+    "Exact registrations confirmed after activity/location review."
+  ],
+  [
+    "Digital Business Starter",
+    "Branding / Digital",
+    "3999",
+    "300",
+    "3699",
+    "0.9249812453113279",
+    "Logo + visiting card + Google Business + WhatsApp Business + 4 social creatives",
+    "Printing, paid ads, domain and hosting extra."
+  ],
+  [
+    "Career Premium",
+    "Career",
+    "1499",
+    "120",
+    "1379",
+    "0.9199466310873916",
+    "ATS resume + cover letter + LinkedIn optimization",
+    "One role-targeting revision included."
+  ],
+  [
+    "Student Admission Support",
+    "Student",
+    "799",
+    "80",
+    "719",
+    "0.899874843554443",
+    "Admission form + document scan/resize + ABC ID assistance + upload support",
+    "Admission/exam/college fees extra."
+  ],
+  [
+    "CCTV 3-Camera Labour Bundle",
+    "Smart Solutions",
+    "2999",
+    "600",
+    "2399",
+    "0.7999333111037013",
+    "Site survey + 3-camera installation labour + DVR/NVR configuration + mobile viewing setup",
+    "Cameras, DVR/NVR, HDD, cable, connectors and materials extra."
+  ],
+  [
+    "Small Office Connectivity Setup",
+    "Smart Solutions",
+    "3499",
+    "750",
+    "2749",
+    "0.7856530437267791",
+    "Site survey + router setup + up to 4 LAN point labour + basic network configuration",
+    "Router/switch/cable/materials extra."
+  ],
+  [
+    "Shop Branding Pack",
+    "Design",
+    "2499",
+    "220",
+    "2279",
+    "0.9119647859143657",
+    "Logo/basic refresh + visiting card + shop-board design + letterhead + 2 social creatives",
+    "Printing/fabrication extra."
+  ],
+  [
+    "Pharmacy Digital Growth Pack",
+    "Pharmacy / Digital",
+    "3999",
+    "350",
+    "3649",
+    "0.9124781195298824",
+    "Google Business + WhatsApp Business + visiting card + shop-board design + 6 social creatives",
+    "Does not include drug licence work."
+  ]
+]

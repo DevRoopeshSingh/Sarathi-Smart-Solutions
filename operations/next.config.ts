@@ -4,6 +4,11 @@ import { fileURLToPath } from "node:url";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   turbopack: { root: fileURLToPath(new URL(".", import.meta.url)) },
+  async redirects() {
+    return [
+      { source: "/digital-seva-kendra.html", destination: "/digital-seva-kendra", permanent: true }
+    ];
+  },
   async rewrites() {
     return [
       { source: "/privacy", destination: "/privacy.html" },

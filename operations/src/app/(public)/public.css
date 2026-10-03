@@ -62,20 +62,23 @@ svg {
 }
 
 .site-header {
-  width: min(1180px, calc(100% - 32px));
+  width: min(1280px, calc(100% - 32px));
   height: 78px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: clamp(14px, 2vw, 24px);
   border-bottom: 1px solid var(--line);
   position: relative;
-  z-index: 20;
+  z-index: 30;
 }
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  min-width: max-content;
 }
 .brand-logo {
   display: block;
@@ -96,6 +99,7 @@ svg {
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 .brand-copy strong {
   font-size: 1.05rem;
@@ -115,6 +119,7 @@ svg {
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 .division-line i {
   display: inline-block;
@@ -128,17 +133,22 @@ svg {
 .header-nav {
   display: none;
   align-items: center;
-  gap: 18px;
+  gap: clamp(8px, 1.2vw, 18px);
+  flex: 0 1 auto;
+  min-width: 0;
 }
 .header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 .header-link {
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 700;
+  white-space: nowrap;
   transition: color 0.2s ease;
 }
 .header-link:hover {
@@ -2732,20 +2742,45 @@ body {
 .hero-location {
   display: inline-block;
 }
-@media (min-width: 920px) and (max-width: 1179px) {
+/* Responsive Header Navigation & Collision Prevention */
+.site-header .brand,
+.site-header .header-phone,
+.site-header .header-cta,
+.site-header .header-actions {
+  flex-shrink: 0;
+}
+
+@media (min-width: 920px) and (max-width: 1199px) {
   .division-line {
     display: none;
   }
-  .site-header .brand,
-  .header-phone,
-  .header-cta {
-    flex-shrink: 0;
+  .site-header {
+    gap: clamp(10px, 1.5vw, 16px);
   }
   .header-nav {
-    gap: 18px;
+    gap: clamp(6px, 1vw, 12px);
   }
   .header-nav a {
     white-space: nowrap;
+    font-size: 0.74rem;
+    padding: 2px 4px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .header-nav {
+    gap: 16px;
+  }
+  .header-nav a {
+    white-space: nowrap;
+    font-size: 0.8rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .division-line {
+    display: block;
+    flex-shrink: 0;
   }
 }
 @media (min-width: 640px) and (max-width: 919px) {

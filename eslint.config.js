@@ -13,7 +13,7 @@ export default [
     ]
   },
   {
-    files: ["app.js", "locator.js"],
+    files: ["app.js", "locator.js", "digital-seva-kendra.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
