@@ -60,4 +60,14 @@ The default Next Turbopack build could not finish in this execution environment 
 
 ## Commit preparation — 3 October 2026
 
-Confirmed `wrangler.jsonc` uses Worker static assets from `dist/`; no hosting configuration change is needed. Corrected the homepage cross-links to advertise the same 153-service catalogue as the Seva page. Cloudflare supports the existing relative 200 proxy rule in `_redirects` ([official reference](https://developers.cloudflare.com/workers/static-assets/redirects/#proxying)).
+Confirmed `wrangler.jsonc` uses Worker static assets from `dist/`. Corrected the homepage cross-links to advertise the same 153-service catalogue as the Seva page.
+
+## Production routing correction — 3 October 2026
+
+The live `/digital-seva-kendra` URL returned a self-referencing HTTP 307 redirect. The `_redirects` rule rewriting it to `/digital-seva-kendra.html` conflicted with Cloudflare's native HTML canonicalization, which redirects `.html` URLs back to their extensionless URL. The homepage itself returned HTTP 200 and contained the latest promotion, so this was a routing defect rather than a missing deployment.
+
+Removed the redundant Seva rewrite. With the default `auto-trailing-slash` HTML handling, Cloudflare serves `digital-seva-kendra.html` directly at `/digital-seva-kendra`; `.html` and trailing-slash aliases redirect to that clean URL. The `#services` fragment is handled by the browser after the document loads. See [Cloudflare HTML handling](https://developers.cloudflare.com/workers/static-assets/routing/advanced/html-handling/).
+
+The earlier local static and Next.js tests did not exercise Cloudflare's `_redirects` processing and therefore missed this interaction. The routing unit check now rejects a Seva rewrite and verifies the expected HTML handling mode. Hosting routing must also be checked with Wrangler against the built `dist/` assets and on the live domain after deployment.
+
+Validation: Wrangler 4.147.0 served the built clean URL with HTTP 200 and no redirects; the `.html` alias reached it after one redirect. All 18 Seva browser tests passed against Wrangler at port 8787, and all 39 unit tests and the static build passed. Generated `.wrangler/` files are excluded from lint and formatting checks.

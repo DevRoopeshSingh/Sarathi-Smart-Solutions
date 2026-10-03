@@ -50,12 +50,16 @@ test("digital-seva-kendra.html contains verified business details and clean meta
   assert.match(html, /href="\/"/);
 });
 
-test("sitemap.xml and _redirects register digital-seva-kendra", async () => {
+test("Seva canonical URL uses native Cloudflare HTML routing without a rewrite loop", async () => {
   const sitemap = await readFile(new URL("../sitemap.xml", import.meta.url), "utf8");
   assert.match(sitemap, /<loc>__SITE_URL__\/digital-seva-kendra<\/loc>/);
 
   const redirects = await readFile(new URL("../_redirects", import.meta.url), "utf8");
-  assert.match(redirects, /\/digital-seva-kendra\s+\/digital-seva-kendra\.html\s+200/);
+  // Cloudflare already serves /digital-seva-kendra from its .html asset.
+  // Rewriting to .html triggers canonicalization back to the same clean URL.
+  assert.doesNotMatch(redirects, /^\/digital-seva-kendra\s/m);
+  const config = JSON.parse(await readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8"));
+  assert.equal(config.assets.html_handling ?? "auto-trailing-slash", "auto-trailing-slash");
 });
 
 test("homepage links to Digital Seva Kendra", async () => {
