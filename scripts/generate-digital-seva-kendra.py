@@ -284,9 +284,9 @@ output_html = f"""<!doctype html>
     <meta name="theme-color" content="#07131f" />
     <meta
       name="description"
-      content="Official Sarathi Digital Seva Kendra in Bhayander East, Mira-Bhayandar. Fast, transparent assistance for PAN card, Aadhaar guidance, Udyam MSME, Gumasta, GST, FSSAI, MahaRERA, FDA drug licence, student forms, and printing."
+      content="Sarathi Digital Seva Kendra in Bhayander East. Fast assistance for PAN, Aadhaar, GST, Gumasta, Udyam, FSSAI, FDA drug licences &amp; printing. Transparent rates."
     />
-    <title>Sarathi Digital Seva Kendra | Government, Business &amp; Citizen Services in Bhayander East</title>
+    <title>Sarathi Digital Seva Kendra | Services in Bhayander East</title>
 
     <link rel="canonical" href="__SITE_URL__/digital-seva-kendra" />
 
