@@ -219,3 +219,11 @@ All original content, branding, trademarks, and graphics are the proprietary pro
 `/digital-seva-kendra` is a standalone static page for Sarathi Digital Seva Kendra. It works with the Cloudflare Worker static assets configured in `wrangler.jsonc` (`dist/`) and the local Next.js runtime; the same static build also supports Pages. Enquiry forms prepare WhatsApp messages for customers to send; booking confirmation and status updates come from staff.
 
 After editing the Seva generator, catalogue, browser script or shared stylesheet, run `npm run generate:seva` to format the generated page and synchronize its assets into `operations/public/`. Python 3 is needed only for regeneration; the public hosting build remains Node-only. See [database-free delivery and QA notes](docs/DIGITAL_SEVA_KENDRA_QA.md) for the workflow and test coverage.
+
+## CCTV SEO pages
+
+The homepage links to three focused service pages: `/cctv-installation-mira-bhayandar`, `/cctv-repair-amc-mira-bhayandar`, and `/housing-society-cctv-mira-bhayandar`. Edit their content in `scripts/generate-cctv-pages.mjs`, then run `npm run generate:cctv` to regenerate, format, and synchronize them to the operations runtime. After other homepage, shared CSS, or sitemap edits, run `npm run sync:seo` before building the native app.
+
+Gallery images use responsive WebP variants at 480, 960, and 1200 pixels. The static build registers these files in `scripts/site-config.mjs`. Native robots and sitemap metadata routes use the production domain (`PUBLIC_SITE_URL`, default `https://sarathismartsolutions.in`) and synchronized sitemap data, rather than serving unresolved templates.
+
+See [SEO implementation and publishing steps](docs/SEO_IMPLEMENTATION_2026-10-05.md) for verified changes and remaining account steps.

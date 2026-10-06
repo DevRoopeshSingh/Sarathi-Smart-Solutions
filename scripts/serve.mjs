@@ -23,6 +23,7 @@ const MIME_TYPES = {
   ".json": "application/json; charset=utf-8",
   ".png": "image/png",
   ".jpg": "image/jpeg",
+  ".webp": "image/webp",
   ".jpeg": "image/jpeg",
   ".svg": "image/svg+xml",
   ".txt": "text/plain; charset=utf-8",

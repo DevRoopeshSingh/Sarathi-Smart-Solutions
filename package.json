@@ -21,7 +21,9 @@
     "operations:typecheck": "npm --prefix operations run typecheck",
     "operations:test": "npm --prefix operations test",
     "operations:migrate": "npm --prefix operations run migrate",
-    "test:operations": "node scripts/test-operations.mjs"
+    "test:operations": "node scripts/test-operations.mjs",
+    "generate:cctv": "node scripts/generate-cctv-pages.mjs && prettier --write cctv-installation-mira-bhayandar.html cctv-repair-amc-mira-bhayandar.html housing-society-cctv-mira-bhayandar.html && node scripts/sync-seo-assets.mjs",
+    "sync:seo": "node scripts/sync-seo-assets.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

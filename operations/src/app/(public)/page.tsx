@@ -3,7 +3,7 @@ import path from "node:path";
 import Script from "next/script";
 
 export default function HomePage() {
-  const siteUrl = process.env.PUBLIC_SITE_URL || "https://sarathi-smart-solutions.pages.dev";
+  const siteUrl = process.env.PUBLIC_SITE_URL || "https://sarathismartsolutions.in";
   const htmlPath = path.join(process.cwd(), "public", "index.html");
   let content = fs.readFileSync(htmlPath, "utf8");
   content = content.replaceAll("__SITE_URL__", siteUrl);

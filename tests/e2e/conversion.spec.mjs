@@ -120,7 +120,8 @@ for (const width of [320, 375, 768, 1024, 1440]) {
     await expect(page.locator(".hero-actions a").first()).toBeInViewport();
     const bar = page.locator(".floating-contact");
     await expect(bar).toBeInViewport();
-    for (const button of await bar.locator("a").all()) {
+    await expect(bar.locator("a:visible")).toHaveCount(width <= 768 ? 1 : 3);
+    for (const button of await bar.locator("a:visible").all()) {
       const box = await button.boundingBox();
       expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(width);
@@ -128,6 +129,9 @@ for (const width of [320, 375, 768, 1024, 1440]) {
     }
     await page.screenshot({ path: testInfo.outputPath(`home-${width}.png`) });
     if (width === 375 || width === 1440) {
+      await page
+        .locator("#camera-comparison")
+        .screenshot({ path: testInfo.outputPath(`comparison-${width}.png`) });
       await page
         .locator("#services")
         .screenshot({ path: testInfo.outputPath(`services-${width}.png`) });
@@ -139,7 +143,7 @@ for (const width of [320, 375, 768, 1024, 1440]) {
       });
       await workGallery.screenshot({ path: testInfo.outputPath(`proof-${width}.png`) });
     }
-    await page.locator('.floating-contact a[href="#survey-form"]').click();
+    await page.locator('.hero-actions a[href="#survey-form"]').click();
     await expect(page.locator("#survey-title")).toBeInViewport();
     // Native keyboard activation and accordion navigation.
     const faq = page.locator("#faq-btn-2");

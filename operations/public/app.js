@@ -91,15 +91,25 @@ function renderCatalogue() {
       syncServiceOptions();
       showStep(checkedValue("space") ? 2 : 1);
     });
-    body.append(
-      categoryTag,
-      element("h4", "", entry.label),
-      element("p", "", entry.description),
-      link
-    );
+    if (entry.category === "additional") {
+      link.textContent = "";
+      link.append(serviceIcon(entry.icon, "service-icon"), element("span", "", entry.label));
+      const heading = element("h4");
+      heading.append(link);
+      body.append(heading);
+      card.append(body);
+    } else {
+      body.append(
+        categoryTag,
+        element("h4", "", entry.label),
+        element("p", "", entry.description),
+        link
+      );
+      card.append(serviceIcon(entry.icon, "service-icon"), body);
+    }
     const number = element("span", "number", String(index + 1).padStart(2, "0"));
     number.setAttribute("aria-hidden", "true");
-    card.append(serviceIcon(entry.icon, "service-icon"), body, number);
+    if (entry.category !== "additional") card.append(number);
 
     const coreContainer = document.querySelector("#coreServicesContainer");
     const additionalContainer = document.querySelector("#additionalServicesContainer");

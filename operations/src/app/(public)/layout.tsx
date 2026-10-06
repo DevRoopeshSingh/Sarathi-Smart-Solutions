@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "./public.css";
 
-const siteUrl = process.env.PUBLIC_SITE_URL || "https://sarathi-smart-solutions.pages.dev";
+const siteUrl = process.env.PUBLIC_SITE_URL || "https://sarathismartsolutions.in";
 
 export const metadata: Metadata = {
-  title: "CCTV Installation in Mira-Bhayandar | Wi‑Fi & Smart Security",
+  title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
   description:
     "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
   robots: { index: true, follow: true },
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    title: "CCTV Installation in Mira-Bhayandar | Wi‑Fi & Smart Security",
+    title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
     description:
       "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
     url: siteUrl,
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "CCTV Installation in Mira-Bhayandar | Wi‑Fi & Smart Security",
+    title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
     description:
       "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
     images: ["/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png"]
@@ -48,7 +48,7 @@ const businessJsonLd = {
   email: "sarathismartsolutions@gmail.com",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Bhayander East",
+    streetAddress: "RNP Park, Bhayander East",
     addressLocality: "Mira-Bhayandar, Thane",
     addressRegion: "Maharashtra",
     postalCode: "401105",
@@ -64,6 +64,7 @@ const businessJsonLd = {
     "Mumbai MMR"
   ],
   priceRange: "₹₹",
+  sameAs: ["https://share.google/yKDsOqWwMYGzaVRIh"],
   "@id": `${siteUrl}/#business`,
   url: `${siteUrl}/`
 };

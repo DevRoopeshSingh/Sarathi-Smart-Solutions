@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.PUBLIC_SITE_URL || "https://sarathi-smart-solutions.pages.dev"),
+  metadataBase: new URL(process.env.PUBLIC_SITE_URL || "https://sarathismartsolutions.in"),
   icons: {
     icon: [
       {
