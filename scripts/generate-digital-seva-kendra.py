@@ -282,6 +282,7 @@ output_html = f"""<!doctype html>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#07131f" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta
       name="description"
       content="Sarathi Digital Seva Kendra in Bhayander East. Fast assistance for PAN, Aadhaar, GST, Gumasta, Udyam, FSSAI, FDA drug licences &amp; printing. Transparent rates."
@@ -297,13 +298,18 @@ output_html = f"""<!doctype html>
     <meta property="og:description" content="{total_services_count} citizen, business registration, pharmacy, food, student, and print services with clear upfront pricing. Walk-in at RNP Park or WhatsApp online support." />
     <meta property="og:site_name" content="Sarathi Digital Seva Kendra" />
     <meta property="og:locale" content="en_IN" />
-    <meta property="og:image" content="__SITE_URL__/01_icon_primary.png" />
+    <meta property="og:image" content="__SITE_URL__/assets/images/seva-citizen-services.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="896" />
+    <meta property="og:image:alt" content="Illustrative digital service assistance with documents and a computer" />
 
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sarathi Digital Seva Kendra | Bhayander East, Mira-Bhayandar" />
     <meta name="twitter:description" content="Fast, transparent digital facilitation for PAN, GST, Udyam, FSSAI, Drug Licence, MahaRERA &amp; printing in Bhayander East." />
-    <meta name="twitter:image" content="__SITE_URL__/01_icon_primary.png" />
+    <meta name="twitter:image" content="__SITE_URL__/assets/images/seva-citizen-services.jpg" />
+    <meta name="twitter:image:alt" content="Illustrative digital service assistance with documents and a computer" />
 
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="01_icon_primary.png" />
@@ -326,6 +332,9 @@ output_html = f"""<!doctype html>
         "telephone": "+918369704457",
         "email": "sarathidigitalsevakendra@gmail.com",
         "url": "__SITE_URL__/digital-seva-kendra",
+        "mainEntityOfPage": "__SITE_URL__/digital-seva-kendra",
+        "image": "__SITE_URL__/assets/images/seva-citizen-services.jpg",
+        "logo": "__SITE_URL__/01_icon_primary.png",
         "address": {{
           "@type": "PostalAddress",
           "streetAddress": "RNP Park, Bhayander East",

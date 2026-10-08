@@ -35,6 +35,7 @@ export const PUBLIC_FILES = Object.freeze([
   "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light.svg",
   "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-dark.svg",
   "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-32.png",
+  "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-128.png",
   "assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-256.png",
 
   "robots.txt",

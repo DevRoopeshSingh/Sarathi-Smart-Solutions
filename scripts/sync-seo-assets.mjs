@@ -11,6 +11,8 @@ const files = PUBLIC_FILES.filter(
     file === "app.js" ||
     file === "locator.js" ||
     file === "recommendation.mjs" ||
+    file.startsWith("assets/brand/") ||
+    file.startsWith("assets/images/seva-") ||
     file.endsWith(".webp") ||
     /^(cctv-|housing-society-cctv-).*\.html$/.test(file)
 );

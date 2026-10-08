@@ -4,6 +4,8 @@ import { writeFile } from "node:fs/promises";
 const pages = [
   {
     slug: "cctv-installation-mira-bhayandar",
+    image: "camera-mounting-1200.webp",
+    imageAlt: "Illustrative CCTV camera setup with protected cabling",
     title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
     description:
       "CCTV installation in Mira Road and Bhayandar for homes, shops and offices. Compare camera packages, mobile viewing and wiring. Request a free local survey.",
@@ -49,6 +51,8 @@ const pages = [
   },
   {
     slug: "cctv-repair-amc-mira-bhayandar",
+    image: "dvr-nvr-rack-1200.webp",
+    imageAlt: "Illustrative CCTV recorder and network rack with organised cabling",
     title: "CCTV Repair & AMC in Mira-Bhayandar | Sarathi Smart Solutions",
     description:
       "CCTV repair and AMC in Mira Road and Bhayandar. Get help with recording faults, offline cameras and mobile viewing. Scope, parts and visit timing confirmed upfront.",
@@ -94,6 +98,8 @@ const pages = [
   },
   {
     slug: "housing-society-cctv-mira-bhayandar",
+    image: "camera-mounting-1200.webp",
+    imageAlt: "Illustrative exterior CCTV camera setup for entrance coverage",
     title: "Housing Society CCTV in Mira-Bhayandar | Sarathi Smart Solutions",
     description:
       "Plan CCTV for housing societies in Mira Road and Bhayandar. Assess gates, lobbies and parking, storage, authorised access and maintenance after a site survey.",
@@ -154,6 +160,8 @@ for (const page of pages) {
       name: page.heading,
       serviceType: page.heading,
       url: `__SITE_URL__/${page.slug}`,
+      mainEntityOfPage: `__SITE_URL__/${page.slug}`,
+      image: `__SITE_URL__/assets/images/${page.image}`,
       areaServed: ["Mira Road", "Bhayandar East", "Bhayandar West"],
       provider: {
         "@type": "HomeAndConstructionBusiness",
@@ -183,11 +191,11 @@ for (const page of pages) {
   const html = `<!doctype html>
 <html lang="en"><head>
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="theme-color" content="#07131f" />
-<title>${escape(page.title)}</title><meta name="description" content="${escape(page.description)}" /><meta name="robots" content="index, follow" />
+<title>${escape(page.title)}</title><meta name="description" content="${escape(page.description)}" /><meta name="robots" content="index, follow, max-image-preview:large" />
 <link rel="canonical" href="__SITE_URL__/${page.slug}" />
-<meta property="og:type" content="website" /><meta property="og:title" content="${escape(page.title)}" /><meta property="og:description" content="${escape(page.description)}" /><meta property="og:url" content="__SITE_URL__/${page.slug}" /><meta property="og:site_name" content="Sarathi Smart Solutions" /><meta property="og:locale" content="en_IN" /><meta property="og:image" content="__SITE_URL__/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png" />
-<meta name="twitter:card" content="summary" /><meta name="twitter:title" content="${escape(page.title)}" /><meta name="twitter:description" content="${escape(page.description)}" /><meta name="twitter:image" content="__SITE_URL__/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png" />
-<link rel="icon" type="image/png" href="/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-32.png" /><link rel="stylesheet" href="/styles.css" />
+<meta property="og:type" content="website" /><meta property="og:title" content="${escape(page.title)}" /><meta property="og:description" content="${escape(page.description)}" /><meta property="og:url" content="__SITE_URL__/${page.slug}" /><meta property="og:site_name" content="Sarathi Smart Solutions" /><meta property="og:locale" content="en_IN" /><meta property="og:image" content="__SITE_URL__/assets/images/${page.image}" /><meta property="og:image:type" content="image/webp" /><meta property="og:image:width" content="1200" /><meta property="og:image:height" content="896" /><meta property="og:image:alt" content="${escape(page.imageAlt)}" />
+<meta name="twitter:card" content="summary_large_image" /><meta name="twitter:title" content="${escape(page.title)}" /><meta name="twitter:description" content="${escape(page.description)}" /><meta name="twitter:image" content="__SITE_URL__/assets/images/${page.image}" /><meta name="twitter:image:alt" content="${escape(page.imageAlt)}" />
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-32.png" /><link rel="icon" type="image/png" sizes="128x128" href="/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-128.png" /><link rel="stylesheet" href="/styles.css" />
 <script type="application/ld+json">${JSON.stringify(schema).replaceAll("<", "\\u003c")}</script>
 </head><body class="seo-page">
 <a class="skip-link" href="#service-content">Skip to service details</a>

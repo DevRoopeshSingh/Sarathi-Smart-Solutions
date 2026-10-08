@@ -6,6 +6,32 @@ const services = [
   "housing-society-cctv-mira-bhayandar"
 ];
 
+async function checkPhotoPreview(page, request) {
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /index, follow, max-image-preview:large/
+  );
+  const photo = await page.locator('meta[property="og:image"]').getAttribute("content");
+  const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+  expect(new URL(photo).origin).toBe(new URL(canonical).origin);
+  expect(new URL(photo).pathname).toMatch(/^\/assets\/images\/.+\.(webp|jpg)$/);
+  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", photo);
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    "content",
+    "summary_large_image"
+  );
+  await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+    "content",
+    /^Illustrative /
+  );
+  const response = await request.get(new URL(photo).pathname);
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain(
+    await page.locator('meta[property="og:image:type"]').getAttribute("content")
+  );
+  return photo;
+}
+
 for (const slug of services) {
   test(`${slug}: initial HTML is indexable, linked and usable without JavaScript`, async ({
     browser,
@@ -15,7 +41,7 @@ for (const slug of services) {
     expect(response.status()).toBe(200);
     const html = await response.text();
     expect(html).not.toContain("__SITE_URL__");
-    expect(html).toContain('<meta name="robots" content="index, follow"');
+    expect(html).toContain('content="index, follow, max-image-preview:large"');
     const context = await browser.newContext({
       javaScriptEnabled: false,
       viewport: { width: 320, height: 900 }
@@ -36,6 +62,10 @@ for (const slug of services) {
       .evaluate((script) => JSON.parse(script.textContent));
     expect(data.map((item) => item["@type"])).toEqual(["Service", "BreadcrumbList"]);
     expect(data[0].provider.address.streetAddress).toContain("RNP Park");
+    expect(data[0].image).toBe(await checkPhotoPreview(page, request));
+    expect(data[0].mainEntityOfPage).toBe(
+      await page.locator('link[rel="canonical"]').getAttribute("href")
+    );
     const enquiry = new URL(
       await page.locator('.seo-actions a[href*="wa.me"]').getAttribute("href")
     );
@@ -66,11 +96,7 @@ test("homepage identifies a crawlable CCTV photo separately from its logo", asyn
   request
 }) => {
   await page.goto("/");
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
-    "content",
-    /max-image-preview:large/
-  );
-  const photo = await page.locator('meta[property="og:image"]').getAttribute("content");
+  const photo = await checkPhotoPreview(page, request);
   expect(photo).toMatch(/^https?:\/\/.*\/assets\/images\/camera-mounting-1200\.webp$/);
   await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", photo);
   await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
@@ -79,6 +105,12 @@ test("homepage identifies a crawlable CCTV photo separately from its logo", asyn
     .locator('script[type="application/ld+json"]')
     .evaluateAll((scripts) => scripts.flatMap((script) => JSON.parse(script.textContent)));
   const webPage = data.find((item) => item["@type"] === "WebPage");
+  const website = data.find((item) => item["@type"] === "WebSite");
+  expect(website.name).toBe("Sarathi Smart Solutions");
+  expect(new URL(website.url).href).toBe(
+    new URL(await page.locator('link[rel="canonical"]').getAttribute("href")).href
+  );
+  expect(webPage.isPartOf["@id"]).toBe(website["@id"]);
   const business = data.find((item) => item["@type"] === "HomeAndConstructionBusiness");
   expect(webPage.primaryImageOfPage.url).toBe(photo);
   expect(webPage.primaryImageOfPage.width).toBe(1200);
@@ -90,6 +122,35 @@ test("homepage identifies a crawlable CCTV photo separately from its logo", asyn
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain("image/webp");
   expect((await request.get(new URL(business.logo).pathname)).status()).toBe(200);
+  const favicon = page.locator('link[rel="icon"][sizes="128x128"]');
+  await expect(favicon).toHaveAttribute("type", "image/png");
+  const iconResponse = await request.get(await favicon.getAttribute("href"));
+  expect(iconResponse.status()).toBe(200);
+  expect(iconResponse.headers()["content-type"]).toContain("image/png");
+  const description = await page.locator('meta[name="description"]').getAttribute("content");
+  expect(description).toBe(
+    "CCTV installation and AMC in Mira Road and Bhayandar. Camera packages, mobile viewing and local support for homes, shops and societies. Request a free survey."
+  );
+  await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+    "content",
+    description
+  );
+  await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute(
+    "content",
+    description
+  );
+});
+
+test("Digital Seva identifies its own service photo and business", async ({ page, request }) => {
+  await page.goto("/digital-seva-kendra");
+  const photo = await checkPhotoPreview(page, request);
+  expect(photo).toContain("/assets/images/seva-citizen-services.jpg");
+  const business = await page
+    .locator('script[type="application/ld+json"]')
+    .evaluate((script) => JSON.parse(script.textContent));
+  expect(business.name).toBe("Sarathi Digital Seva Kendra");
+  expect(business.image).toBe(photo);
+  expect(business.logo).not.toBe(photo);
 });
 
 test("homepage gallery serves responsive WebP files with an image content type", async ({

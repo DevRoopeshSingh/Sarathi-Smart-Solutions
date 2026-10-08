@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import "./public.css";
 
 const siteUrl = process.env.PUBLIC_SITE_URL || "https://sarathismartsolutions.in";
+const description =
+  "CCTV installation and AMC in Mira Road and Bhayandar. Camera packages, mobile viewing and local support for homes, shops and societies. Request a free survey.";
 
 export const metadata: Metadata = {
   title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
-  description:
-    "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
+  description,
   robots: { index: true, follow: true, "max-image-preview": "large" },
   alternates: {
     canonical: "/"
@@ -14,14 +15,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
-    description:
-      "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
+    description,
     url: siteUrl,
     siteName: "Sarathi Smart Solutions",
     locale: "en_IN",
     images: [
       {
         url: "/assets/images/camera-mounting-1200.webp",
+        type: "image/webp",
         width: 1200,
         height: 896,
         alt: "Illustrative CCTV camera setup with protected cabling"
@@ -31,8 +32,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
-    description:
-      "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
+    description,
     images: [
       {
         url: "/assets/images/camera-mounting-1200.webp",
@@ -40,6 +40,15 @@ export const metadata: Metadata = {
       }
     ]
   }
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${siteUrl}/#website`,
+  url: `${siteUrl}/`,
+  name: "Sarathi Smart Solutions",
+  publisher: { "@id": `${siteUrl}/#business` }
 };
 
 const businessJsonLd = {
@@ -81,6 +90,7 @@ const webPageJsonLd = {
   "@id": `${siteUrl}/#webpage`,
   url: `${siteUrl}/`,
   name: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
+  isPartOf: { "@id": `${siteUrl}/#website` },
   mainEntity: { "@id": `${siteUrl}/#business` },
   primaryImageOfPage: {
     "@type": "ImageObject",
@@ -177,6 +187,10 @@ const faqJsonLd = {
 export default function PublicLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c") }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }}

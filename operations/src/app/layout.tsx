@@ -10,6 +10,11 @@ export const metadata: Metadata = {
         sizes: "32x32"
       },
       {
+        url: "/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light-128.png",
+        type: "image/png",
+        sizes: "128x128"
+      },
+      {
         url: "/assets/brand/sarathi-cctv-logo-pack/favicon/favicon-light.svg",
         type: "image/svg+xml"
       },
