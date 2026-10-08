@@ -29,6 +29,7 @@ export const PUBLIC_FILES = Object.freeze([
   "app.js",
   "locator.js",
   "recommendation.mjs",
+  "image-loading.mjs",
   "01_icon_primary.png",
   "assets/brand/sarathi-cctv-logo-pack/sarathi-logo-dark.svg",
   "assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png",

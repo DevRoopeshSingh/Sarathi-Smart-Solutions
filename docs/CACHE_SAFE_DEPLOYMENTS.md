@@ -6,7 +6,7 @@ The Cloudflare deployment in `wrangler.jsonc` serves the static `dist/` build. T
 
 The previous `_headers` allowed unchanged CSS/JavaScript URLs to remain fresh for one day and stale for another week. That can pair new HTML with old styling. A hard refresh recovering the layout is consistent with stale resources, but does not identify HTML versus CSS or prove a particular Cloudflare dashboard rule.
 
-`npm run build` now writes content-fingerprinted runtime assets to `dist/assets/build/` and rewrites every public HTML page to those URLs. For example, `styles.css` becomes `/assets/build/styles.<content-hash>.css`. The app module imports the matching fingerprinted recommendation module; a dependency change also changes the app module's URL. Local development and synchronized operations source URLs remain unchanged.
+`npm run build` now writes content-fingerprinted runtime assets to `dist/assets/build/` and rewrites every public HTML page to those URLs. For example, `styles.css` becomes `/assets/build/styles.<content-hash>.css`. The app module imports the matching fingerprinted recommendation module, and both public page scripts import the fingerprinted image-loading module. A dependency change also changes the importing script's URL. Local development and synchronized operations source URLs remain unchanged.
 
 HTML, including `/` and extensionless service/policy paths, and legacy unversioned runtime assets require revalidation (`public, max-age=0, must-revalidate`). The fingerprinted assets use the existing `/assets/*` immutable policy. Cache-Control rules do not overlap for the new runtime assets, because Cloudflare joins duplicate header values rather than treating the last rule as an override.
 

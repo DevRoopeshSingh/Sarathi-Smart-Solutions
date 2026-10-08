@@ -12,7 +12,10 @@
  * - Accessible focus management, keyboard navigation (Escape, Enter), and ARIA attributes
  */
 
+import { initImagePlaceholders } from "./image-loading.mjs";
+
 document.addEventListener("DOMContentLoaded", () => {
+  initImagePlaceholders();
   // 1. Parse Embedded Data
   const dataScript = document.getElementById("seva-data");
   let sevaData = { services: [], packages: [] };

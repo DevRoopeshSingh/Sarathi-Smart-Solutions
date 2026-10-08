@@ -26,6 +26,9 @@
 /recommendation.mjs
   Cache-Control: public, max-age=0, must-revalidate
 
+/image-loading.mjs
+  Cache-Control: public, max-age=0, must-revalidate
+
 /digital-seva-kendra.js
   Cache-Control: public, max-age=0, must-revalidate
 

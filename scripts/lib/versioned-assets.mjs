@@ -4,6 +4,7 @@ import path from "node:path";
 export const VERSIONED_ASSETS = Object.freeze([
   "styles.css",
   "recommendation.mjs",
+  "image-loading.mjs",
   "app.js",
   "locator.js",
   "digital-seva-kendra.js"

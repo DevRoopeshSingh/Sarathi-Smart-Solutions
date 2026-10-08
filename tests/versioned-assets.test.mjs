@@ -43,6 +43,20 @@ test("a recommendation change invalidates both dependency and importing entry", 
   assert.doesNotMatch(entry, /["']\.\/recommendation\.mjs["']/);
 });
 
+test("a shared image loader change invalidates both pages without changing the map script", () => {
+  const previous = versionAssets(sources);
+  const updated = versionAssets(
+    new Map([
+      ...sources,
+      ["image-loading.mjs", sources.get("image-loading.mjs") + "\n/* changed image loading */"]
+    ])
+  );
+  for (const file of ["image-loading.mjs", "app.js", "digital-seva-kendra.js"]) {
+    assert.notEqual(previous.manifest.get(file), updated.manifest.get(file));
+  }
+  assert.equal(previous.manifest.get("locator.js"), updated.manifest.get("locator.js"));
+});
+
 test("every public HTML file references the matching fingerprinted local assets", async () => {
   const { manifest, files } = versionAssets(sources);
   for (const file of PUBLIC_FILES.filter((file) => file.endsWith(".html"))) {

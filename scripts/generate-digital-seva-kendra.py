@@ -605,7 +605,7 @@ output_html = f"""<!doctype html>
 
           <div class="seva-showcase-grid">
             <article class="seva-showcase-card">
-              <div class="seva-showcase-media">
+              <div class="seva-showcase-media" data-image-placeholder>
                 <img
                   src="assets/images/seva-citizen-services.jpg"
                   alt="Customer verification at Sarathi Digital Seva Kendra service desk in Bhayander East"
@@ -636,7 +636,7 @@ output_html = f"""<!doctype html>
             </article>
 
             <article class="seva-showcase-card">
-              <div class="seva-showcase-media">
+              <div class="seva-showcase-media" data-image-placeholder>
                 <img
                   src="assets/images/seva-business-gst.jpg"
                   alt="Business GST and MSME tax compliance consultant workstation in Mumbai"
@@ -667,7 +667,7 @@ output_html = f"""<!doctype html>
             </article>
 
             <article class="seva-showcase-card">
-              <div class="seva-showcase-media">
+              <div class="seva-showcase-media" data-image-placeholder>
                 <img
                   src="assets/images/seva-pharmacy-fda.jpg"
                   alt="Pharmacist reviewing official FDA drug inspection certificate in modern medical store"

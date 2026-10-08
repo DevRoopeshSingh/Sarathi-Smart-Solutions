@@ -55,6 +55,92 @@
   border-top: 1px solid var(--line);
   background: #fff;
 }
+.map-loading-placeholder {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--navy-850);
+  background-image:
+    linear-gradient(30deg, transparent 43%, var(--line) 43% 46%, transparent 46%),
+    linear-gradient(100deg, transparent 65%, var(--line) 65% 68%, transparent 68%);
+}
+.map-placeholder-panel {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: min(210px, 50%);
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--navy-900);
+}
+.map-placeholder-panel span {
+  display: block;
+  height: 10px;
+  margin-bottom: 12px;
+  border-radius: 5px;
+  background: var(--line);
+}
+.map-placeholder-panel span:last-child {
+  width: 65%;
+  margin: 0;
+}
+.map-placeholder-pin {
+  position: absolute;
+  top: 48%;
+  left: 65%;
+  width: 24px;
+  height: 24px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--muted);
+  transform: rotate(-45deg);
+}
+
+/* Skeletons reserve only media space; they never cover page text or actions. */
+[data-image-placeholder] {
+  position: relative;
+  overflow: hidden;
+}
+.is-image-loading,
+.image-load-error {
+  background-color: var(--navy-850);
+}
+.is-image-loading::after,
+.skeleton-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 25%, rgba(148, 194, 218, 0.14), transparent 75%);
+  transform: translateX(-100%);
+  pointer-events: none;
+  animation: media-skeleton-shimmer 1.4s ease-in-out 3;
+}
+.image-load-error > img {
+  visibility: hidden;
+}
+.image-load-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  color: var(--ink);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: center;
+}
+@keyframes media-skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-image-loading::after,
+  .skeleton-surface::after {
+    animation: none;
+  }
+}
 .location-map gmpx-store-locator {
   display: block;
   width: 100%;
@@ -5791,13 +5877,18 @@ body {
   margin: 0;
   padding-bottom: 104px;
 }
-.hero-installation > img {
+.hero-photo {
   display: block;
   width: 100%;
   height: 320px;
-  object-fit: cover;
   border-radius: 20px;
   border: 1px solid var(--line);
+}
+.hero-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .hero-installation > figcaption {
   position: absolute;
@@ -6177,7 +6268,7 @@ body {
   .homepage-redesign .hero h1 {
     font-size: 2.7rem;
   }
-  .hero-installation > img {
+  .hero-photo {
     height: 300px;
   }
   .hero-price-card {
@@ -6234,7 +6325,7 @@ body {
     margin-inline: auto;
     padding-bottom: 100px;
   }
-  .hero-installation > img {
+  .hero-photo {
     height: 250px;
   }
   .homepage-redesign .proof-grid,

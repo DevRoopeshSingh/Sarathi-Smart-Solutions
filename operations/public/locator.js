@@ -61,6 +61,7 @@ if (button && container && status && /^AIza[A-Za-z0-9_-]+$/.test(apiKey)) {
     async () => {
       button.disabled = true;
       container.setAttribute("aria-busy", "true");
+      container.hidden = false;
       status.textContent = "Loading the interactive map…";
       let timer;
       let failed = false;

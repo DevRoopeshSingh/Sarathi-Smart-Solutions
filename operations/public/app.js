@@ -5,6 +5,8 @@
  * safe DOM rendering (zero innerHTML), clipboard copying, and WhatsApp dispatch.
  */
 
+import { initImagePlaceholders } from "./image-loading.mjs";
+
 import {
   buildRecommendation,
   SIZE_OPTIONS,
@@ -928,6 +930,7 @@ function initNavigation() {
 }
 
 // Initialise page
+initImagePlaceholders();
 initNavigation();
 renderCatalogue();
 showStep(1, { moveFocus: false });

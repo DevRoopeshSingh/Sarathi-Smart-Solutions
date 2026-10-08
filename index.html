@@ -334,19 +334,21 @@
         </div>
 
         <figure class="hero-installation">
-          <img
-            src="assets/images/camera-mounting-960.webp"
-            srcset="
-              assets/images/camera-mounting-480.webp 480w,
-              assets/images/camera-mounting-960.webp 960w
-            "
-            sizes="(max-width: 767px) calc(100vw - 40px), 440px"
-            alt="Dome CCTV camera mounted above a doorway with protected cabling"
-            width="1200"
-            height="896"
-            fetchpriority="high"
-            decoding="async"
-          />
+          <div class="hero-photo" data-image-placeholder>
+            <img
+              src="assets/images/camera-mounting-960.webp"
+              srcset="
+                assets/images/camera-mounting-480.webp 480w,
+                assets/images/camera-mounting-960.webp 960w
+              "
+              sizes="(max-width: 767px) calc(100vw - 40px), 440px"
+              alt="Dome CCTV camera mounted above a doorway with protected cabling"
+              width="1200"
+              height="896"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </div>
           <figcaption>Illustrative CCTV setup</figcaption>
           <div class="hero-price-card">
             <span>HD CCTV packages from</span><strong>₹13,900</strong>
@@ -369,7 +371,7 @@
         </div>
         <div class="proof-grid">
           <figure class="proof-card">
-            <div class="proof-media">
+            <div class="proof-media" data-image-placeholder>
               <img
                 src="assets/images/dvr-nvr-rack-1200.webp"
                 srcset="
@@ -395,7 +397,7 @@
             </figcaption>
           </figure>
           <figure class="proof-card">
-            <div class="proof-media">
+            <div class="proof-media" data-image-placeholder>
               <img
                 src="assets/images/cable-casing-finish-1200.webp"
                 srcset="
@@ -421,7 +423,7 @@
             </figcaption>
           </figure>
           <figure class="proof-card">
-            <div class="proof-media">
+            <div class="proof-media" data-image-placeholder>
               <img
                 src="assets/images/wifi-ap-installation-1200.webp"
                 srcset="
@@ -1535,7 +1537,12 @@
             aria-label="Sarathi Smart Solutions interactive location map"
             tabindex="-1"
             hidden
-          ></div>
+          >
+            <div class="map-loading-placeholder skeleton-surface" aria-hidden="true">
+              <div class="map-placeholder-panel"><span></span><span></span><span></span></div>
+              <div class="map-placeholder-pin"></div>
+            </div>
+          </div>
         </div>
       </section>
     </main>

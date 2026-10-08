@@ -84,3 +84,36 @@ test("blocked map library preserves usable location and contact links", async ({
   await expect(page.getByRole("link", { name: /Open in Google Maps/ })).toBeVisible();
   await expect(page.locator('#location a[href="tel:+918369704457"]')).toBeVisible();
 });
+
+test("slow map shows a skeleton only after a request and removes it when ready", async ({
+  page
+}) => {
+  await setBrowserKey(page, "AIza-test_key");
+  let release;
+  const waiting = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route(library, async (route) => {
+    await waiting;
+    await route.fulfill({
+      contentType: "text/javascript",
+      headers: { "access-control-allow-origin": "*" },
+      body: `
+        export class APILoader { static async importLibrary() {} }
+        customElements.define('gmpx-api-loader', class extends HTMLElement {});
+        customElements.define('gmpx-store-locator', class extends HTMLElement {
+          configureFromQuickBuilder() {}
+        });`
+    });
+  });
+  await page.goto("/");
+  await expect(page.locator(".map-loading-placeholder")).toBeHidden();
+  await page.getByRole("button", { name: "Load interactive map" }).click();
+  await expect(page.locator("#location-map")).toHaveAttribute("aria-busy", "true");
+  await expect(page.locator(".map-loading-placeholder")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open in Google Maps/ })).toBeVisible();
+  release();
+  await expect(page.locator("#location-map gmpx-store-locator")).toBeVisible();
+  await expect(page.locator(".map-loading-placeholder")).toHaveCount(0);
+  await expect(page.locator("#location-map")).not.toHaveAttribute("aria-busy");
+});
