@@ -11,6 +11,9 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
     });
 
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
     await page.waitForLoadState("networkidle");
 
     expect(errors).toEqual([]);
@@ -18,15 +21,18 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("loads page with correct title, branding, and accessibility landmarks", async ({ page }) => {
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
 
-    await expect(page).toHaveTitle("CCTV Installation in Mira-Bhayandar | Wi‑Fi & Smart Security");
+    await expect(page).toHaveTitle("CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions");
 
     const brand = page.locator(".brand").first();
     await expect(brand).toBeVisible();
     await expect(brand).toHaveAttribute("aria-label", "Sarathi Smart Solutions home");
 
     const skipLink = page.locator(".skip-link");
-    await expect(skipLink).toHaveAttribute("href", "#planner");
+    await expect(skipLink).toHaveAttribute("href", "#top");
 
     const progressBar = page.locator('.progress-track[role="progressbar"]');
     await expect(progressBar).toHaveAttribute("aria-valuenow", "1");
@@ -35,6 +41,9 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("renders all core company sections properly", async ({ page }) => {
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
 
     await expect(page.locator(".hero")).toBeVisible();
     await expect(page.locator(".brands")).toBeVisible();
@@ -49,6 +58,9 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
   test("renders responsively at mobile viewport without horizontal overflow", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
     await page.waitForLoadState("networkidle");
 
     const isOverflowing = await page.evaluate(() => {
@@ -63,6 +75,9 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("completes the 3-step solution planner happy path", async ({ page }) => {
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
     await page.waitForLoadState("networkidle");
 
     // Step 1: Space selection
@@ -111,12 +126,17 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("enforces step-by-step validation and announces accessible errors", async ({ page }) => {
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
     await page.waitForLoadState("networkidle");
 
     // Step 1: Click Continue without selection
     await page.locator("#nextButton").click();
     const spaceError = page.locator("#spaceError");
-    await expect(spaceError).toHaveText("Please choose Home or Business to continue.");
+    await expect(spaceError).toHaveText(
+      "Please choose Home, Business or Housing society to continue."
+    );
 
     // Resolve Step 1
     await page.locator('input[name="space"][value="Business"]').check({ force: true });
@@ -141,6 +161,9 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("preserves user selections during backward and forward navigation", async ({ page }) => {
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
     await page.waitForLoadState("networkidle");
 
     // Step 1: Home
@@ -172,6 +195,9 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("resets the planner when Start again is clicked", async ({ page }) => {
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
     await page.waitForLoadState("networkidle");
 
     // Complete planner
@@ -195,6 +221,9 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
   test("FAQ accordion opens and closes correctly", async ({ page }) => {
     await page.goto("/");
+    await page.locator("#planner").evaluate((panel) => {
+      panel.open = true;
+    });
 
     const firstFaq = page.locator(".faq-card").first();
     await expect(firstFaq).toHaveAttribute("open", "");
@@ -209,3 +238,49 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
     await expect(secondFaq.locator(".faq-trigger")).toHaveAttribute("aria-expanded", "true");
   });
 });
+
+test("society planner uses shared-space sizing and prepares an assessment without an invented camera count", async ({
+  page
+}) => {
+  await page.goto("/#planner");
+  await page.locator('input[name="space"][value="Society"]').locator("..").click();
+  await page.locator("#nextButton").click();
+  await page.locator('input[name="needs"][value="cctv"]').locator("..").click();
+  await page.locator("#nextButton").click();
+  await expect(page.locator("#sizeGrid")).toContainText("Multiple buildings / shared parking");
+  await page.locator('input[name="size"][value="Standard"]').locator("..").click();
+  await page.locator("#nextButton").click();
+  await expect(page.locator("#result-title")).toHaveText("Housing Society Assessment");
+  await expect(page.locator("#recommendationList")).toContainText(
+    "Housing society site assessment"
+  );
+  await expect(page.locator("#recommendationList")).not.toContainText("4–6 camera");
+  await expect(page.locator("#summaryText")).toContainText("Space: Society");
+});
+
+for (const [work, quantity, size, guidance, excluded] of [
+  ["Repair / troubleshooting", "1", "Standard", "Diagnose faults affecting 1 camera", "4–6 camera"],
+  ["New installation", "12", "Compact", "Plan a new installation for 12 cameras", "2–3 camera"]
+]) {
+  test(`CCTV ${work} for ${quantity} ${quantity === "1" ? "camera" : "cameras"} follows the supplied requirement`, async ({
+    page
+  }) => {
+    await page.goto("/#planner");
+    await page.locator('input[name="space"][value="Home"]').locator("..").click();
+    await page.locator("#nextButton").click();
+    await page.locator('input[name="needs"][value="cctv"]').locator("..").click();
+    await page.locator("#nextButton").click();
+    await page.locator(`input[name="size"][value="${size}"]`).locator("..").click();
+    await page.locator("#enquiry-cctv-work").selectOption(work);
+    await page.locator("#enquiry-cctv-quantity").fill(quantity);
+    await page.locator("#nextButton").click();
+    await expect(page.locator("#recommendationList")).toContainText(guidance);
+    await expect(page.locator("#recommendationList")).not.toContainText(excluded);
+    const summary = await page.locator("#summaryText").textContent();
+    const url = new URL(await page.locator("#whatsappButton").getAttribute("href"));
+    expect(url.searchParams.get("text")).toBe(summary);
+    expect(summary).toContain(work);
+    expect(summary).toContain(`Number of cameras: ${quantity}`);
+    expect(summary).not.toContain(excluded);
+  });
+}

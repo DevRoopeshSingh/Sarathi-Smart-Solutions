@@ -16,8 +16,9 @@ export default function HomePage() {
 
   return (
     <>
-      <div dangerouslySetInnerHTML={{ __html: sanitizedBody }} />
+      <div className="homepage-redesign" dangerouslySetInnerHTML={{ __html: sanitizedBody }} />
       <Script src="/app.js" type="module" strategy="afterInteractive" />
+      <Script src="/locator.js" type="module" strategy="afterInteractive" />
     </>
   );
 }

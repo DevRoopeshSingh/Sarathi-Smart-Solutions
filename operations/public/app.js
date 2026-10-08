@@ -83,6 +83,7 @@ function renderCatalogue() {
     link.href = "#planner";
     link.setAttribute("aria-label", `Enquire about ${entry.label}`);
     link.addEventListener("click", () => {
+      revealAnchor("#planner");
       const input = needGrid?.querySelector(`input[value="${id}"]`);
       if (input) input.checked = true;
       form?.classList.remove("hidden");
@@ -90,6 +91,10 @@ function renderCatalogue() {
       progressWrap?.classList.remove("hidden");
       syncServiceOptions();
       showStep(checkedValue("space") ? 2 : 1);
+      // Fragment navigation runs after click handlers and can replace the focused legend.
+      requestAnimationFrame(() => {
+        steps[currentStep - 1]?.querySelector("legend")?.focus({ preventScroll: true });
+      });
     });
     if (entry.category === "additional") {
       link.textContent = "";
@@ -232,7 +237,7 @@ function setError(message = "") {
 /**
  * Dynamically builds size radio cards using safe DOM methods.
  * Preserves user's previous selection if valid for the space.
- * @param {string} space - 'Home' or 'Business'
+ * @param {string} space - 'Home', 'Business' or 'Society'
  */
 function renderSizes(space) {
   if (!sizeGrid || !SIZE_OPTIONS[space]) return;
@@ -334,7 +339,7 @@ function showStep(step, { moveFocus = true } = {}) {
  */
 function validateCurrentStep() {
   if (currentStep === 1 && !checkedValue("space")) {
-    setError("Please choose Home or Business to continue.");
+    setError("Please choose Home, Business or Housing society to continue.");
     const firstRadio = steps[0]?.querySelector('input[type="radio"]');
     firstRadio?.focus();
     return false;
@@ -429,7 +434,10 @@ function renderResult() {
   if (result) {
     result.classList.remove("hidden");
     result.focus();
-    result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    result.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "nearest"
+    });
   }
 
   window.dispatchEvent(
@@ -840,20 +848,87 @@ function initAnalytics() {
     });
   });
 
-  document
-    .querySelectorAll('a[href*="google.com/maps"], a[href*="g.page"], a[href*="review"]')
-    .forEach((link) => {
-      link.addEventListener("click", () => {
-        window.dispatchEvent(
-          new CustomEvent("sarathi:event", {
-            detail: { event: "google_review_link_click", href: link.href }
-          })
-        );
-      });
+  document.querySelectorAll('a[href*="g.page"], a[href*="review"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      window.dispatchEvent(
+        new CustomEvent("sarathi:event", {
+          detail: { event: "google_review_link_click", href: link.href }
+        })
+      );
     });
+  });
+
+  document.querySelectorAll('a[href*="google.com/maps"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      window.dispatchEvent(
+        new CustomEvent("sarathi:event", {
+          detail: { event: "location_map_click", href: link.href }
+        })
+      );
+    });
+  });
+}
+
+// Native optional sections remain usable without JavaScript; anchor links reveal their content.
+function revealAnchor(hash) {
+  const target = hash.startsWith("#") ? document.getElementById(hash.slice(1)) : null;
+  if (!target) return;
+  if (target instanceof HTMLDetailsElement) target.open = true;
+  for (let parent = target.parentElement; parent; parent = parent.parentElement) {
+    if (parent instanceof HTMLDetailsElement) parent.open = true;
+  }
+}
+
+function initNavigation() {
+  const toggle = document.querySelector(".menu-toggle");
+  const nav = document.querySelector("#main-navigation");
+  if (toggle && nav) {
+    toggle.hidden = false;
+    nav.dataset.menuReady = "true";
+    const closeMenu = ({ restoreFocus = false } = {}) => {
+      nav.classList.remove("is-open");
+      toggle.setAttribute("aria-expanded", "false");
+      if (restoreFocus) toggle.focus();
+    };
+    toggle.addEventListener("click", () => {
+      const isOpen = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(isOpen));
+      nav.classList.toggle("is-open", isOpen);
+    });
+    nav.addEventListener("click", (event) => {
+      const link = event.target.closest("a");
+      if (!link) return;
+      closeMenu();
+      const hash = link.getAttribute("href");
+      if (hash?.startsWith("#")) {
+        revealAnchor(hash);
+        const target = document.getElementById(hash.slice(1));
+        const focusTarget =
+          target instanceof HTMLDetailsElement ? target.querySelector("summary") : target;
+        if (focusTarget) {
+          if (!focusTarget.hasAttribute("tabindex") && focusTarget.tagName !== "SUMMARY") {
+            focusTarget.setAttribute("tabindex", "-1");
+          }
+          requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
+        }
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
+        closeMenu({ restoreFocus: true });
+      }
+    });
+    window.matchMedia("(max-width: 920px)").addEventListener("change", () => closeMenu());
+  }
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.addEventListener("click", () => revealAnchor(link.getAttribute("href")));
+  });
+  window.addEventListener("hashchange", () => revealAnchor(window.location.hash));
+  revealAnchor(window.location.hash);
 }
 
 // Initialise page
+initNavigation();
 renderCatalogue();
 showStep(1, { moveFocus: false });
 initFaqAccordion();

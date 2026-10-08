@@ -52,10 +52,11 @@ export const NEED_LABELS: Record<string, string>;
 export const SIZE_OPTIONS: {
   Home: readonly SizeOption[];
   Business: readonly SizeOption[];
+  Society: readonly SizeOption[];
 };
 
 export function buildRecommendation(input: {
-  space: "Home" | "Business";
+  space: "Home" | "Business" | "Society";
   needs: string[];
   size: "Compact" | "Standard" | "Large";
   enquiryOptions?: Record<string, Record<string, string | number>>;

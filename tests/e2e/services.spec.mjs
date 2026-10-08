@@ -3,6 +3,8 @@ import { SERVICE_CATALOGUE } from "../../recommendation.mjs";
 
 test("catalogue, planner and enquiry panels expose the same services", async ({ page }) => {
   await page.goto("/");
+  await page.locator("#services > summary").click();
+  await page.locator("#planner > summary").click();
   const expected = Object.keys(SERVICE_CATALOGUE);
   await expect(page.locator("#serviceGrid article")).toHaveCount(expected.length);
   expect(
@@ -32,6 +34,8 @@ for (const [id, work, detailField, detail] of [
   test(`${id} can be selected from its card and sent as a detailed enquiry`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
+    await page.locator("#services > summary").click();
+    await page.locator("#planner > summary").click();
     await page.locator(`#serviceGrid [data-service="${id}"] a`).click();
     await page.locator('input[name="space"][value="Business"]').locator("..").click();
     await page.locator("#nextButton").click();
@@ -84,6 +88,8 @@ test("details survive navigation, are excluded on deselection, and support safe 
     });
   });
   await page.goto("/");
+  await page.locator("#services > summary").click();
+  await page.locator("#planner > summary").click();
   await page.locator('input[name="space"][value="Home"]').locator("..").click();
   await page.locator("#nextButton").click();
   await page.locator('input[name="needs"][value="appliance"]').locator("..").click();
@@ -122,6 +128,8 @@ test("details survive navigation, are excluded on deselection, and support safe 
 
 test("all services can be combined with optional details left blank", async ({ page }) => {
   await page.goto("/");
+  await page.locator("#services > summary").click();
+  await page.locator("#planner > summary").click();
   await page.locator('input[name="space"][value="Home"]').locator("..").click();
   await page.locator("#nextButton").click();
   for (const id of Object.keys(SERVICE_CATALOGUE)) {
@@ -136,4 +144,17 @@ test("all services can be combined with optional details left blank", async ({ p
   for (const entry of Object.values(SERVICE_CATALOGUE)) {
     await expect(page.locator("#summaryText")).toContainText(entry.label);
   }
+});
+
+test("a service link reopens a closed planner even when its hash is already selected", async ({
+  page
+}) => {
+  await page.goto("/#planner");
+  await page.locator("#services > summary").click();
+  await page.locator("#planner > summary").click();
+  await expect(page.locator("#planner")).not.toHaveAttribute("open", "");
+  await page.locator('#serviceGrid [data-service="cctv"] a').click();
+  await expect(page.locator("#planner")).toHaveAttribute("open", "");
+  await expect(page.locator('input[name="needs"][value="cctv"]')).toBeChecked();
+  await expect(page.locator('.form-step[data-step="1"] legend')).toBeFocused();
 });

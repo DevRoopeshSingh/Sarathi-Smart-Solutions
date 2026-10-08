@@ -13,10 +13,10 @@ async function fillLead(form) {
 }
 
 for (const [source, width] of [
-  ["hero-quick-survey", 1440],
+  ["contact-survey", 1440],
   ["contact-survey", 375]
 ]) {
-  test(`${source}: validates, prepares an honest private handoff and prevents duplicates`, async ({
+  test(`${source} at ${width}px: validates, prepares an honest private handoff and prevents duplicates`, async ({
     page
   }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -120,7 +120,7 @@ for (const width of [320, 375, 768, 1024, 1440]) {
     await expect(page.locator(".hero-actions a").first()).toBeInViewport();
     const bar = page.locator(".floating-contact");
     await expect(bar).toBeInViewport();
-    await expect(bar.locator("a:visible")).toHaveCount(width <= 768 ? 1 : 3);
+    await expect(bar.locator("a:visible")).toHaveCount(1);
     for (const button of await bar.locator("a:visible").all()) {
       const box = await button.boundingBox();
       expect(box.x).toBeGreaterThanOrEqual(0);
@@ -129,6 +129,8 @@ for (const width of [320, 375, 768, 1024, 1440]) {
     }
     await page.screenshot({ path: testInfo.outputPath(`home-${width}.png`) });
     if (width === 375 || width === 1440) {
+      await page.locator(".technical-details > summary").click();
+      await page.locator("#services > summary").click();
       await page
         .locator("#camera-comparison")
         .screenshot({ path: testInfo.outputPath(`comparison-${width}.png`) });
@@ -244,7 +246,7 @@ test("keyboard form flow, reduced motion and local performance snapshot", async 
   await page.keyboard.press("Tab");
   await expect(page.locator(".skip-link")).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.locator("#planner")).toBeInViewport();
+  await expect(page.locator("#top")).toBeFocused();
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior)).toBe(
     "auto"
   );
@@ -276,4 +278,65 @@ test("keyboard form flow, reduced motion and local performance snapshot", async 
   await expect(form.locator('[type="submit"]')).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(form.locator(".lead-feedback")).toContainText("Your enquiry is ready");
+});
+
+test("one survey and qualified packages follow the homepage decision flow", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".lead-form")).toHaveCount(1);
+  await expect(page.locator("#services")).not.toHaveAttribute("open", "");
+  await expect(page.locator("#planner")).not.toHaveAttribute("open", "");
+  await expect(page.locator("#work-gallery")).toContainText("Illustrative installation examples");
+  for (const card of await page.locator(".package-card").all()) {
+    await expect(card.locator(".package-price")).toContainText("GST & site extras additional");
+    await expect(card.locator(".package-cta")).toHaveText("Enquire on WhatsApp");
+  }
+  const flow = await page
+    .locator("main > section, main > details")
+    .evaluateAll((sections) => sections.map((section) => section.id || section.className));
+  expect(flow.indexOf("work-gallery")).toBeLessThan(flow.indexOf("packages"));
+  expect(flow.indexOf("packages")).toBeLessThan(flow.indexOf("installation"));
+  expect(flow.indexOf("faq")).toBeLessThan(flow.indexOf("survey-form"));
+});
+
+for (const width of [390, 768, 920]) {
+  test(`mobile menu at ${width}px supports keyboard and closes after navigation`, async ({
+    page
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const menu = page.locator(".menu-toggle");
+    const nav = page.locator("#main-navigation");
+    await expect(menu).toBeVisible();
+    await expect(nav).toBeHidden();
+    await menu.focus();
+    await page.keyboard.press("Enter");
+    await expect(menu).toHaveAttribute("aria-expanded", "true");
+    await expect(nav).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeFocused();
+    await expect(menu).toHaveAttribute("aria-expanded", "false");
+    await menu.click();
+    await nav.locator('a[href="#services"]').click();
+    await expect(nav).toBeHidden();
+    await expect(page.locator("#services")).toHaveAttribute("open", "");
+    await expect(page.locator("#services > summary")).toBeInViewport();
+    await expect(page.locator("#services > summary")).toBeFocused();
+  });
+}
+
+test("mobile form controls remain reachable above the persistent enquiry action", async ({
+  page
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/#survey-form");
+  await expect(page.locator(".lead-submit-btn")).toBeEnabled();
+  await page.locator(".lead-submit-btn").focus();
+  await expect(page.locator(".lead-submit-btn")).toBeFocused();
+  const submit = await page.locator(".lead-submit-btn").boundingBox();
+  const contact = await page.locator(".floating-contact").boundingBox();
+  expect(submit.y + submit.height).toBeLessThanOrEqual(contact.y);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const footer = await page.locator(".footer-bottom").boundingBox();
+  expect(footer.y + footer.height).toBeLessThanOrEqual(contact.y);
 });

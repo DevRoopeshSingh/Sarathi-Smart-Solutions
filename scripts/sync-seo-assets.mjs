@@ -1,4 +1,4 @@
-/** Keep SEO pages, responsive images and native crawl data in the operations runtime. */
+/** Keep public pages, their runtime assets and native crawl data in operations. */
 import { copyFile, mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,9 @@ const files = PUBLIC_FILES.filter(
   (file) =>
     file === "index.html" ||
     file === "styles.css" ||
+    file === "app.js" ||
+    file === "locator.js" ||
+    file === "recommendation.mjs" ||
     file.endsWith(".webp") ||
     /^(cctv-|housing-society-cctv-).*\.html$/.test(file)
 );
@@ -16,6 +19,15 @@ for (const file of files) {
   await mkdir(dirname(fileURLToPath(destination)), { recursive: true });
   await copyFile(new URL(`../${file}`, import.meta.url), destination);
 }
+// The native homepage mounts the static body and imports its CSS from the public layout.
+await copyFile(
+  new URL("../styles.css", import.meta.url),
+  new URL("../operations/src/app/(public)/public.css", import.meta.url)
+);
+await copyFile(
+  new URL("../recommendation.mjs", import.meta.url),
+  new URL("../operations/src/lib/recommendation.mjs", import.meta.url)
+);
 const sitemap = await readFile(new URL("../sitemap.xml", import.meta.url), "utf8");
 const entries = [...sitemap.matchAll(/<url>([\s\S]*?)<\/url>/g)].map(([, entry]) => ({
   path: /<loc>__SITE_URL__([^<]*)<\/loc>/.exec(entry)[1],

@@ -67,7 +67,7 @@ test("homepage gallery serves responsive WebP files with an image content type",
 }) => {
   await page.goto("/");
   const images = page.locator("#work-gallery img");
-  await expect(images).toHaveCount(6);
+  await expect(images).toHaveCount(3);
   for (const img of await images.all()) {
     await expect(img).toHaveAttribute("srcset", /480w[\s\S]*960w[\s\S]*1200w/);
     const src = await img.getAttribute("src");

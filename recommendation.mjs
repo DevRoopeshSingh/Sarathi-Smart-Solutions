@@ -57,9 +57,9 @@ export const SERVICE_CATALOGUE = Object.freeze({
     "Indoor and outdoor cameras, recording and secure remote viewing.",
     "M4 8h11a2 2 0 0 1 2 2v6H4zM17 11l4-2v7l-4-2",
     [
-      "2–3 camera starting layout, recording and secure mobile viewing (Packages from ₹13,900)",
-      "4–6 camera starting layout, recording and secure mobile viewing (4-camera package from ₹17,900; additional cameras quoted after survey)",
-      "8+ camera multi-zone layout, recording and secure mobile viewing (Packages from ₹30,900)"
+      "2–3 camera starting layout, recording and secure mobile viewing (Packages from ₹13,900; GST and site extras additional, final quotation after survey)",
+      "4–6 camera starting layout, recording and secure mobile viewing (4-camera package from ₹17,900; GST and site extras additional, additional cameras quoted after survey)",
+      "Multi-zone coverage assessment, recording and secure mobile viewing; confirm camera count and quotation after a site survey"
     ],
     [
       choice("work", "CCTV requirement", [
@@ -153,7 +153,7 @@ export const SERVICE_CATALOGUE = Object.freeze({
       quantity("Number of locks"),
       note("Door and lock details", "Door material, existing lock or preferred access method")
     ],
-    { category: "core", ctaLabel: "Book Smart Lock Demo →" }
+    { category: "core", ctaLabel: "Enquire about smart locks →" }
   ),
   automation: service(
     "Home / business automation",
@@ -345,6 +345,11 @@ export const SIZE_OPTIONS = Object.freeze({
     { value: "Compact", title: "Compact", description: "Small shop / cabin" },
     { value: "Standard", title: "Standard", description: "Office / showroom" },
     { value: "Large", title: "Large", description: "Multi-zone / warehouse" }
+  ]),
+  Society: Object.freeze([
+    { value: "Compact", title: "Compact", description: "One building / shared entry" },
+    { value: "Standard", title: "Standard", description: "Multiple buildings / shared parking" },
+    { value: "Large", title: "Large", description: "Large complex / multiple shared zones" }
   ])
 });
 
@@ -392,7 +397,7 @@ export function describeEnquiryOptions(needs, enquiryOptions = {}) {
  * Formats a clean, professional enquiry text for sharing or WhatsApp.
  *
  * @param {Object} params
- * @param {string} params.space - 'Home' or 'Business'
+ * @param {string} params.space - 'Home', 'Business', or 'Society'
  * @param {string[]} params.needs - Array of need keys
  * @param {string} params.size - 'Compact', 'Standard', or 'Large'
  * @param {string} params.title - Calculated bundle title
@@ -469,18 +474,56 @@ export function formatPackageWhatsAppMessage({ packageName, startingPrice }) {
   return lines.join("\n");
 }
 
+/** Answers have already passed catalogue validation before deriving service guidance. */
+function cctvGuidance(space, size, options = {}) {
+  const work = Object.hasOwn(options, "work") ? String(options.work).trim() : "";
+  const quantity = Object.hasOwn(options, "quantity") ? Number(String(options.quantity).trim()) : 0;
+  const cameras = quantity
+    ? `${quantity} ${quantity === 1 ? "camera" : "cameras"}`
+    : "the existing CCTV system";
+
+  if (work === "Repair / troubleshooting") {
+    return `Diagnose faults affecting ${cameras}, including power, cabling, recording and mobile viewing as relevant; confirm repair scope and parts before quotation`;
+  }
+  if (work === "Maintenance / AMC") {
+    return `Inspect and maintain ${cameras}; check camera condition, recording and remote viewing, then agree the maintenance schedule, support terms and parts exclusions in writing`;
+  }
+  if (work === "Upgrade existing cameras") {
+    return `Assess ${cameras} for an upgrade; review existing cameras, recorder, storage and cabling compatibility before recommending replacements or quoting`;
+  }
+  if (space === "Society") {
+    const scope = quantity
+      ? `the requested ${cameras}`
+      : "shared entrances, parking and common areas";
+    return `Housing society site assessment for ${scope}; confirm coverage, recorder and storage needs, cable routes and society permissions before recommending equipment and quoting`;
+  }
+  if (quantity) {
+    if (work !== "New installation") {
+      return `Assess the requested ${cameras}; confirm whether new installation, repair or an upgrade is needed, then review coverage and equipment before quotation`;
+    }
+    const packagePrices = { 2: "13,900", 3: "15,900", 4: "17,900", 8: "30,900" };
+    const price = packagePrices[quantity];
+    return `Plan a new installation for ${cameras}, recording and secure mobile viewing; ${
+      price
+        ? `${quantity}-camera package starts at ₹${price}, with GST and site extras additional; final equipment and quotation follow a site survey`
+        : "camera placement, recorder capacity, storage and cabling require a site survey and a tailored quotation"
+    }`;
+  }
+  return SERVICE_CATALOGUE.cctv.details[size];
+}
+
 /**
  * Evaluates user selections and returns a coordinated service recommendation bundle.
  *
  * @param {Object} input
- * @param {string} input.space - 'Home' or 'Business'
+ * @param {string} input.space - 'Home', 'Business', or 'Society'
  * @param {string[]} input.needs - Array of chosen service need keys
  * @param {string} input.size - 'Compact', 'Standard', or 'Large'
  * @returns {{ title: string, intro: string, items: Array<{ key: string, title: string, detail: string }>, summary: string }}
  * @throws {Error} if any parameter is missing, invalid, or unknown
  */
 export function buildRecommendation({ space, needs, size, enquiryOptions = {} }) {
-  if (!space || !["Home", "Business"].includes(space)) {
+  if (typeof space !== "string" || !Object.hasOwn(SIZE_OPTIONS, space)) {
     throw new Error("Choose a valid space.");
   }
   if (!Array.isArray(needs) || needs.length === 0) {
@@ -504,27 +547,66 @@ export function buildRecommendation({ space, needs, size, enquiryOptions = {} })
   const includesCareService = needs.some((need) =>
     ["electrical", "appliance", "it", "tv", "ev"].includes(need)
   );
-  const title = includesCareService
-    ? needs.length === 1
-      ? `${NEED_LABELS[needs[0]]} Plan`
-      : "Home & Business Service Plan"
-    : complexity >= 6
-      ? "Smart Site 360 Bundle"
-      : complexity >= 3
-        ? "Connected Control Bundle"
-        : "Secure Start Bundle";
+  const cctvOptions =
+    needs.includes("cctv") && Object.hasOwn(enquiryOptions, "cctv") ? enquiryOptions.cctv : {};
+  const cctvWork = Object.hasOwn(cctvOptions, "work") ? String(cctvOptions.work).trim() : "";
+  const cctvQuantity = Object.hasOwn(cctvOptions, "quantity")
+    ? Number(String(cctvOptions.quantity).trim())
+    : 0;
+  const unspecifiedCctvWork = needs.includes("cctv") && !cctvWork && cctvQuantity > 0;
+  const needsAssessment =
+    space === "Society" ||
+    needs.includes("amc") ||
+    unspecifiedCctvWork ||
+    (needs.includes("cctv") &&
+      ["Repair / troubleshooting", "Upgrade existing cameras", "Maintenance / AMC"].includes(
+        cctvWork
+      ));
+  const cctvPlanTitles = {
+    "Repair / troubleshooting": "CCTV Repair Assessment",
+    "Upgrade existing cameras": "CCTV Upgrade Assessment",
+    "Maintenance / AMC": "CCTV Maintenance Plan"
+  };
+  const title = needsAssessment
+    ? needs.length === 1 && needs[0] === "cctv" && cctvPlanTitles[cctvWork]
+      ? cctvPlanTitles[cctvWork]
+      : needs.length === 1 && needs[0] === "amc"
+        ? "CCTV Maintenance Plan"
+        : space === "Society"
+          ? "Housing Society Assessment"
+          : needs.length === 1 && unspecifiedCctvWork
+            ? "CCTV Site Assessment"
+            : "Assessment & Service Plan"
+    : includesCareService
+      ? needs.length === 1
+        ? `${NEED_LABELS[needs[0]]} Plan`
+        : "Home & Business Service Plan"
+      : complexity >= 6
+        ? "Smart Site 360 Bundle"
+        : complexity >= 3
+          ? "Connected Control Bundle"
+          : "Secure Start Bundle";
 
-  const items = needs.map((need) => ({
-    key: need,
-    title: NEED_LABELS[need],
-    detail: [SERVICE_CATALOGUE[need].details[size], ...answers[need]].join(" · ")
-  }));
+  const items = needs.map((need) => {
+    let guidance = SERVICE_CATALOGUE[need].details[size];
+    if (need === "cctv") guidance = cctvGuidance(space, size, cctvOptions);
+    if (need === "amc" && space === "Society") {
+      guidance =
+        "Housing society CCTV health assessment; agree the maintenance schedule, support terms and parts exclusions after inspecting the existing system";
+    }
+    return {
+      key: need,
+      title: NEED_LABELS[need],
+      detail: [guidance, ...answers[need]].join(" · ")
+    };
+  });
 
   items.push({
     key: "setup",
-    title: includesCareService
-      ? "Assessment, service & handover"
-      : "Planning, installation & handover",
+    title:
+      includesCareService || needsAssessment
+        ? "Assessment, service & handover"
+        : "Planning, installation & handover",
     detail:
       "Confirm the requested work and site conditions, agree a quotation, then complete the service and handover"
   });
