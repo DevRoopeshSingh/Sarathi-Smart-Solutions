@@ -120,7 +120,12 @@ for (const width of [320, 375, 768, 1024, 1440]) {
     await expect(page.locator(".hero-actions a").first()).toBeInViewport();
     const bar = page.locator(".floating-contact");
     await expect(bar).toBeInViewport();
-    await expect(bar.locator("a:visible")).toHaveCount(1);
+    await expect(bar.locator("a:visible")).toHaveCount(width <= 767 ? 2 : 1);
+    if (width <= 767) {
+      await expect(bar.locator(".call-pill")).toHaveAttribute("href", "tel:+918369704457");
+      await expect(bar.locator(".call-pill")).toHaveAccessibleName(/Call Sarathi Smart Solutions/);
+      await expect(bar.locator(".wa-pill .pill-text:visible")).toHaveText("WhatsApp");
+    }
     for (const button of await bar.locator("a:visible").all()) {
       const box = await button.boundingBox();
       expect(box.x).toBeGreaterThanOrEqual(0);
@@ -339,4 +344,82 @@ test("mobile form controls remain reachable above the persistent enquiry action"
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   const footer = await page.locator(".footer-bottom").boundingBox();
   expect(footer.y + footer.height).toBeLessThanOrEqual(contact.y);
+});
+
+for (const width of [320, 375, 767, 1440]) {
+  test(`quick package comparison at ${width}px matches the listed packages and stays usable`, async ({
+    page
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const comparison = page.locator("#package-quick-comparison");
+    const summary = comparison.locator("summary");
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await expect(comparison).toHaveAttribute("open", "");
+    const table = comparison.locator("table");
+    await expect(table.locator("tbody tr")).toHaveCount(4);
+    const packages = await page.locator(".package-card").evaluateAll((cards) =>
+      cards.map((card) => ({
+        cameras: card.querySelector(".package-badge").textContent.trim(),
+        price: card.querySelector(".price-val").textContent.trim(),
+        coverage: card.querySelector(".package-suitability").textContent.trim(),
+        recorder: card
+          .querySelector(".package-highlights li")
+          .textContent.trim()
+          .replace(" HD DVR", ""),
+        storage: card
+          .querySelector(".package-highlights li:nth-child(2)")
+          .textContent.trim()
+          .split(" ")[0]
+      }))
+    );
+    const rows = await table
+      .locator("tbody tr")
+      .evaluateAll((rows) =>
+        rows.map((row) => [...row.children].map((cell) => cell.textContent.trim()))
+      );
+    expect(rows).toEqual(packages.map((item) => Object.values(item)));
+    await expect(comparison.locator("#package-comparison-note")).toContainText(
+      "GST and site extras are additional"
+    );
+    const region = comparison.getByRole("region", { name: "HD CCTV package comparison" });
+    await region.focus();
+    await expect(region).toBeFocused();
+    if (width <= 767) {
+      await expect(comparison.locator(".package-scroll-hint")).toBeVisible();
+      expect(await region.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+      await page.keyboard.press("ArrowRight");
+      await expect.poll(() => region.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+      // The scroll region moves independently of the page.
+      await region.evaluate((el) => {
+        el.scrollLeft = el.scrollWidth;
+      });
+      expect(await region.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width
+    );
+    await region.evaluate((el) => {
+      el.scrollLeft = 0;
+    });
+    await comparison.screenshot({ path: testInfo.outputPath(`package-comparison-${width}.png`) });
+  });
+}
+
+test("mobile contact actions and package comparison work without JavaScript", async ({
+  browser
+}) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 375, height: 812 }
+  });
+  const page = await context.newPage();
+  await page.goto("/");
+  const bar = page.locator(".floating-contact");
+  await expect(bar.locator(".call-pill")).toBeVisible();
+  await expect(bar.locator(".wa-pill")).toBeVisible();
+  await page.locator("#package-quick-comparison summary").click();
+  await expect(page.locator("#package-quick-comparison table")).toBeVisible();
+  await context.close();
 });
