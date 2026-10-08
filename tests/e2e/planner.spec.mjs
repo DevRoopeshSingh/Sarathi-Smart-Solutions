@@ -102,7 +102,8 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
 
     // Step 3: Size selection
     const standardSize = page.locator('input[name="size"][value="Standard"]');
-    await standardSize.check({ force: true });
+    await standardSize.locator("..").click();
+    await expect(standardSize).toBeChecked();
     await page.locator("#nextButton").click();
 
     // Verify Result display

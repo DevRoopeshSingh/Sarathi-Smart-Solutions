@@ -185,6 +185,8 @@ export const CONTACT_CONFIG = Object.freeze({
 
 For the complete, step-by-step production deployment guide, refer to the **[Cloudflare Pages Deployment Runbook](DEPLOYMENT.md)**.
 
+The static build fingerprints CSS and JavaScript filenames, while HTML and legacy runtime URLs revalidate. See [Cache-safe deployments](docs/CACHE_SAFE_DEPLOYMENTS.md) for the publishing and cache verification steps.
+
 When preparing to publish this website to production:
 
 1. **Production Domain Configuration**:

@@ -2,6 +2,8 @@
 
 This document provides a step-by-step, zero-cost production deployment guide for **Sarathi Smart Solutions** using **Cloudflare Pages**.
 
+For the current asset fingerprinting, HTML revalidation policy, and post-deployment checks, follow [Cache-safe deployments](docs/CACHE_SAFE_DEPLOYMENTS.md). Publish the complete `dist/` build, including its `_headers` file and hashed runtime assets.
+
 ---
 
 ## 1. Why Cloudflare Pages?
