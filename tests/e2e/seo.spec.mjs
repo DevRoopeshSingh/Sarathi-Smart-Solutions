@@ -61,6 +61,37 @@ for (const slug of services) {
   });
 }
 
+test("homepage identifies a crawlable CCTV photo separately from its logo", async ({
+  page,
+  request
+}) => {
+  await page.goto("/");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /max-image-preview:large/
+  );
+  const photo = await page.locator('meta[property="og:image"]').getAttribute("content");
+  expect(photo).toMatch(/^https?:\/\/.*\/assets\/images\/camera-mounting-1200\.webp$/);
+  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", photo);
+  await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
+  await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute("content", "896");
+  const data = await page
+    .locator('script[type="application/ld+json"]')
+    .evaluateAll((scripts) => scripts.flatMap((script) => JSON.parse(script.textContent)));
+  const webPage = data.find((item) => item["@type"] === "WebPage");
+  const business = data.find((item) => item["@type"] === "HomeAndConstructionBusiness");
+  expect(webPage.primaryImageOfPage.url).toBe(photo);
+  expect(webPage.primaryImageOfPage.width).toBe(1200);
+  expect(webPage.primaryImageOfPage.height).toBe(896);
+  expect(business.image).toBe(photo);
+  expect(business.logo).not.toBe(photo);
+  expect(business.logo).toMatch(/sarathi-logo-light-2048\.png$/);
+  const response = await request.get(new URL(photo).pathname);
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("image/webp");
+  expect((await request.get(new URL(business.logo).pathname)).status()).toBe(200);
+});
+
 test("homepage gallery serves responsive WebP files with an image content type", async ({
   page,
   request

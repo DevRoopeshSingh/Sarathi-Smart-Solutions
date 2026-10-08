@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
   description:
     "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
-  robots: { index: true, follow: true },
+  robots: { index: true, follow: true, "max-image-preview": "large" },
   alternates: {
     canonical: "/"
   },
@@ -21,19 +21,24 @@ export const metadata: Metadata = {
     locale: "en_IN",
     images: [
       {
-        url: "/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png",
-        width: 2048,
-        height: 2048,
-        alt: "Sarathi Smart Solutions — CCTV and security"
+        url: "/assets/images/camera-mounting-1200.webp",
+        width: 1200,
+        height: 896,
+        alt: "Illustrative CCTV camera setup with protected cabling"
       }
     ]
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
     description:
       "CCTV camera installation, Wi‑Fi networking, smart locks, access control, and AMC for homes, shops, offices, and societies in Mira-Bhayandar and Thane. Free site survey and transparent quotations.",
-    images: ["/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png"]
+    images: [
+      {
+        url: "/assets/images/camera-mounting-1200.webp",
+        alt: "Illustrative CCTV camera setup with protected cabling"
+      }
+    ]
   }
 };
 
@@ -43,7 +48,8 @@ const businessJsonLd = {
   name: "Sarathi Smart Solutions",
   description:
     "Turnkey CCTV camera installation, structured Wi‑Fi networking, and smart security systems for homes, shops, offices, and housing societies in Mira-Bhayandar, Thane, and Mumbai MMR.",
-  image: `${siteUrl}/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png`,
+  image: `${siteUrl}/assets/images/camera-mounting-1200.webp`,
+  logo: `${siteUrl}/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png`,
   telephone: "+918369704457",
   email: "sarathismartsolutions@gmail.com",
   address: {
@@ -67,6 +73,23 @@ const businessJsonLd = {
   sameAs: ["https://share.google/yKDsOqWwMYGzaVRIh"],
   "@id": `${siteUrl}/#business`,
   url: `${siteUrl}/`
+};
+
+const webPageJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "@id": `${siteUrl}/#webpage`,
+  url: `${siteUrl}/`,
+  name: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
+  mainEntity: { "@id": `${siteUrl}/#business` },
+  primaryImageOfPage: {
+    "@type": "ImageObject",
+    url: `${siteUrl}/assets/images/camera-mounting-1200.webp`,
+    contentUrl: `${siteUrl}/assets/images/camera-mounting-1200.webp`,
+    width: 1200,
+    height: 896,
+    caption: "Illustrative CCTV camera setup with protected cabling"
+  }
 };
 
 const serviceJsonLd = {
@@ -157,6 +180,10 @@ export default function PublicLayout({ children }: Readonly<{ children: React.Re
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd).replace(/</g, "\\u003c") }}
       />
       <script
         type="application/ld+json"
