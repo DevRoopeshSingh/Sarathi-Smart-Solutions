@@ -3,6 +3,9 @@ import { hashPassword } from "better-auth/crypto";
 import { Pool } from "pg";
 
 async function main() {
+  const organizationSlug = process.env.SARATHI_ORGANIZATION_SLUG ?? "sarathi";
+  if (!/^[a-z][a-z0-9-]{1,62}$/.test(organizationSlug))
+    throw new Error("Invalid organization slug.");
   const email = (process.env.SARATHI_ADMIN_EMAIL ?? "").trim().toLowerCase();
   const name = (process.env.SARATHI_ADMIN_NAME ?? "").trim();
   const role = process.env.SARATHI_USER_ROLE ?? "ADMIN";
@@ -51,6 +54,23 @@ async function main() {
       "INSERT INTO sarathi.users (identity_subject, display_name, role, active) VALUES ($1, $2, $3, true)",
       [identity, name, role]
     );
+    const membership = await client.query(
+      `
+      INSERT INTO sarathi.organization_memberships(organization_id,user_id,role)
+      SELECT o.id,u.id,u.role FROM sarathi.organizations o CROSS JOIN sarathi.users u
+      WHERE o.slug=$2 AND o.active AND u.identity_subject=$1
+      RETURNING id,organization_id`,
+      [identity, organizationSlug]
+    );
+    if (membership.rowCount !== 1) throw new Error("Initial organization is unavailable.");
+    const assignment = await client.query(
+      `
+      INSERT INTO sarathi.division_assignments(organization_id,membership_id,division_id)
+      SELECT $1,$2,d.id FROM sarathi.divisions d
+      WHERE d.organization_id=$1 AND d.slug='smart-solutions' AND d.active`,
+      [membership.rows[0].organization_id, membership.rows[0].id]
+    );
+    if (assignment.rowCount !== 1) throw new Error("Operational division is unavailable.");
     await client.query("COMMIT");
     console.log(`${role} account created. Existing accounts are never changed by this command.`);
   } catch (error) {

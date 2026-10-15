@@ -45,3 +45,8 @@ for (const file of ["robots.txt", "sitemap.xml"]) {
   await rm(new URL(`../operations/public/${file}`, import.meta.url), { force: true });
 }
 console.log(`Synced ${files.length} SEO assets and ${entries.length} sitemap entries.`);
+
+await copyFile(
+  new URL("../server/domain/commercial.mjs", import.meta.url),
+  new URL("../operations/src/lib/commercial.mjs", import.meta.url)
+);

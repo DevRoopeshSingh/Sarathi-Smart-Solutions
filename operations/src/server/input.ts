@@ -1,5 +1,7 @@
 import "server-only";
+import { validCustomerPhone } from "../lib/customer-contact";
 import { LEAD_STATUSES, PROJECT_STATUSES } from "../lib/operations";
+import { isProjectService, PROJECT_SERVICE_OPTIONS } from "../lib/project-services";
 import { InputError } from "./mutation-errors";
 export { InputError } from "./mutation-errors";
 
@@ -96,12 +98,16 @@ export interface CreateCustomerInput {
   address?: string;
 }
 export function validateCustomer(data: CreateCustomerInput) {
+  if (!data || typeof data !== "object") throw new InputError("Invalid customer submission.");
+  const phone = boundedText(data.phone, "Phone", 32);
+  if (!validCustomerPhone(phone))
+    throw new InputError("Enter a valid phone number with 7–15 digits.");
   const email = boundedText(data.email ?? "", "Email", 254, false);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     throw new InputError("Enter a valid email address.");
   return {
     name: boundedText(data.name, "Name", 200),
-    phone: boundedText(data.phone, "Phone", 32),
+    phone,
     email: email || null,
     address: boundedText(data.address ?? "", "Address", 1000, false) || null
   };
@@ -123,14 +129,23 @@ export interface CreateProjectInput {
   serviceTypes?: string[];
   leadId?: string;
 }
-export function validateProject(data: CreateProjectInput) {
-  const serviceTypes = data.serviceTypes ?? ["cctv"];
-  if (!Array.isArray(serviceTypes) || serviceTypes.length < 1 || serviceTypes.length > 20) {
-    throw new InputError("Provide between 1 and 20 services.");
+function projectServices(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > PROJECT_SERVICE_OPTIONS.length) {
+    throw new InputError(`Choose between 1 and ${PROJECT_SERVICE_OPTIONS.length} services.`);
   }
-  const services = serviceTypes.map((value) => boundedText(value, "Service", 80));
+  const services = Array.from(value, (value) => {
+    const service = boundedText(value, "Service", 80);
+    if (service !== value || !isProjectService(service)) {
+      throw new InputError("Choose a valid project service.");
+    }
+    return service;
+  });
   if (new Set(services).size !== services.length)
     throw new InputError("Services must not be repeated.");
+  return services;
+}
+export function validateProject(data: CreateProjectInput) {
+  const services = projectServices(data.serviceTypes === undefined ? ["cctv"] : data.serviceTypes);
   return {
     customerId: databaseId(data.customerId, "Customer"),
     leadId: data.leadId === undefined ? null : databaseId(data.leadId, "Lead"),
@@ -147,6 +162,6 @@ export function projectForm(form: FormData): CreateProjectInput {
     name: formText(form, "name", "Project name", 200),
     siteAddress: formText(form, "siteAddress", "Site address", 1000),
     scope: formText(form, "scope", "Scope", 5000, false),
-    serviceTypes: ["cctv"]
+    serviceTypes: projectServices(form.getAll("serviceTypes"))
   };
 }

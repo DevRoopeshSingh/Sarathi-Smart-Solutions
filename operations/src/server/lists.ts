@@ -1,5 +1,6 @@
+import type { TenantPool } from "./tenant-pool";
 import "server-only";
-import type { Pool } from "pg";
+import { customerSearch } from "../lib/customer-contact";
 import type {
   LeadRecord,
   CustomerRecord,
@@ -36,14 +37,15 @@ const lists = {
     status: "status"
   },
   customers: {
-    select: `SELECT c.id::text, c.name, c.phone, c.email, c.address,
+    select: `SELECT c.id::text, c.name, c.phone, c.email, c.address, c.version, c.updated_at::text AS "updatedAt",
            (SELECT count(*)::int FROM sarathi.projects p WHERE p.customer_id=c.id) AS "projectCount",
            to_char(c.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt"
     `,
     from: `FROM sarathi.customers c`,
     id: "c.id",
-    search: "concat_ws(' ', c.name, c.phone, c.address)",
-    status: "''"
+    search: "concat_ws(' ', c.name, c.phone, c.normalized_phone, c.email, c.address)",
+    status:
+      "CASE WHEN EXISTS(SELECT 1 FROM sarathi.projects p WHERE p.customer_id=c.id) THEN 'HAS_PROJECTS' ELSE 'NO_PROJECTS' END"
   },
   projects: {
     select: `SELECT p.id::text, p.customer_id::text AS "customerId", c.name AS "customerName",
@@ -59,29 +61,31 @@ const lists = {
     status: "p.operational_status"
   },
   quotes: {
-    select: `SELECT q.id::text, q.project_id::text AS "projectId", p.name AS "projectName",
-           q.customer_id::text AS "customerId", c.name AS "customerName",
-           q.version, q.status,
+    select: `SELECT q.id::text, q.project_id::text AS "projectId", coalesce(p.name,q.title) AS "projectName",q.quote_number AS "quotationNumber",
+           q.customer_id::text AS "customerId", q.customer_name AS "customerName",
+           q.version, q.status,(q.status='SENT' AND q.valid_until<(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date) AS expired,
            q.subtotal::text, q.discount::text, q.tax_amount::text AS "taxAmount",
            q.total::text AS "quoteTotal",
            to_char(q.sent_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "issuedAt",
            to_char(q.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt"`,
     from: `FROM sarathi.quotations q
-    JOIN sarathi.projects p ON p.id = q.project_id
+    LEFT JOIN sarathi.projects p ON p.id = q.project_id
     JOIN sarathi.customers c ON c.id = q.customer_id`,
     id: "q.id",
-    search: "concat_ws(' ', p.name, c.name)",
-    status: "q.status"
+    search: "concat_ws(' ', p.name, q.title, q.customer_name,q.quote_number)",
+    status:
+      "CASE WHEN q.status='SENT' AND q.valid_until<(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date THEN 'EXPIRED' ELSE q.status END"
   },
   payments: {
-    select: `SELECT pay.id::text, pay.project_id::text AS "projectId", p.name AS "projectName",
+    select: `SELECT pay.id::text, pay.project_id::text AS "projectId", coalesce(p.name,q.title) AS "projectName",
            pay.quotation_id::text AS "quotationId", pay.kind,
            pay.amount::text, pay.payment_method AS "paymentMethod", pay.reference,
            to_char(pay.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt"`,
     from: `FROM sarathi.payments pay
-    JOIN sarathi.projects p ON p.id = pay.project_id`,
+    LEFT JOIN sarathi.projects p ON p.id = pay.project_id
+    LEFT JOIN sarathi.quotations q ON q.id = pay.quotation_id`,
     id: "pay.id",
-    search: "concat_ws(' ', p.name, pay.reference)",
+    search: "concat_ws(' ', p.name, q.title, pay.receipt_number, pay.reference)",
     status: "pay.kind"
   }
 } as const;
@@ -99,14 +103,17 @@ export function readListQuery(params: SearchParameters): ListQuery {
 }
 const pattern = (q: string) => `%${q.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
 export async function getListPage<K extends keyof Records>(
-  pool: Pool,
+  pool: TenantPool,
   kind: K,
   input: ListQuery
 ): Promise<ListPage<Records[K]>> {
   const config = lists[kind];
   const query = readListQuery(input);
   const filter = ` WHERE ($1 = '' OR ${config.search} ILIKE $1) AND ($2 = '' OR ${config.status} = $2)`;
-  const values = [query.q ? pattern(query.q) : "", query.status || ""];
+  const values = [
+    query.q ? pattern(kind === "customers" ? customerSearch(query.q) : query.q) : "",
+    query.status || ""
+  ];
   const [rows, counts] = await Promise.all([
     pool.query<Records[K]>(
       `${config.select} ${config.from}${filter}
@@ -121,17 +128,17 @@ export async function getListPage<K extends keyof Records>(
   const items = rows.rows.slice(0, 50);
   return { items, total, next: rows.rows.length > 50 ? items.at(-1)!.id : null };
 }
-export async function customerOptions(pool: Pool, input: string): Promise<CustomerOption[]> {
+export async function customerOptions(pool: TenantPool, input: string): Promise<CustomerOption[]> {
   const q = boundedText(input, "Search", 100, false);
   const result = await pool.query<CustomerOption>(
     `SELECT id::text, name, phone
-    FROM sarathi.customers WHERE ($1='' OR concat_ws(' ',name,phone) ILIKE $1)
+    FROM sarathi.customers WHERE ($1='' OR concat_ws(' ',name,phone,normalized_phone) ILIKE $1)
     ORDER BY customers.id DESC LIMIT 25`,
-    [q ? pattern(q) : ""]
+    [q ? pattern(customerSearch(q)) : ""]
   );
   return result.rows;
 }
-export async function projectCounts(pool: Pool): Promise<Record<string, number>> {
+export async function projectCounts(pool: TenantPool): Promise<Record<string, number>> {
   const result = await pool.query<{
     status: string;
     count: string;

@@ -1,7 +1,8 @@
 import "server-only";
-import { requirePermission } from "./dal";
+import { requirePermission, authorizedDatabase } from "./dal";
 import { getPool } from "./db";
 import { databaseId } from "./input";
+import { getProjectServiceLabel } from "../lib/project-services";
 import {
   stageInfo,
   type ActivityEvent,
@@ -22,6 +23,7 @@ type RecordRow = {
   customer?: string;
   address?: string;
   scope?: string;
+  serviceTypes?: string[];
   version?: number;
   total?: string;
   subtotal?: string;
@@ -56,14 +58,13 @@ export async function getWorkflowDetail(
   kind: WorkflowKind,
   rawId: string
 ): Promise<WorkflowDetail | null> {
-  await requirePermission(headers, permissions[kind]);
+  const { pool } = await authorizedDatabase(headers, permissions[kind]);
   let id: string;
   try {
     id = databaseId(rawId);
   } catch {
     return null;
   }
-  const pool = getPool();
   let row: RecordRow | undefined;
   if (kind === "lead") {
     row = (
@@ -79,7 +80,7 @@ export async function getWorkflowDetail(
       await pool.query<RecordRow>(
         `SELECT p.id::text, p.name AS title, p.operational_status AS status,
       p.lead_id::text AS "leadId", p.id::text AS "projectId", c.name AS customer, p.site_address AS address,
-      p.scope, p.on_hold AS "onHold", p.hold_reason AS "holdReason"
+      p.scope, p.service_types AS "serviceTypes", p.on_hold AS "onHold", p.hold_reason AS "holdReason"
       FROM sarathi.projects p JOIN sarathi.customers c ON c.id=p.customer_id WHERE p.id=$1`,
         [id]
       )
@@ -87,10 +88,10 @@ export async function getWorkflowDetail(
   } else {
     row = (
       await pool.query<RecordRow>(
-        `SELECT q.id::text, p.name AS title, q.status, p.lead_id::text AS "leadId",
+        `SELECT q.id::text, coalesce(p.name,q.title) AS title, q.status, p.lead_id::text AS "leadId",
       q.project_id::text AS "projectId", q.customer_name AS customer, q.site_address AS address, q.version,
       q.subtotal::text, q.service_charges::text AS "serviceCharges", q.discount::text, q.tax_amount::text AS tax,
-      q.total::text, q.terms FROM sarathi.quotations q JOIN sarathi.projects p ON p.id=q.project_id WHERE q.id=$1`,
+      q.total::text, q.terms FROM sarathi.quotations q LEFT JOIN sarathi.projects p ON p.id=q.project_id WHERE q.id=$1`,
         [id]
       )
     ).rows[0];
@@ -152,6 +153,10 @@ export async function getWorkflowDetail(
         ? [
             { label: "Customer", value: row.customer ?? null },
             { label: "Site address", value: row.address ?? null },
+            {
+              label: "Services",
+              value: row.serviceTypes?.map(getProjectServiceLabel).join(", ") || null
+            },
             { label: "Scope", value: row.scope ?? null }
           ]
         : [

@@ -4,7 +4,7 @@ import { hashPassword } from "better-auth/crypto";
 
 if (process.env.OPERATIONS_TEST_ISOLATED !== "1" || !process.env.OPERATIONS_TEST_PASSWORD)
   throw new Error("Runtime fixtures may only be created by the isolated test harness.");
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+const client = new pg.Client({ connectionString: process.env.DATABASE_MIGRATION_URL });
 await client.connect();
 try {
   const password = await hashPassword(process.env.OPERATIONS_TEST_PASSWORD);
@@ -37,6 +37,12 @@ try {
   }
   await client.query(`UPDATE sarathi.users SET onboarding_completed_at=now() WHERE identity_subject IN
     (SELECT id FROM sarathi.auth_users WHERE email <> 'newcomer@example.test')`);
+  await client.query(`INSERT INTO sarathi.organization_memberships(organization_id,user_id,role,active)
+    SELECT o.id,u.id,u.role,u.active FROM sarathi.users u CROSS JOIN sarathi.organizations o
+    WHERE o.slug='sarathi'`);
+  await client.query(`INSERT INTO sarathi.division_assignments(organization_id,membership_id,division_id)
+    SELECT m.organization_id,m.id,d.id FROM sarathi.organization_memberships m
+    JOIN sarathi.divisions d ON d.organization_id=m.organization_id AND d.slug='smart-solutions'`);
   await client.query("COMMIT");
 } catch (error) {
   await client.query("ROLLBACK");

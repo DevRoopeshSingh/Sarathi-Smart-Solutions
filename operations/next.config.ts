@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  serverExternalPackages: ["pdfkit"],
+  outputFileTracingIncludes: { "/*": ["./src/server/documents/fonts/*.ttf"] },
   turbopack: { root: fileURLToPath(new URL(".", import.meta.url)) },
   async redirects() {
     return [

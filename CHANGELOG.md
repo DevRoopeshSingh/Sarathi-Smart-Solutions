@@ -4,6 +4,17 @@ All notable changes to the Sarathi Smart Solutions website project will be docum
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-10-15
+
+### Added (Sarathi Business Manager - `operations/`)
+
+- **Multi-Service Project Selection (Milestone 1)**: Catalog-backed multi-service selection for projects and lead conversions with strict server validation.
+- **Multi-Organization Tenant Foundation & RLS (Milestone 2)**: Database migrations 006 & 007 establishing composite primary/foreign keys, tenant context resolution, Row-Level Security, and scoped DAL (`authorizedDatabase`/`TenantPool`).
+- **Customer Management V2 (Milestone 3)**: Migration 008 adding scoped customer profiles, composite editing, advisory duplicate detection, and linked timeline history.
+- **Quotation Management & A4 PDF Engine (Milestone 4)**: Migration 009 adding exact paise arithmetic, catalog drafts, revisions, staff acceptance/rejection decisions, accepted baselines, and private PDF rendering with embedded Noto fonts.
+- **Payment & Receipt Management (Milestone 5)**: Migration 010 adding manual receipts (Cash/UPI/Bank/Card), partial advances and allocations, staff refund/correction audit trails, balance reconciliation, and private PDF receipt generation.
+- **SEO & Canonical Improvements**: Optimized page titles (<60 chars) and meta descriptions (<160 chars) for homepage and Digital Seva Kendra; resolved clean URL canonicalization in `sitemap.xml`.
+
 ---
 
 ## [1.1.0] - 2026-09-16

@@ -1,6 +1,8 @@
 import "server-only";
 import { getListPage, customerOptions, projectCounts, type ListQuery } from "./lists";
-import { getAuth } from "./auth";
+import { getIdentityActor } from "./identity";
+import { currentOrganization } from "./tenancy";
+import { tenantPool } from "./tenant-pool";
 import { getPool } from "./db";
 
 import type {
@@ -13,7 +15,7 @@ import type {
   ManagedUser
 } from "../lib/operations";
 import type { Permission, Role } from "./permissions";
-import { hasPermission, isRole } from "./permissions";
+import { isRole } from "./permissions";
 import { databaseId } from "./input";
 export type {
   AdminActor,
@@ -30,20 +32,35 @@ import * as business from "./business";
 import type { CreateLeadInput, CreateCustomerInput, CreateProjectInput } from "./input";
 
 export async function getActor(headers: Headers): Promise<AdminActor | null> {
-  const session = await getAuth().api.getSession({ headers, query: { disableCookieCache: true } });
-  if (!session) return null;
-  const result = await getPool().query<AdminActor>(
-    `
-    SELECT actor.id::text AS id, actor.display_name AS "displayName", identity.email,
-           actor.role
-    FROM sarathi.users actor
-    JOIN sarathi.auth_users identity ON identity.id = actor.identity_subject
-    WHERE actor.identity_subject = $1 AND actor.active
-  `,
-    [session.user.id]
-  );
-  const actor = result.rows[0];
-  return actor && isRole(actor.role) ? actor : null;
+  const identity = await getIdentityActor(headers);
+  if (!identity) return null;
+  try {
+    const context = await currentOrganization(identity.id, "dashboard.read");
+    const levels: Role[] = ["VIEWER", "OPERATOR", "ADMIN"];
+    return {
+      ...identity,
+      role: levels[Math.min(levels.indexOf(identity.role), levels.indexOf(context.role))]
+    };
+  } catch (error) {
+    if (error instanceof AccessDeniedError) return null;
+    throw error;
+  }
+}
+
+export async function authorizedDatabase(headers: Headers, permission: Permission) {
+  const actor = await getIdentityActor(headers);
+  if (!actor) throw new AccessDeniedError();
+  const context = await currentOrganization(actor.id, permission);
+  const levels: Role[] = ["VIEWER", "OPERATOR", "ADMIN"];
+  const effectiveActor = {
+    ...actor,
+    role: levels[Math.min(levels.indexOf(actor.role), levels.indexOf(context.role))]
+  };
+  return {
+    actor: effectiveActor,
+    context,
+    pool: tenantPool(getPool(), actor.id, context.organization.id, permission)
+  };
 }
 
 export const getAdminActor = getActor;
@@ -58,8 +75,7 @@ export async function requirePermission(
   headers: Headers,
   permission: Permission
 ): Promise<AdminActor> {
-  const actor = await getActor(headers);
-  if (!actor || !hasPermission(actor.role, permission)) throw new AccessDeniedError();
+  const { actor } = await authorizedDatabase(headers, permission);
   return actor;
 }
 
@@ -68,14 +84,18 @@ export async function requireAdmin(headers: Headers): Promise<AdminActor> {
 }
 
 export async function getManagedUsers(headers: Headers): Promise<ManagedUser[]> {
-  await requireAdmin(headers);
-  const result = await getPool().query<ManagedUser>(`
+  const { context, pool } = await authorizedDatabase(headers, "admin.users.manage");
+  const result = await pool.query<ManagedUser>(
+    `
     SELECT actor.id::text AS id, actor.display_name AS "displayName", identity.email,
-           actor.role, actor.active
+           m.role, (actor.active AND m.active) AS active
     FROM sarathi.users actor
     JOIN sarathi.auth_users identity ON identity.id = actor.identity_subject
+    JOIN sarathi.organization_memberships m ON m.user_id=actor.id AND m.organization_id=$1
     ORDER BY actor.display_name, identity.email
-  `);
+  `,
+    [context.organization.id]
+  );
   return result.rows.filter((user) => isRole(user.role));
 }
 
@@ -84,19 +104,20 @@ export async function setManagedUserRole(
   targetUserId: string,
   nextRole: string
 ): Promise<void> {
-  const actor = await requireAdmin(headers);
+  const { actor, context, pool } = await authorizedDatabase(headers, "admin.users.manage");
   const targetId = databaseId(targetUserId, "User");
   if (!isRole(nextRole)) throw new InputError("Choose a valid role.");
-  await getPool().query("SELECT sarathi.admin_set_user_role($1, $2, $3)", [
+  await pool.query("SELECT sarathi.admin_set_membership_role($1, $2, $3, $4)", [
     actor.id,
+    context.organization.id,
     targetId,
     nextRole
   ]);
 }
 
 export async function getAdminOverview(headers: Headers) {
-  const actor = await requirePermission(headers, "dashboard.read");
-  const result = await getPool().query<{ leads: string; projects: string; quotations: string }>(
+  const { actor, pool } = await authorizedDatabase(headers, "dashboard.read");
+  const result = await pool.query<{ leads: string; projects: string; quotations: string }>(
     `
     SELECT (SELECT count(*)::text FROM sarathi.leads) AS leads,
            (SELECT count(*)::text FROM sarathi.projects) AS projects,
@@ -114,7 +135,7 @@ export async function getAdminOverview(headers: Headers) {
     })
   ) as { leads: number; projects: number; quotations: number };
 
-  const recentLeadsResult = await getPool().query<LeadRecord>(
+  const recentLeadsResult = await pool.query<LeadRecord>(
     `
     SELECT id::text, customer_id::text AS "customerId", contact_name AS "contactName",
            phone, service_requested AS "serviceRequested", source, status,
@@ -127,7 +148,7 @@ export async function getAdminOverview(headers: Headers) {
   `
   );
 
-  const recentProjectsResult = await getPool().query<ProjectRecord>(
+  const recentProjectsResult = await pool.query<ProjectRecord>(
     `
     SELECT p.id::text, p.customer_id::text AS "customerId", c.name AS "customerName",
            p.lead_id::text AS "leadId", p.name, p.site_address AS "siteAddress",
@@ -151,13 +172,13 @@ export async function getAdminOverview(headers: Headers) {
 }
 
 export async function getLeads(headers: Headers, query: ListQuery = {}) {
-  await requirePermission(headers, "leads.read");
-  return getListPage(getPool(), "leads", query);
+  const { pool } = await authorizedDatabase(headers, "leads.read");
+  return getListPage(pool, "leads", query);
 }
 
 export async function createLead(headers: Headers, data: CreateLeadInput) {
-  await requirePermission(headers, "leads.create");
-  return business.createLead(getPool(), data);
+  const { pool } = await authorizedDatabase(headers, "leads.create");
+  return business.createLead(pool, data);
 }
 
 export async function updateLeadStatus(
@@ -166,28 +187,42 @@ export async function updateLeadStatus(
   status: string,
   expectedStatus: string
 ) {
-  await requirePermission(headers, "leads.update");
-  return business.updateLeadStatus(getPool(), leadId, status, expectedStatus);
+  const { pool } = await authorizedDatabase(headers, "leads.update");
+  return business.updateLeadStatus(pool, leadId, status, expectedStatus);
 }
 
 export async function getCustomers(headers: Headers, query: ListQuery = {}) {
-  await requirePermission(headers, "customers.read");
-  return getListPage(getPool(), "customers", query);
+  const { pool } = await authorizedDatabase(headers, "customers.read");
+  return getListPage(pool, "customers", query);
 }
 
-export async function createCustomer(headers: Headers, data: CreateCustomerInput) {
-  await requirePermission(headers, "customers.create");
-  return business.createCustomer(getPool(), data);
+export async function createCustomer(
+  headers: Headers,
+  data: CreateCustomerInput,
+  submission?: import("./customer-mutations").CustomerSubmission
+) {
+  const { pool } = await authorizedDatabase(headers, "customers.create");
+  const { validateCustomerSubmission } = await import("./customer-mutations");
+  return business.createCustomer(pool, data, validateCustomerSubmission(submission));
+}
+export async function updateCustomer(
+  headers: Headers,
+  id: string,
+  data: CreateCustomerInput,
+  version: string
+) {
+  const { pool } = await authorizedDatabase(headers, "customers.update");
+  return business.updateCustomer(pool, id, data, version);
 }
 
 export async function getProjects(headers: Headers, query: ListQuery = {}) {
-  await requirePermission(headers, "projects.read");
-  return getListPage(getPool(), "projects", query);
+  const { pool } = await authorizedDatabase(headers, "projects.read");
+  return getListPage(pool, "projects", query);
 }
 
 export async function createProject(headers: Headers, data: CreateProjectInput) {
-  const actor = await requirePermission(headers, "projects.create");
-  return business.createProject(getPool(), actor.id, data);
+  const { actor, pool } = await authorizedDatabase(headers, "projects.create");
+  return business.createProject(pool, actor.id, data);
 }
 
 export async function updateProjectStatus(
@@ -197,9 +232,9 @@ export async function updateProjectStatus(
   expectedStatus: string,
   reason?: string
 ) {
-  const actor = await requirePermission(headers, "projects.update");
+  const { actor, pool } = await authorizedDatabase(headers, "projects.update");
   return business.updateProjectStatus(
-    getPool(),
+    pool,
     actor.id,
     projectId,
     operationalStatus,
@@ -209,20 +244,20 @@ export async function updateProjectStatus(
 }
 
 export async function getQuotations(headers: Headers, query: ListQuery = {}) {
-  await requirePermission(headers, "quotations.read");
-  return getListPage(getPool(), "quotes", query);
+  const { pool } = await authorizedDatabase(headers, "quotations.read");
+  return getListPage(pool, "quotes", query);
 }
 
 export async function getPayments(headers: Headers, query: ListQuery = {}) {
-  await requirePermission(headers, "payments.read");
-  return getListPage(getPool(), "payments", query);
+  const { pool } = await authorizedDatabase(headers, "payments.read");
+  return getListPage(pool, "payments", query);
 }
 
 export async function getCustomerOptions(headers: Headers, query = "") {
-  await requirePermission(headers, "customers.read");
-  return customerOptions(getPool(), query);
+  const { pool } = await authorizedDatabase(headers, "customers.read");
+  return customerOptions(pool, query);
 }
 export async function getProjectCounts(headers: Headers) {
-  await requirePermission(headers, "projects.read");
-  return projectCounts(getPool());
+  const { pool } = await authorizedDatabase(headers, "projects.read");
+  return projectCounts(pool);
 }

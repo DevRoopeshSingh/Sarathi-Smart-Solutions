@@ -1,11 +1,12 @@
 "use client";
 import { formatIndiaDate } from "@/lib/date";
-import { ListSearch } from "../list-controls";
+import Link from "next/link";
+import { CustomerForm, CustomerDialog } from "./customer-form";
+import { ListSearch, useListFilters } from "../list-controls";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { CustomerRecord } from "@/lib/operations";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createCustomerAction } from "../actions";
 
 interface CustomersManagerProps {
   initialCustomers: CustomerRecord[];
@@ -16,9 +17,8 @@ export function CustomersManager({ initialCustomers, canWrite }: CustomersManage
   const [customers, setCustomers] = useState(initialCustomers);
   useEffect(() => setCustomers(initialCustomers), [initialCustomers]);
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const submittingRef = useRef(false);
+  const [saved, setSaved] = useState(false);
+  const filters = useListFilters();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -32,35 +32,10 @@ export function CustomersManager({ initialCustomers, canWrite }: CustomersManage
 
   const filteredCustomers = customers;
 
-  async function handleCreateCustomer(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (submittingRef.current) return;
-    submittingRef.current = true;
-    setIsSubmitting(true);
-    setErrorMessage("");
-    const formData = new FormData(e.currentTarget);
-    try {
-      const result = await createCustomerAction(formData);
-      if ("error" in result) {
-        setErrorMessage(result.error ?? "Unable to save. Please try again.");
-        return;
-      }
-      setShowNewModal(false);
-      router.refresh();
-    } catch {
-      setErrorMessage(
-        "Unable to confirm the save. Check your connection and reload before retrying."
-      );
-    } finally {
-      submittingRef.current = false;
-      setIsSubmitting(false);
-    }
-  }
-
   return (
     <div className="admin-view">
       <div className="admin-toolbar">
-        <ListSearch placeholder="Search customers by name, phone, or address..." />
+        <ListSearch placeholder="Search customers by name, phone, email, or address..." />
         {canWrite && (
           <div className="toolbar-actions">
             <button
@@ -74,6 +49,19 @@ export function CustomersManager({ initialCustomers, canWrite }: CustomersManage
         )}
       </div>
 
+      <p role="status">{saved ? "Customer saved." : ""}</p>
+      <label>
+        Project filter{" "}
+        <select
+          className="admin-input"
+          value={filters.filter}
+          onChange={(event) => filters.setFilter(event.target.value)}
+        >
+          <option value="ALL">All customers</option>
+          <option value="HAS_PROJECTS">With visible projects</option>
+          <option value="NO_PROJECTS">Without visible projects</option>
+        </select>
+      </label>
       {filteredCustomers.length === 0 ? (
         <div className="empty-state">
           <p>No customer profiles found.</p>
@@ -104,7 +92,9 @@ export function CustomersManager({ initialCustomers, canWrite }: CustomersManage
               {filteredCustomers.map((c) => (
                 <tr key={c.id}>
                   <td>
-                    <strong>{c.name}</strong>
+                    <Link href={`/admin/customers/${c.id}`}>
+                      <strong>{c.name}</strong>
+                    </Link>
                   </td>
                   <td>
                     <a href={`tel:${c.phone}`} className="phone-link">
@@ -125,81 +115,9 @@ export function CustomersManager({ initialCustomers, canWrite }: CustomersManage
       )}
 
       {canWrite && showNewModal && (
-        <div className="modal-backdrop" onClick={() => setShowNewModal(false)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Create Customer Profile</h3>
-              <button type="button" className="modal-close" onClick={() => setShowNewModal(false)}>
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleCreateCustomer} className="modal-form">
-              {errorMessage && (
-                <div className="form-error-banner" role="alert">
-                  {errorMessage}
-                </div>
-              )}
-              <div className="form-group">
-                <label htmlFor="customerName">Full Name / Business Name *</label>
-                <input
-                  id="customerName"
-                  name="name"
-                  type="text"
-                  required
-                  placeholder="e.g. Rajesh Mehra"
-                  className="admin-input"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="customerPhone">Mobile Number *</label>
-                <input
-                  id="customerPhone"
-                  name="phone"
-                  type="tel"
-                  required
-                  placeholder="e.g. 9820098200"
-                  className="admin-input"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="customerEmail">Email Address (Optional)</label>
-                <input
-                  id="customerEmail"
-                  name="email"
-                  type="email"
-                  placeholder="e.g. rajesh@example.com"
-                  className="admin-input"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="customerAddress">Address / Locality (Optional)</label>
-                <textarea
-                  id="customerAddress"
-                  name="address"
-                  rows={2}
-                  placeholder="e.g. Shop 4, Silver Plaza, Mira Road"
-                  className="admin-input"
-                />
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  onClick={() => setShowNewModal(false)}
-                  className="admin-btn admin-btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="admin-btn admin-btn-primary"
-                >
-                  {isSubmitting ? "Saving..." : "Save Customer"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <CustomerDialog title="Create Customer Profile" onClose={() => setShowNewModal(false)}>
+          <CustomerForm onClose={() => setShowNewModal(false)} onSaved={() => setSaved(true)} />
+        </CustomerDialog>
       )}
     </div>
   );

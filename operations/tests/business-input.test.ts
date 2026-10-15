@@ -2,6 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { requiresProjectTransitionReason } from "../src/lib/operations";
 import {
+  getProjectServiceLabel,
+  isProjectService,
+  PROJECT_SERVICE_OPTIONS
+} from "../src/lib/project-services";
+import {
   boundedText,
   databaseId,
   formText,
@@ -88,10 +93,116 @@ test("all creation paths validate lengths, emails and service inputs", () => {
     assert.throws(() => validateProject({ ...project, ...patch }), InputError);
   const form = new FormData();
   Object.entries(project).forEach(([key, value]) => form.set(key, value));
+  form.set("serviceTypes", "cctv");
   form.set("leadId", "9007199254740993");
   assert.equal(projectForm(form).leadId, "9007199254740993");
   form.append("leadId", "2");
   assert.throws(() => projectForm(form), InputError);
+});
+
+test("project services preserve the CCTV API default and accept catalogue selections", () => {
+  const project = { customerId: "1", name: "Office", siteAddress: "Mumbai" };
+  assert.deepEqual(validateProject(project).serviceTypes, ["cctv"]);
+  assert.deepEqual(validateProject({ ...project, serviceTypes: ["network"] }).serviceTypes, [
+    "network"
+  ]);
+  const selected = ["biometric", "cctv", "network"];
+  assert.deepEqual(validateProject({ ...project, serviceTypes: selected }).serviceTypes, selected);
+  const allServices = PROJECT_SERVICE_OPTIONS.map(({ id }) => id);
+  assert.deepEqual(
+    validateProject({ ...project, serviceTypes: allServices }).serviceTypes,
+    allServices
+  );
+  assert.equal(isProjectService("cctv"), true);
+  assert.equal(isProjectService("it"), true);
+  assert.equal(getProjectServiceLabel("cctv"), "CCTV surveillance & mobile viewing");
+  assert.equal(getProjectServiceLabel("legacy-service"), "legacy-service");
+  for (const id of ["__proto__", "constructor", "toString"]) {
+    assert.equal(isProjectService(id), false);
+    assert.equal(getProjectServiceLabel(id), id);
+  }
+});
+
+test("project service validation rejects malformed, unknown and repeated selections", () => {
+  const project = { customerId: "1", name: "Office", siteAddress: "Mumbai" };
+  const invalidServices: unknown[] = [
+    null,
+    "cctv",
+    { cctv: true },
+    [],
+    new Array(1),
+    ["cctv", "cctv"],
+    Array(PROJECT_SERVICE_OPTIONS.length + 1).fill("cctv"),
+    ["legacy-service"],
+    ["__proto__"],
+    ["constructor"],
+    ["toString"],
+    ["hasOwnProperty"],
+    ["CCTV"],
+    [" cctv "],
+    [""],
+    ["  "],
+    ["cctv\0"],
+    ["a".repeat(81)],
+    [123],
+    [null],
+    [undefined],
+    [{}],
+    [["cctv"]],
+    [new Blob(["cctv"])],
+    ["cctv", undefined]
+  ];
+  for (const serviceTypes of invalidServices) {
+    assert.throws(
+      () => validateProject({ ...project, serviceTypes: serviceTypes as string[] }),
+      InputError
+    );
+  }
+});
+
+function validProjectForm(): FormData {
+  const form = new FormData();
+  form.set("customerId", "1");
+  form.set("name", "Office");
+  form.set("siteAddress", "Mumbai");
+  return form;
+}
+
+test("project forms parse repeated checkbox values and keep text-field protections", () => {
+  const form = validProjectForm();
+  form.append("serviceTypes", "network");
+  assert.deepEqual(projectForm(form).serviceTypes, ["network"]);
+  form.append("serviceTypes", "cctv");
+  assert.deepEqual(projectForm(form).serviceTypes, ["network", "cctv"]);
+  assert.deepEqual(validateProject(projectForm(form)).serviceTypes, ["network", "cctv"]);
+  form.append("name", "Another name");
+  assert.throws(() => projectForm(form), InputError);
+  form.set("name", new Blob(["Office"]), "name.txt");
+  assert.throws(() => projectForm(form), InputError);
+});
+
+test("project forms require a selection and reject invalid checkbox payloads", () => {
+  assert.throws(() => projectForm(validProjectForm()), /Choose between 1 and \d+ services\./);
+  for (const selections of [
+    [""],
+    ["unknown"],
+    ["__proto__"],
+    ["constructor"],
+    ["toString"],
+    ["cctv", "cctv"],
+    ["cctv", "unknown"],
+    [" cctv "],
+    ["cctv\0"],
+    Array(PROJECT_SERVICE_OPTIONS.length + 1).fill("cctv")
+  ]) {
+    const form = validProjectForm();
+    selections.forEach((value) => form.append("serviceTypes", value));
+    assert.throws(() => projectForm(form), InputError);
+  }
+  const fileForm = validProjectForm();
+  fileForm.append("serviceTypes", "cctv");
+  fileForm.append("serviceTypes", new Blob(["network"]), "service.txt");
+  assert.throws(() => projectForm(fileForm), InputError);
 });
 
 test("status validation and exceptional transition reasons follow policy", () => {

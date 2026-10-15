@@ -65,6 +65,8 @@ export interface CustomerRecord {
   address: string | null;
   projectCount: number;
   createdAt: string;
+  updatedAt: string;
+  version: number;
 }
 
 export interface ProjectRecord {
@@ -83,6 +85,8 @@ export interface ProjectRecord {
 }
 
 export interface QuotationRecord {
+  quotationNumber?: string | null;
+  expired?: boolean;
   id: string;
   projectId: string;
   projectName: string;

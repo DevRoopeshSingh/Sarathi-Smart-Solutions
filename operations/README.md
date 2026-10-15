@@ -1,6 +1,6 @@
 # Sarathi operations runtime
 
-This Next.js application serves the public website at `/` and a protected operations workspace at `/admin`. The workspace supports customer records, leads, lead-to-project conversion, project statuses, dashboard counts, and administrator session management. It uses Better Auth, Drizzle and PostgreSQL. Costing, surveys, PDFs, and payment entry remain later phases in [the V1 plan](../docs/V1_IMPLEMENTATION_PLAN.md).
+This Next.js application serves the public website at `/` and a protected operations workspace at `/admin`. The workspace supports customer records, leads, lead-to-project conversion, project statuses, dashboard counts, and administrator session management, exact quotation drafts, immutable A4 PDFs, revisions and staff-recorded customer decisions. It uses Better Auth, Drizzle and PostgreSQL. Costing, surveys and payment entry remain later phases in [the V1 plan](../docs/V1_IMPLEMENTATION_PLAN.md).
 
 ## Local setup
 
@@ -11,13 +11,15 @@ npm --prefix operations ci
 cp operations/.env.example operations/.env.local
 ```
 
-Set `DATABASE_URL` to your own local PostgreSQL database, `BETTER_AUTH_URL` to the exact browser origin (for example `http://localhost:3000`), and `BETTER_AUTH_SECRET` to a unique random secret of at least 32 characters. Do not commit environment files. `PUBLIC_SITE_URL` is optional; when supplied it must be an HTTP(S) URL for the existing public website. No website link appears when it is omitted.
+Set `DATABASE_URL` to a restricted non-owner login for your own local PostgreSQL database, `DATABASE_MIGRATION_URL` to its separate owner/direct connection for local CLI setup only, `BETTER_AUTH_URL` to the exact browser origin (for example `http://localhost:3000`), and `BETTER_AUTH_SECRET` to a unique random secret of at least 32 characters. Do not commit environment files. `PUBLIC_SITE_URL` is optional; when supplied it must be an HTTP(S) URL for the existing public website. No website link appears when it is omitted.
 
-Apply the existing SQL migration history before starting the runtime. The migration command reads environment variables from the shell; Next.js itself loads `.env.local` for development. Export the database URL in the shell or use your environment/secret manager to supply it, then run:
+Apply the existing SQL migration history before starting the runtime. The CLI scripts load local `.env.local` where present; shell/secret-manager values take precedence. Next.js also loads `.env.local` for development. Keep owner credentials out of hosted runtime configuration, then run:
 
 ```sh
 npm --prefix operations run migrate
 ```
+
+Apply `database/runtime-grants.sql` as the migration owner after all pending migrations, selecting the existing restricted runtime role through `-v runtime_role=...`; use your approved local owner connection configuration. Never use the owner role as the running application's `DATABASE_URL`.
 
 The authoritative migration history is in `database/migrations/`. Do not run Drizzle schema push or create an independent ORM migration history. See [database instructions](../database/README.md) for database ownership and migration details.
 
@@ -41,7 +43,7 @@ Open the exact origin configured in `BETTER_AUTH_URL`, followed by `/admin/login
 
 Migration `004_role_based_access.sql` enables `ADMIN`, `OPERATOR`, and `VIEWER`; existing `TECHNICIAN` mappings become `OPERATOR`. Each account has one role in `sarathi.users.role`. The server permission map is in `src/server/permissions.ts`; DAL checks enforce it for every protected read and mutation. Operators can use existing operational write actions, while viewers can read the dashboard, leads, customers, projects, and quotations. Viewers cannot access payments. Only administrators can access `/admin/users`, `/admin/security`, and session revocation. The user screen changes roles for existing accounts; create accounts with the owner-only provision command and the selected `SARATHI_USER_ROLE`.
 
-The runtime database role must not receive direct `UPDATE` privileges on `sarathi.users`. Apply the updated `database/runtime-grants.sql` after migration 004; it grants execution only on `sarathi.admin_set_user_role`, which checks the active administrator actor, role allowlist, and last-admin/self-demotion constraints. No deletion permission is granted. All authorization remains server-side; hiding navigation/actions is not an access control boundary.
+The runtime database role must not receive direct `UPDATE` privileges on `sarathi.users`. Apply all pending migrations through 009 and the updated `database/runtime-grants.sql`; it grants execution on the scoped `sarathi.admin_set_membership_role`, which checks active organization/admin membership, role intersection, the allowlist and last-admin/self-demotion constraints. The former global `sarathi.admin_set_user_role` is revoked from runtime. No deletion permission is granted. All authorization remains server-side; hiding navigation/actions is not an access control boundary.
 
 ## Workflow guidance
 
@@ -87,8 +89,22 @@ Lead conversion and project history updates run in transactions. Status changes 
 
 ## Pinned implementation references
 
-- [Next.js installation](https://nextjs.org/docs/app/getting-started/installation): Next.js 16.3.5 and React 19.3.0, manually scaffolded with App Router and TypeScript.
+- [Next.js installation](https://nextjs.org/docs/app/getting-started/installation): Next.js 16.3.8 and React 19.3.0, manually scaffolded with App Router and TypeScript.
 - [Next.js authentication guide](https://nextjs.org/docs/app/guides/authentication): authorization close to data access, explicit returned data, and server/client boundaries.
 - [Better Auth installation](https://better-auth.com/docs/installation): Better Auth 1.7.5 with Drizzle ORM 0.45.2 and PostgreSQL driver `pg` 8.23.0.
 
 Exact direct dependencies and the resolved dependency tree are recorded in `package.json` and `package-lock.json`.
+
+## Quotation workflow (Milestone 4)
+
+ADMIN and permitted OPERATOR accounts can create/edit drafts, calculate exact server totals, issue an immutable private PDF, prepare revisions and record staff acceptance/rejection. VIEWER can read/download only permitted quotations. Choose an allowed division and customer; optionally link an existing composite-owned project at draft creation. Standalone counter services do not need projects. Acceptance never records a payment and does not prove customer authentication or a digital signature.
+
+Apply `009_quotation_management.sql` and updated runtime grants before using this module. GST defaults to No GST charged until owner verification. PDFs and complete snapshots are stored privately in PostgreSQL in the same transaction as issue/audit/numbering. The Node deployment must include the four pinned licensed Noto font assets; tracing configuration includes them. No new environment variables or paid services are required. Original historical quotations without stored PDF/item/tax provenance require owner reconciliation; no retrospective document is fabricated.
+
+See [quotation usage](../docs/QUOTATION_USAGE.md) for migration preflight, local setup and the complete draft → issue → download → staff decision → revision walkthrough, and [progress](../docs/DEVELOPMENT_PROGRESS.md) for verified results and staging gates.
+
+## Manual payments (Milestone 5)
+
+Apply additive migration 010 and matching runtime grants only on an approved development/staging database before deploying the corresponding app. Effective organization ADMIN can record receipts, completed refunds and reasoned receipt corrections; OPERATOR can record receipts/allocations only with explicit `can_record_payments` membership authorization. VIEWER cannot access payments. Number, immutable snapshot/private A4 PDF and audit commit together. No money is transferred and no tax invoice is generated.
+
+Use a project for advances or an accepted standalone quotation for counter services. Balances use the current accepted baseline and exact recorded receipts/refunds/corrections; partial allocations never add another receipt. Existing financial records remain unchanged; legacy records without artifacts have no fabricated PDF. See [payment usage](../docs/PAYMENT_USAGE.md) for setup, refunds/corrections, retry recovery, allocation rules and release prerequisites. No new dependencies or environment variables were added for payments.

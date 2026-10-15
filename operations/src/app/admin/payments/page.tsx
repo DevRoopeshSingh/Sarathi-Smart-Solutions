@@ -1,42 +1,41 @@
-import { formatIndiaDate } from "@/lib/date";
-import { ListNavigation } from "../list-controls";
-import { readListQuery, type SearchParameters } from "@/server/lists";
-import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAdminActor, getPayments } from "@/server/dal";
-
-export const metadata: Metadata = { title: "Payments" };
+import { getAdminActor, authorizedDatabase } from "@/server/dal";
+import { paymentList } from "@/server/payments";
+import { readListQuery, type SearchParameters } from "@/server/lists";
+import { ListNavigation } from "../list-controls";
+import { formatIndiaDate } from "@/lib/date";
+export const metadata = { title: "Payments" };
 export const dynamic = "force-dynamic";
-
 export default async function PaymentsPage({
   searchParams
 }: {
   searchParams: Promise<SearchParameters>;
 }) {
-  const query = readListQuery(await searchParams);
-  const requestHeaders = await headers();
-  const actor = await getAdminActor(requestHeaders);
+  const h = await headers(),
+    actor = await getAdminActor(h);
   if (!actor) redirect("/admin/login");
   if (actor.role === "VIEWER") redirect("/admin");
-
-  const result = await getPayments(requestHeaders, query);
-
-  const payments = result.items;
+  const query = readListQuery(await searchParams),
+    result = await paymentList(h, query),
+    { context } = await authorizedDatabase(h, "payments.read");
   return (
     <div className="workspace-shell">
       <main id="main" className="workspace-main">
         <section className="workspace-heading">
-          <span className="eyebrow">
-            <span className="small-rule" />
-            FINANCIAL AUDIT
-          </span>
+          <span className="eyebrow">FINANCIAL AUDIT</span>
           <h1>Payments & Receipts</h1>
           <p className="lead-copy">
-            Append-only financial ledger tracking advances, progress receipts, and refunds.
+            Append-only receipts, advances, allocations and reasoned refunds. Records acknowledge
+            completed payments; this app does not transfer money.
           </p>
+          {context.permissions.includes("payments.create") && (
+            <Link className="admin-btn" href="/admin/payments/new">
+              Record receipt
+            </Link>
+          )}
         </section>
-
         <ListNavigation
           query={query}
           total={result.total}
@@ -44,12 +43,18 @@ export default async function PaymentsPage({
           base="/admin/payments"
           search
         />
+        <nav className="customer-tabs" aria-label="Payment kind">
+          <Link href="/admin/payments">All entries</Link>
+          <Link href="/admin/payments?status=RECEIPT">Receipts</Link>
+          <Link href="/admin/payments?status=REFUND">Refunds</Link>
+          <Link href="/admin/payments?status=REVERSAL">Receipt corrections</Link>
+        </nav>
         <div className="admin-view">
-          {payments.length === 0 ? (
+          {result.items.length === 0 ? (
             <div className="empty-state">
               <p>No payments recorded yet.</p>
               <p className="table-subtext">
-                Payments are recorded against approved project quotations.
+                Record a project advance or a receipt against an accepted quotation.
               </p>
             </div>
           ) : (
@@ -57,35 +62,36 @@ export default async function PaymentsPage({
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Project</th>
+                    <th>Receipt / refund</th>
+                    <th>Customer / project</th>
                     <th>Kind</th>
-                    <th>Amount</th>
-                    <th>Method</th>
-                    <th>Reference</th>
-                    <th>Date</th>
+                    <th>Amount INR</th>
+                    <th>Method / reference</th>
+                    <th>Payment time</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {payments.map((pay) => (
-                    <tr key={pay.id}>
+                  {result.items.map((p) => (
+                    <tr key={p.id}>
                       <td>
-                        <strong>{pay.projectName}</strong>
+                        <Link href={"/admin/payments/" + p.id}>
+                          {p.number ?? "Historical payment " + p.id}
+                        </Link>
+                        <p className="table-subtext">{p.divisionName}</p>
                       </td>
                       <td>
-                        <span
-                          className={`status-badge ${pay.kind === "RECEIPT" ? "badge-completed" : "badge-lost"}`}
-                        >
-                          {pay.kind}
-                        </span>
+                        {p.customerName}
+                        <p className="table-subtext">{p.projectName ?? "Standalone quotation"}</p>
+                      </td>
+                      <td>{p.purpose === "REVERSAL" ? "RECEIPT CORRECTION" : p.kind}</td>
+                      <td>
+                        {p.kind === "REFUND" ? "−" : "+"}₹{p.amount}
                       </td>
                       <td>
-                        <strong>
-                          {pay.kind === "RECEIPT" ? "+" : "-"}₹{pay.amount}
-                        </strong>
+                        {p.method.replaceAll("_", " ")}
+                        <p className="table-subtext">{p.reference ?? "—"}</p>
                       </td>
-                      <td>{pay.paymentMethod}</td>
-                      <td>{pay.reference || "—"}</td>
-                      <td className="table-subtext">{formatIndiaDate(pay.createdAt)}</td>
+                      <td>{formatIndiaDate(p.occurredAt)}</td>
                     </tr>
                   ))}
                 </tbody>

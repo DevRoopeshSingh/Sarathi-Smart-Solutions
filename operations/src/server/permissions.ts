@@ -23,6 +23,8 @@ export const PERMISSIONS = [
   "quotations.delete",
   "payments.read",
   "payments.create",
+  "payments.allocate",
+  "payments.refund",
   "payments.update",
   "payments.delete",
   "admin.security.manage",
@@ -37,6 +39,7 @@ const operatorPermissions = new Set<Permission>([
   "leads.update",
   "customers.read",
   "customers.create",
+  "customers.update",
   "projects.read",
   "projects.create",
   "projects.update",
@@ -45,6 +48,7 @@ const operatorPermissions = new Set<Permission>([
   "quotations.update",
   "payments.read",
   "payments.create",
+  "payments.allocate",
   "payments.update"
 ]);
 

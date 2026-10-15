@@ -3,6 +3,7 @@ import Link from "next/link";
 import { StageTooltip } from "@/components/workflow/stage-tooltip";
 import { formatIndiaDate } from "@/lib/date";
 import { CustomerSelect } from "../customer-select";
+import { ProjectServiceSelect } from "../project-service-select";
 import { ListSearch, useListFilters } from "../list-controls";
 
 import { useEffect, useRef, useState } from "react";
@@ -401,6 +402,8 @@ export function LeadsManager({ initialLeads, customers, canWrite }: LeadsManager
                   className="admin-input"
                 />
               </div>
+              <ProjectServiceSelect />
+
               <div className="form-group">
                 <label htmlFor="scope">Initial Scope / Requirements</label>
                 <textarea

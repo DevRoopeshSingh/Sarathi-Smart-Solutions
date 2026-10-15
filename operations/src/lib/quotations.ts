@@ -1,0 +1,53 @@
+import type { QuoteLine, TaxMode } from "./quotation-money";
+export interface Quotation {
+  id: string;
+  customerId: string;
+  divisionId: string;
+  divisionName: string;
+  projectId: string | null;
+  projectName: string | null;
+  title: string;
+  version: number;
+  latestVersion: number;
+  draftVersion: number;
+  status: string;
+  quotationNumber: string | null;
+  rootId: string;
+  revisionOf: string | null;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  customerAddress: string | null;
+  siteAddress: string;
+  subtotal: string;
+  discount: string;
+  tax: string;
+  total: string;
+  taxMode: TaxMode | "LEGACY";
+  validUntil: string;
+  terms: string;
+  expired: boolean;
+  hasDocument: boolean;
+  items: QuoteLine[];
+}
+export interface QuoteSnapshot {
+  schemaVersion: 1;
+  quotationNumber: string;
+  version: number;
+  issuedAt: string;
+  validUntil: string;
+  title: string;
+  currency: "INR";
+  business: { name: string; address?: string; phone?: string; email?: string; gstin?: string };
+  customer: { name: string; phone: string; email: string | null; address: string | null };
+  siteAddress: string;
+  taxMode: TaxMode;
+  items: QuoteLine[];
+  subtotal: string;
+  discount: string;
+  tax: string;
+  net: string;
+  total: string;
+  terms: string;
+}
+export type QuoteResult = { id: string } | { error: string };

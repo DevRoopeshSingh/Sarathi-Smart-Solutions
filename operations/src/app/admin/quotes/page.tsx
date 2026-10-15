@@ -1,3 +1,5 @@
+import { quoteStatusLabel } from "@/lib/quotation-money";
+import { QuoteFilters } from "./quote-filters";
 import { StageTooltip } from "@/components/workflow/stage-tooltip";
 import { LifecycleDiagram } from "@/components/workflow/lifecycle-diagram";
 import { formatIndiaDate } from "@/lib/date";
@@ -19,7 +21,8 @@ export default async function QuotesPage({
 }) {
   const query = readListQuery(await searchParams);
   const requestHeaders = await headers();
-  if (!(await getAdminActor(requestHeaders))) redirect("/admin/login");
+  const actor = await getAdminActor(requestHeaders);
+  if (!actor) redirect("/admin/login");
 
   const result = await getQuotations(requestHeaders, query);
 
@@ -34,15 +37,21 @@ export default async function QuotesPage({
           </span>
           <h1>Quotations & Estimates</h1>
           <p className="lead-copy">
-            Version-controlled quotations derived from site surveys and bill of materials (BOM).
+            Prepare standalone service estimates or project quotations, then issue a fixed PDF and
+            record customer decisions.
           </p>
         </section>
 
         <LifecycleDiagram current="quote" />
         <p className="lead-copy">
-          Review recorded quotations here. Creating, editing and sending quotations are not
-          available in this workspace yet.
+          Save a draft before issuing. Acceptance is recorded by staff after customer communication.
         </p>
+        {actor.role !== "VIEWER" && (
+          <Link href="/admin/quotes/new" className="admin-btn">
+            Create quotation
+          </Link>
+        )}
+        <QuoteFilters />
         <ListNavigation
           query={query}
           total={result.total}
@@ -83,7 +92,7 @@ export default async function QuotesPage({
                       <td>
                         <strong>
                           <Link href={`/admin/quotes/${q.id}`}>
-                            {q.projectName} · v{q.version}
+                            {q.quotationNumber ?? q.projectName} · v{q.version}
                           </Link>
                         </strong>
                       </td>
@@ -93,7 +102,7 @@ export default async function QuotesPage({
                       </td>
                       <td>
                         <span className={`status-badge badge-${q.status.toLowerCase()}`}>
-                          {q.status}
+                          {quoteStatusLabel(q.status, q.expired)}
                         </span>
                         <StageTooltip kind="quote" status={q.status} />
                       </td>

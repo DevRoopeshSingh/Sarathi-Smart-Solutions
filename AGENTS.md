@@ -1,0 +1,13 @@
+# Sarathi Business Manager development
+
+- Work on `feat/sarathi-business-manager` in the existing Next.js application under `operations/`. Preserve unrelated working-tree changes; do not rebuild the app.
+- First read `docs/SARATHI_MASTER_PLAN.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT_ROADMAP.md`, `docs/DEVELOPMENT_PROGRESS.md` and `operations/AGENTS.md`. Next.js version-specific guides are installed under `operations/node_modules/next/dist/docs/`.
+- Keep the public static site independently built/deployed. Reuse Better Auth, PostgreSQL, parameterized `pg` queries, the service catalog and current components.
+- Migration 007 secures business ownership with composite FKs and RLS. Use `authorizedDatabase`/`TenantPool` for every business query; raw `getPool` is reserved for identity/authentication and context metadata. Never bypass scoped transactions or use owner/BYPASSRLS credentials at runtime. Customer editing follows verified isolation; additional organization onboarding needs staging review.
+- Resolve identity through the authenticated DAL; verify active membership and division permissions on the server. Global ADMIN is not a cross-organization bypass. VIEWER never writes; operator financial writes need explicit membership authorization.
+- Use new numbered, atomic migrations; preserve immutable ownership, financial content and audit history. Never edit applied migrations, print credentials, use production data in tests, or delete financial/audit history. Seek approval for destructive migrations, major auth/hosting changes, recurring costs or customer-data integrations.
+- Use Node 22+ (local Node 22: `/opt/homebrew/opt/node@22/bin`). Verify unit tests, TypeScript, a Next.js build and `npm run test:operations` with the isolated PostgreSQL/HTTPS harness. Root lint does not cover operations TypeScript.
+- Preserve catalog-backed multi-service selection and historical unknown IDs. Money uses exact decimals/minor units; mutations must be transactional and auditable.
+- Update development progress with actual pass/fail/blocked results and the next task. Do not commit, push or deploy unless specifically requested. No subscription billing, AI automation, payment gateways or advanced scheduling without separate authorization.
+
+- Quotations may be standalone or linked to a composite-owned customer/project/division. Use exact server totals, immutable issued content and an atomic number/snapshot/private-PDF/audit transaction. New runtime rows require durable request references; never fabricate historical PDFs or assume GST registration. Decisions are staff-recorded communication and never imply payment or customer authentication. Payments/balances/receipts remain Milestone 5 scope.

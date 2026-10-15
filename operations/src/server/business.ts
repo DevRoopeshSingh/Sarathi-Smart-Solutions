@@ -1,54 +1,26 @@
+import type { TenantPool } from "./tenant-pool";
 import "server-only";
-import type { Pool, PoolClient } from "pg";
+import { transaction } from "./transaction";
 import { requiresProjectTransitionReason } from "../lib/operations";
-import type {
-  CustomerRecord,
-  LeadRecord,
-  LeadStatus,
-  ProjectRecord,
-  ProjectStatus
-} from "../lib/operations";
+import type { LeadRecord, LeadStatus, ProjectRecord, ProjectStatus } from "../lib/operations";
 import {
   boundedText,
   databaseId,
   leadStatus,
   projectStatus,
-  validateCustomer,
   validateLead,
   validateProject
 } from "./input";
-import type { CreateCustomerInput, CreateLeadInput, CreateProjectInput } from "./input";
+import type { CreateLeadInput, CreateProjectInput } from "./input";
 import { InputError } from "./mutation-errors";
 
 // Internal persistence operations. The DAL must authorize before calling these;
-// actorId always comes from requireAdmin, never from submitted form data.
-async function transaction<T>(pool: Pool, work: (client: PoolClient) => Promise<T>): Promise<T> {
-  const client = await pool.connect();
-  let discard = false;
-  try {
-    await client.query("BEGIN");
-    await client.query("SET LOCAL lock_timeout = '3s'");
-    await client.query("SET LOCAL statement_timeout = '10s'");
-    const result = await work(client);
-    await client.query("COMMIT");
-    return result;
-  } catch (error) {
-    try {
-      await client.query("ROLLBACK");
-    } catch {
-      discard = true;
-    }
-    throw error;
-  } finally {
-    client.release(discard);
-  }
-}
-
+// actorId comes from the authenticated DAL, never from submitted form data.
 function expectOne(rowCount: number | null, message: string) {
   if (rowCount !== 1) throw new InputError(message);
 }
 
-export async function createLead(pool: Pool, input: CreateLeadInput): Promise<LeadRecord> {
+export async function createLead(pool: TenantPool, input: CreateLeadInput): Promise<LeadRecord> {
   const data = validateLead(input);
   const result = await pool.query<LeadRecord>(
     `
@@ -66,26 +38,11 @@ export async function createLead(pool: Pool, input: CreateLeadInput): Promise<Le
   return result.rows[0];
 }
 
-export async function createCustomer(
-  pool: Pool,
-  input: CreateCustomerInput
-): Promise<CustomerRecord> {
-  const data = validateCustomer(input);
-  const result = await pool.query<CustomerRecord>(
-    `
-    INSERT INTO sarathi.customers (name, phone, email, address)
-    VALUES ($1, $2, $3, $4)
-    RETURNING id::text, name, phone, email, address, 0 AS "projectCount",
-      to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt"
-  `,
-    [data.name, data.phone, data.email, data.address]
-  );
-  expectOne(result.rowCount, "Unable to create customer.");
-  return result.rows[0];
-}
+// Customer persistence lives separately; retain the existing internal import surface.
+export { createCustomer, updateCustomer } from "./customer-mutations";
 
 export async function updateLeadStatus(
-  pool: Pool,
+  pool: TenantPool,
   rawId: string,
   rawStatus: string,
   rawExpected: string
@@ -119,11 +76,12 @@ export async function updateLeadStatus(
 }
 
 export async function createProject(
-  pool: Pool,
+  pool: TenantPool,
   rawActorId: string,
   input: CreateProjectInput
 ): Promise<ProjectRecord> {
   const actorId = databaseId(rawActorId, "Administrator");
+  if (actorId !== pool.actorId) throw new InputError("Invalid audit actor.");
   const data = validateProject(input);
   return transaction(pool, async (client) => {
     const customer = await client.query(`SELECT id FROM sarathi.customers WHERE id = $1`, [
@@ -132,14 +90,19 @@ export async function createProject(
     if (!customer.rows[0]) throw new InputError("Customer no longer exists.");
     if (data.leadId) {
       // Every lead mutation locks this same row first, serializing conversion/status changes.
-      const locked = await client.query<{ customerId: string | null; status: LeadStatus }>(
+      const locked = await client.query<{
+        customerId: string | null;
+        status: LeadStatus;
+        divisionId: string;
+      }>(
         `
-        SELECT customer_id::text AS "customerId", status FROM sarathi.leads WHERE id = $1 FOR UPDATE
+        SELECT customer_id::text AS "customerId", status, division_id::text AS "divisionId" FROM sarathi.leads WHERE id = $1 FOR UPDATE
       `,
         [data.leadId]
       );
       const lead = locked.rows[0];
       if (!lead) throw new InputError("Lead no longer exists.");
+      await client.query("SELECT set_config('sarathi.division_id',$1,true)", [lead.divisionId]);
       if (lead.customerId && lead.customerId !== data.customerId) {
         throw new InputError("Lead belongs to another customer.");
       }
@@ -189,7 +152,7 @@ export async function createProject(
 }
 
 export async function updateProjectStatus(
-  pool: Pool,
+  pool: TenantPool,
   rawActorId: string,
   rawId: string,
   rawStatus: string,
@@ -197,6 +160,7 @@ export async function updateProjectStatus(
   rawReason?: string
 ): Promise<void> {
   const actorId = databaseId(rawActorId, "Administrator");
+  if (actorId !== pool.actorId) throw new InputError("Invalid audit actor.");
   const id = databaseId(rawId, "Project");
   const status = projectStatus(rawStatus);
   const expected = projectStatus(rawExpected);

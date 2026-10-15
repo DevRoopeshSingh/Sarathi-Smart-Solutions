@@ -41,24 +41,24 @@ export const QUOTE_STAGES: Record<QuotationRecord["status"], Stage> = {
     description:
       "A quotation is being prepared. Prices and scope are not yet issued to the customer.",
     previous: "The project’s survey and costing inform the estimate.",
-    next: "Review scope, quantities, prices and terms before issuing. Quotation editing and sending are not available in this workspace yet."
+    next: "Review scope, quantities, prices and terms before issuing. Save your draft, then issue the PDF from Quotation actions."
   },
   SENT: {
-    label: "Sent",
+    label: "Issued",
     description:
       "The issued quotation is frozen. Await the customer’s decision; changes need a new version.",
     previous: "The quotation was prepared and issued.",
-    next: "Follow up with the customer. Approval must be recorded through the team’s current quotation process."
+    next: "Follow up with the customer and record their decision here as a staff record, not a digital signature."
   },
   APPROVED: {
-    label: "Approved",
+    label: "Accepted",
     description:
-      "Customer approval is recorded. This does not prove an advance has been received or installation has started.",
+      "Staff-recorded customer acceptance is recorded. This does not prove an advance has been received or installation has started.",
     previous: "The customer accepted the issued quotation.",
     next: "Confirm agreed payment and material readiness with the team, then plan delivery in the linked project."
   },
   DECLINED: {
-    label: "Declined",
+    label: "Rejected",
     description:
       "The customer declined this version. It is retained as part of the commercial record.",
     previous: "An issued quotation was reviewed by the customer.",

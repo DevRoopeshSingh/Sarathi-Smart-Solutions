@@ -10,7 +10,15 @@ import { StageTooltip } from "./stage-tooltip";
 import { StepPanel } from "./step-panel";
 import { ActivityTimeline } from "./activity-timeline";
 
-export async function RecordDetail({ kind, id }: { kind: WorkflowKind; id: string }) {
+export async function RecordDetail({
+  kind,
+  id,
+  children
+}: {
+  kind: WorkflowKind;
+  id: string;
+  children?: import("react").ReactNode;
+}) {
   const requestHeaders = await headers();
   const actor = await getActor(requestHeaders);
   if (!actor) redirect("/admin/login");
@@ -80,8 +88,8 @@ export async function RecordDetail({ kind, id }: { kind: WorkflowKind; id: strin
           )}
           {kind === "project" && (
             <p className="tw:text-sm tw:text-[var(--muted)]">
-              Up to 10 latest linked quotations are shown. Quotation preparation and sending are not
-              available in this workspace yet.
+              Up to 10 latest linked quotations are shown. Use Quotations to prepare, issue and
+              record customer decisions.
             </p>
           )}
         </section>
@@ -93,6 +101,7 @@ export async function RecordDetail({ kind, id }: { kind: WorkflowKind; id: strin
           onHold={detail.onHold}
           holdReason={detail.holdReason}
         />
+        {children}
         <ActivityTimeline events={detail.events} truncated={detail.historyTruncated} />
       </main>
     </div>

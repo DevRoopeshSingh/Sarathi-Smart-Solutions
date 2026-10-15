@@ -14,13 +14,15 @@
     "test": "node --conditions=react-server --import tsx --test tests/*.test.ts",
     "admin:provision": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/provision-admin.ts",
     "admin:recover": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/recover-admin.ts",
-    "migrate": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/migrate.ts"
+    "migrate": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/migrate.ts",
+    "sync:commercial": "node scripts/sync-commercial.mjs"
   },
   "dependencies": {
     "better-auth": "1.7.5",
     "drizzle-orm": "0.45.2",
     "lucide-react": "1.48.0",
-    "next": "16.3.5",
+    "next": "16.3.8",
+    "pdfkit": "0.20.2",
     "pg": "8.23.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "22.20.4",
+    "@types/pdfkit": "0.17.6",
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

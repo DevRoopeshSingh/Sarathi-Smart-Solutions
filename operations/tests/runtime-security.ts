@@ -297,7 +297,19 @@ test("owner provisioning creates a usable administrator and refuses silent crede
     );
   const first = provision(password);
   assert.equal(first.status, 0, "Initial owner provisioning must succeed.");
-  assert.equal((await login(email)).status, 200);
+  const provisionedLogin = await login(email);
+  assert.equal(provisionedLogin.status, 200);
+  const organization = (
+    await client.query("SELECT id::text FROM sarathi.organizations WHERE slug='sarathi'")
+  ).rows[0].id;
+  const membershipResponse = await fetch(
+    `${origin}/api/admin/organization-context?organizationId=${organization}`,
+    {
+      headers: { Cookie: cookies(provisionedLogin) }
+    }
+  );
+  assert.equal(membershipResponse.status, 200);
+  assert.equal((await membershipResponse.json()).context.role, "ADMIN");
   const snapshot = () =>
     client.query(
       "SELECT account.password, actor.role, actor.active FROM sarathi.auth_accounts account JOIN sarathi.auth_users identity ON identity.id = account.user_id JOIN sarathi.users actor ON actor.identity_subject = identity.id WHERE identity.email = $1",

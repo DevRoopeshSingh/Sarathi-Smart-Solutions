@@ -3,6 +3,9 @@ import { Pool } from "pg";
 import { migrationConnectionString } from "./migrate";
 
 async function main() {
+  const organizationSlug = process.env.SARATHI_ORGANIZATION_SLUG ?? "sarathi";
+  if (!/^[a-z][a-z0-9-]{1,62}$/.test(organizationSlug))
+    throw new Error("Invalid organization slug.");
   const email = (process.env.SARATHI_ADMIN_EMAIL ?? "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
     throw new Error("Set SARATHI_ADMIN_EMAIL.");
@@ -31,8 +34,10 @@ async function main() {
       const identity = await client.query<{ id: string }>(
         `SELECT identity.id FROM sarathi.auth_users identity
         JOIN sarathi.users actor ON actor.identity_subject=identity.id
-        WHERE identity.email=$1 AND actor.active AND actor.role='ADMIN' FOR UPDATE OF identity, actor`,
-        [email]
+        JOIN sarathi.organization_memberships m ON m.user_id=actor.id AND m.active AND m.role='ADMIN'
+        JOIN sarathi.organizations o ON o.id=m.organization_id AND o.active
+        WHERE identity.email=$1 AND o.slug=$2 AND actor.active AND actor.role='ADMIN' FOR UPDATE OF identity, actor, m`,
+        [email, organizationSlug]
       );
       const id = identity.rows[0]?.id;
       if (!id) throw new Error("No active administrator matches this email.");

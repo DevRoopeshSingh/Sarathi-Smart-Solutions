@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import pg from "pg";
 import { fixtureTotp } from "./totp-fixture.mjs";
+import { readFile } from "node:fs/promises";
 
 async function database(work) {
   const client = new pg.Client({ connectionString: process.env.DATABASE_MIGRATION_URL });
@@ -20,6 +21,169 @@ async function signIn(page, email = "admin@example.test") {
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/admin$/);
 }
+
+test("payment receipt, private PDF, advance allocation and refund work on desktop/mobile", async ({
+  page
+}, testInfo) => {
+  await signIn(page);
+  const project = await database(
+    async (client) =>
+      (await client.query("SELECT id::text FROM sarathi.projects WHERE name='Payment QA project'"))
+        .rows[0]
+  );
+  await page.goto("/admin/payments/new?projectId=" + project.id);
+  const receipt = page.getByRole("region", { name: "Record receipt" });
+  await receipt.getByLabel("Amount (INR)", { exact: true }).fill("7.03");
+  await receipt.getByLabel("Method", { exact: true }).selectOption("UPI");
+  await receipt
+    .getByLabel("Transaction reference", { exact: false })
+    .fill("UI-PAYMENT-" + testInfo.project.name);
+  await receipt.getByLabel("I confirm this records money already received.").check();
+  await receipt.getByRole("button", { name: "Save receipt", exact: true }).dblclick();
+  await expect(page).toHaveURL(/\/admin\/payments\/\d+$/);
+  const receiptId = new URL(page.url()).pathname.split("/").at(-1);
+  const number = await page.locator("h1").innerText();
+  expect(number).toMatch(/^SAR-RCPT/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+  await page.screenshot({
+    path: `/private/tmp/sarathi-payment-receipt-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+  const downloaded = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Download private receipt PDF" }).click();
+  const download = await downloaded;
+  expect((await readFile(await download.path())).subarray(0, 5).toString()).toBe("%PDF-");
+  const allocate = page.getByRole("region", { name: "Allocate advance" });
+  await allocate.getByLabel("Amount to allocate (INR)").fill("3.01");
+  await allocate.getByRole("button", { name: "Allocate advance", exact: true }).click();
+  await expect(page.getByText("This receipt:", { exact: false })).toContainText("allocated ₹3.01");
+  const refund = page.getByRole("region", { name: "Record refund" });
+  await refund.getByLabel("Amount (INR)", { exact: true }).fill("5.02");
+  await refund
+    .getByLabel("Refund reason", { exact: false })
+    .fill("Customer refund already completed");
+  await refund.getByLabel("I confirm this records money already refunded.").check();
+  await refund.getByRole("button", { name: "Save refund record", exact: true }).click();
+  await expect(page.locator("h1")).toContainText("SAR-RFND");
+  await expect(page.getByRole("heading", { name: "₹5.02 refunded" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+  await page.screenshot({
+    path: `/private/tmp/sarathi-payment-refund-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+  await page.getByRole("link", { name: "Original receipt", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp("/admin/payments/" + receiptId + "$"));
+  await expect(page.getByText("This receipt:", { exact: false })).toContainText("allocated ₹2.01");
+  const correction = page.getByRole("region", { name: "Record refund" });
+  await correction.getByLabel("Entry type").selectOption("REVERSAL");
+  await correction.getByLabel("Amount (INR)", { exact: true }).fill("0.01");
+  await correction
+    .getByLabel("Transaction reference", { exact: false })
+    .fill("UI-CORRECTION-" + testInfo.project.name);
+  await correction
+    .getByLabel("Correction reason", { exact: false })
+    .fill("Incorrect one-paisa receipt entry approved for reversal");
+  await correction
+    .getByLabel("I confirm this reverses an incorrect receipt; no money is moved.")
+    .check();
+  await correction.getByRole("button", { name: "Save correction record", exact: true }).click();
+  await expect(page.locator("h1")).toContainText("SAR-ADJ");
+  await expect(page.getByRole("heading", { name: "₹0.01 receipt correction" })).toBeVisible();
+  const result = await database(
+    async (client) =>
+      (
+        await client.query("SELECT count(*)::int AS n FROM sarathi.payments WHERE reference=$1", [
+          "UI-PAYMENT-" + testInfo.project.name
+        ])
+      ).rows[0]
+  );
+  expect(result.n).toBe(1);
+});
+
+test("interrupted payment response recovers the stored receipt after a page reload", async ({
+  page
+}, testInfo) => {
+  await signIn(page);
+  const project = await database(
+    async (client) =>
+      (await client.query("SELECT id::text FROM sarathi.projects WHERE name='Payment QA project'"))
+        .rows[0]
+  );
+  const path = "/admin/payments/new?projectId=" + project.id;
+  await page.goto(path);
+  await page.route("**/admin/payments/new?projectId=" + project.id, async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fetch();
+      await route.abort("failed");
+    } else await route.continue();
+  });
+  const form = page.getByRole("region", { name: "Record receipt" });
+  await form.getByLabel("Amount (INR)", { exact: true }).fill("1.11");
+  await form.getByLabel("Method", { exact: true }).selectOption("UPI");
+  await form
+    .getByLabel("Transaction reference", { exact: false })
+    .fill("INTERRUPTED-" + testInfo.project.name);
+  await form.getByLabel("I confirm this records money already received.").check();
+  await form.getByRole("button", { name: "Save receipt", exact: true }).click();
+  await expect(form.getByRole("alert")).toContainText("interrupted");
+  await page.unroute("**/admin/payments/new?projectId=" + project.id);
+  await page.reload();
+  await expect(page).toHaveURL(/\/admin\/payments\/\d+$/);
+  const count = await database(
+    async (client) =>
+      (
+        await client.query("SELECT count(*)::int AS n FROM sarathi.payments WHERE reference=$1", [
+          "INTERRUPTED-" + testInfo.project.name
+        ])
+      ).rows[0]
+  );
+  expect(count.n).toBe(1);
+  const receiptId = new URL(page.url()).pathname.split("/").at(-1),
+    detailPath = "**/admin/payments/" + receiptId;
+  await page.route(detailPath, async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fetch();
+      await route.abort("failed");
+    } else await route.continue();
+  });
+  const allocation = page.getByRole("region", { name: "Allocate advance" });
+  await allocation.getByLabel("Amount to allocate (INR)").fill("0.20");
+  await allocation.getByRole("button", { name: "Allocate advance", exact: true }).click();
+  await expect(allocation.getByRole("alert")).toContainText("Unable to confirm");
+  await page.unroute(detailPath);
+  await page.reload();
+  await expect(
+    page.getByText("The previous allocation was saved.", { exact: false })
+  ).toBeVisible();
+  await expect(page.getByText("This receipt:", { exact: false })).toContainText("allocated ₹0.20");
+  const allocated = await database(
+    async (client) =>
+      (
+        await client.query(
+          "SELECT count(*)::int AS n FROM sarathi.payment_allocations WHERE receipt_id=$1 AND amount=0.20",
+          [receiptId]
+        )
+      ).rows[0]
+  );
+  expect(allocated.n).toBe(1);
+});
+test("payment write controls respect viewer and operator membership authorization", async ({
+  page
+}) => {
+  await signIn(page, "operator@example.test");
+  await page.goto("/admin/payments");
+  await expect(page.getByRole("link", { name: "Record receipt", exact: true })).toHaveCount(0);
+  await page.goto("/admin/payments/new");
+  await expect(page).toHaveURL(/\/admin\/payments$/);
+  await page.context().clearCookies();
+  await signIn(page, "viewer@example.test");
+  await page.goto("/admin/payments");
+  await expect(page).toHaveURL(/\/admin$/);
+});
 
 test("first-login introduction persists per account and can be replayed", async ({
   page
@@ -113,7 +277,7 @@ test("linked detail pages explain stages and show real activity on desktop and m
     path: `/tmp/sarathi-workflow-project-dark-${testInfo.project.name}.png`,
     fullPage: true
   });
-  await page.getByRole("link", { name: "Quotation v1 · Sent", exact: true }).click();
+  await page.getByRole("link", { name: "Quotation v1 · Issued", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Workflow fixture · Quotation v1", exact: true })
   ).toBeVisible();
@@ -121,7 +285,7 @@ test("linked detail pages explain stages and show real activity on desktop and m
     "Quotation v1 sent"
   );
   await expect(page.getByRole("region", { name: "Previous and next steps" })).toContainText(
-    "current quotation process"
+    "staff record"
   );
   try {
     await database((client) =>
@@ -234,7 +398,7 @@ test("administrator assigns a role to an existing user", async ({ page }) => {
   } finally {
     await database((client) =>
       client.query(
-        "UPDATE sarathi.users SET role = 'OPERATOR' WHERE identity_subject = (SELECT id FROM sarathi.auth_users WHERE email = 'operator@example.test')"
+        "UPDATE sarathi.users SET role = 'OPERATOR' WHERE identity_subject = (SELECT id FROM sarathi.auth_users WHERE email = 'operator@example.test'); UPDATE sarathi.organization_memberships SET role='OPERATOR' WHERE organization_id=1 AND user_id=(SELECT u.id FROM sarathi.users u JOIN sarathi.auth_users a ON a.id=u.identity_subject WHERE a.email='operator@example.test')"
       )
     );
   }
@@ -286,9 +450,9 @@ test("administrator signs in, sees live counts and signs out on all viewport siz
     async (client) =>
       (
         await client.query(`SELECT
-    (SELECT count(*) FROM sarathi.leads) AS leads,
-    (SELECT count(*) FROM sarathi.projects) AS projects,
-    (SELECT count(*) FROM sarathi.quotations) AS quotations`)
+    (SELECT count(*) FROM sarathi.leads WHERE organization_id=(SELECT id FROM sarathi.organizations WHERE slug='sarathi')) AS leads,
+    (SELECT count(*) FROM sarathi.projects WHERE organization_id=(SELECT id FROM sarathi.organizations WHERE slug='sarathi')) AS projects,
+    (SELECT count(*) FROM sarathi.quotations WHERE organization_id=(SELECT id FROM sarathi.organizations WHERE slug='sarathi')) AS quotations`)
       ).rows[0]
   );
   await expect(page.locator(".metric dd")).toHaveText([
@@ -371,6 +535,9 @@ test("business writes persist and rejected status changes never look successful"
   await page.getByLabel("Full Name / Business Name *", { exact: true }).fill(name);
   await page.getByLabel("Mobile Number *", { exact: true }).fill("9999999999");
   await page.getByRole("button", { name: "Save Customer", exact: true }).click();
+  await expect(page.getByRole("alert", { name: "Possible existing customers" })).toBeVisible();
+  await page.getByRole("button", { name: "Create separate customer", exact: true }).click();
+  await page.getByRole("button", { name: "Save Customer", exact: true }).click();
   await expect(page.getByText(name, { exact: true })).toBeVisible();
   await page.goto("/admin/leads?new=1");
   await page.getByLabel("Customer / Contact Name *", { exact: true }).fill(leadName);
@@ -411,6 +578,10 @@ test("business writes persist and rejected status changes never look successful"
     .selectOption({ label: `${name} (9999999999)` });
   await page.getByLabel("Project Title *", { exact: true }).fill(projectName);
   await page.getByLabel("Site Address *", { exact: true }).fill("Mumbai");
+  await expect(page.locator('input[name="serviceTypes"][value="cctv"]')).toBeChecked();
+  await page.locator('input[name="serviceTypes"][value="cctv"]').uncheck();
+  await page.locator('input[name="serviceTypes"][value="network"]').check();
+  await page.locator('input[name="serviceTypes"][value="biometric"]').check();
   await page.getByRole("button", { name: "Confirm & Create Project", exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/projects$/);
   // Select by accessible name as desktop and mobile variants share the same label.
@@ -440,4 +611,350 @@ test("business writes persist and rejected status changes never look successful"
       ).rows[0]
   );
   expect(history.reason).toBe("Existing installation handed over");
+  const conversion = await database(
+    async (client) =>
+      (
+        await client.query(
+          `SELECT p.service_types, p.lead_id::text, p.customer_id::text AS project_customer,
+          l.status AS lead_status, l.contact_name AS lead_name, l.customer_id::text AS lead_customer,
+          c.name AS customer_name
+          FROM sarathi.projects p
+          JOIN sarathi.leads l ON l.id=p.lead_id
+          JOIN sarathi.customers c ON c.id=p.customer_id WHERE p.name=$1`,
+          [projectName]
+        )
+      ).rows[0]
+  );
+  expect(conversion.service_types).toEqual(["network", "biometric"]);
+  expect(conversion.lead_id).toMatch(/^\d+$/);
+  expect(conversion.lead_status).toBe("CONVERTED");
+  expect(conversion.lead_name).toBe(leadName);
+  expect(conversion.customer_name).toBe(name);
+  expect(conversion.lead_customer).toBe(conversion.project_customer);
+  await page.goto(`/admin/leads/${conversion.lead_id}`);
+  await expect(page.getByRole("heading", { name: leadName, exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continue in linked project" })).toBeVisible();
+});
+
+test("operator chooses project services and empty selections never create a record", async ({
+  page
+}, testInfo) => {
+  const customerName = `Service selector customer ${testInfo.project.name}`;
+  const projectName = `Service selector project ${testInfo.project.name}`;
+  const customer = await database(
+    async (client) =>
+      (
+        await client.query(
+          "INSERT INTO sarathi.customers(name,phone) VALUES($1,'9999999999') RETURNING id::text",
+          [customerName]
+        )
+      ).rows[0]
+  );
+  await signIn(page, "operator@example.test");
+  await page.goto("/admin/projects?new=1");
+  const dialog = page.getByRole("dialog", { name: "Create New Project", exact: true });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Select Customer *", { exact: true }).selectOption(customer.id);
+  await dialog.getByLabel("Project Name / Title *", { exact: true }).fill(projectName);
+  await dialog.getByLabel("Site Address *", { exact: true }).fill("Mira Road, Mumbai");
+  const cctv = dialog.locator('input[name="serviceTypes"][value="cctv"]');
+  await expect(cctv).toBeChecked();
+  await expect(dialog.locator('input[name="serviceTypes"]:checked')).toHaveCount(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+  await page.screenshot({
+    path: `/tmp/sarathi-project-service-selector-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+  await cctv.uncheck();
+  await dialog.getByRole("button", { name: "Save Project", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toContainText(/service/i);
+  await expect(dialog).toBeVisible();
+  const rejected = await database((client) =>
+    client.query("SELECT id FROM sarathi.projects WHERE name=$1", [projectName])
+  );
+  expect(rejected.rowCount).toBe(0);
+  await dialog.locator('input[name="serviceTypes"][value="network"]').check();
+  await dialog.locator('input[name="serviceTypes"][value="biometric"]').check();
+  await dialog.getByRole("button", { name: "Save Project", exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("link", { name: projectName, exact: true })).toBeVisible();
+  const saved = await database(
+    async (client) =>
+      (
+        await client.query(
+          `SELECT id::text, customer_id::text, lead_id::text, service_types,
+          operational_status FROM sarathi.projects WHERE name=$1`,
+          [projectName]
+        )
+      ).rows[0]
+  );
+  expect(saved.customer_id).toBe(customer.id);
+  expect(saved.lead_id).toBeNull();
+  expect(saved.service_types).toEqual(["network", "biometric"]);
+  expect(saved.operational_status).toBe("SURVEY_PENDING");
+  await page.getByRole("link", { name: projectName, exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/admin/projects/${saved.id}$`));
+  await expect(page.getByRole("heading", { name: projectName, exact: true })).toBeVisible();
+  const details = page.getByRole("region", { name: "Record details", exact: true });
+  await expect(details).toContainText("Wi‑Fi & networking");
+  await expect(details).toContainText("Biometric attendance / access control");
+});
+
+test("customer V2 creates, warns about duplicates, edits, and displays scoped profile history", async ({
+  page
+}, testInfo) => {
+  await signIn(page, "operator@example.test");
+  const name = `Customer profile browser ${testInfo.project.name}`;
+  const phone = testInfo.project.name === "desktop" ? "9876012301" : "9876012302";
+  await page.goto("/admin/customers?new=1");
+  const dialog = page.getByRole("dialog", { name: "Create Customer Profile" });
+  await dialog.getByLabel("Full Name / Business Name *", { exact: true }).fill(name);
+  await dialog.getByLabel("Mobile Number *", { exact: true }).fill("abc");
+  await dialog.getByRole("button", { name: "Save Customer", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toContainText("valid phone");
+  await dialog.getByLabel("Mobile Number *", { exact: true }).fill(phone);
+  await dialog.getByRole("button", { name: "Save Customer", exact: true }).evaluate((button) => {
+    button.click();
+    button.click();
+  });
+  // Desktop and mobile names share a normalized prefix, so the second run may
+  // legitimately warn about a similar name even though the phone is different.
+  await expect(async () => {
+    expect(
+      (await dialog.count()) === 0 ||
+        (await dialog.getByRole("alert", { name: "Possible existing customers" }).isVisible())
+    ).toBe(true);
+  }).toPass();
+  if (await dialog.count()) {
+    await dialog.getByRole("button", { name: "Create separate customer", exact: true }).click();
+    await dialog.getByRole("button", { name: "Save Customer", exact: true }).click();
+  }
+  await expect(dialog).toHaveCount(0);
+  const created = await database((client) =>
+    client.query("SELECT count(*)::int AS count FROM sarathi.customers WHERE name=$1", [name])
+  );
+  expect(created.rows[0].count).toBe(1);
+  await page.getByRole("link", { name, exact: true }).click();
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Customer information" })).toContainText(phone);
+  await page.getByRole("button", { name: "Edit Customer", exact: true }).click();
+  const editor = page.getByRole("dialog", { name: "Edit Customer Profile" });
+  await expect(editor.getByLabel("Full Name / Business Name *", { exact: true })).toHaveValue(name);
+  await expect(editor.getByLabel("Mobile Number *", { exact: true })).toHaveValue(phone);
+  await editor.getByLabel("Email Address (Optional)", { exact: true }).fill("edited@example.test");
+  await editor
+    .getByLabel("Address / Locality (Optional)", { exact: true })
+    .fill("Updated Mumbai address");
+  await editor.getByRole("button", { name: "Save Changes", exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Customer information" })).toContainText(
+    "edited@example.test"
+  );
+  await page.getByRole("link", { name: "Recent activity", exact: true }).click();
+  await expect(page.getByRole("region", { name: "activity records" })).toContainText(
+    "Customer details updated"
+  );
+  await expect(page.getByRole("region", { name: "activity records" })).toContainText(
+    "Test operator"
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+  await page.screenshot({
+    path: `/tmp/sarathi-customer-profile-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+  await page.goto("/admin/customers?new=1");
+  await dialog
+    .getByLabel("Full Name / Business Name *", { exact: true })
+    .fill("Different person at shared contact");
+  await dialog.getByLabel("Mobile Number *", { exact: true }).fill(`+91 ${phone}`);
+  await dialog.getByRole("button", { name: "Save Customer", exact: true }).click();
+  await expect(dialog.getByRole("alert", { name: "Possible existing customers" })).toContainText(
+    "Matching phone"
+  );
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  const found = await database((client) =>
+    client.query(
+      "SELECT count(*)::int AS count FROM sarathi.customers WHERE name='Different person at shared contact'"
+    )
+  );
+  expect(found.rows[0].count).toBe(0);
+});
+
+test("customer V2 viewer profiles hide editing and payments", async ({ page }) => {
+  const fixture = await database((client) =>
+    client.query(
+      "SELECT id::text FROM sarathi.customers WHERE name LIKE 'Customer profile browser %' ORDER BY id DESC LIMIT 1"
+    )
+  );
+  await signIn(page, "viewer@example.test");
+  await page.goto(`/admin/customers/${fixture.rows[0].id}`);
+  await expect(page.getByRole("button", { name: "Edit Customer", exact: true })).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("navigation", { name: "Customer records" })
+      .getByRole("link", { name: "Payments", exact: true })
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "Recent activity", exact: true }).click();
+  await expect(page.getByRole("region", { name: "activity records" })).toContainText(
+    "Customer details updated"
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+});
+
+async function prepareQuote(page, label) {
+  const customer = await database(
+    async (client) =>
+      (
+        await client.query(
+          "INSERT INTO sarathi.customers(name,phone) VALUES($1,'9999999999') RETURNING id::text",
+          [label]
+        )
+      ).rows[0]
+  );
+  await page.goto("/admin/quotes/new");
+  await page.getByLabel("Search customer directory").fill(label);
+  await expect(
+    page.getByRole("option", { name: label + " (9999999999)", exact: true })
+  ).toBeAttached();
+  await page.getByLabel("Customer", { exact: true }).selectOption(customer.id);
+  await page.getByLabel("Division", { exact: true }).selectOption({ label: "Smart Solutions" });
+  await page.getByLabel("Quotation title").fill(label);
+  await page.getByLabel("Description 1", { exact: true }).fill("CCTV supply / सीसीटीवी");
+  await page.getByLabel("Quantity 1", { exact: true }).fill("2.500");
+  await page.getByLabel("Rate (INR) 1", { exact: true }).fill("100.01");
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  await page.getByLabel("Description 2", { exact: true }).fill("Installation and testing");
+  await page.getByLabel("Rate (INR) 2", { exact: true }).fill("50");
+  await page.getByLabel("Overall discount (INR)").fill("0.01");
+  await page.getByLabel("Valid until", { exact: true }).fill("2099-12-31");
+  await page
+    .getByLabel("Terms and conditions")
+    .fill("Delivery by agreement. This quote does not record payment.");
+}
+test("quotation drafts, PDFs, staff acceptance and revision rejection work at the counter", async ({
+  page
+}, testInfo) => {
+  await signIn(page, "operator@example.test");
+  const label = "Counter quotation " + testInfo.project.name;
+  await prepareQuote(page, label);
+  await expect(page.getByLabel("Tax treatment")).toHaveValue("NONE");
+  await expect(page.getByLabel("Tax treatment").locator("option")).toHaveCount(1);
+  await page.getByRole("button", { name: "Calculate totals", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("₹300.02");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+  await page.screenshot({
+    path: "/tmp/sarathi-quotation-editor-" + testInfo.project.name + ".png",
+    fullPage: true
+  });
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/quotes\/[0-9]+$/);
+  const original = page.url();
+  await expect(page.getByRole("region", { name: "Quotation items" })).toContainText(
+    "Saved total: ₹300.02"
+  );
+  await page.getByRole("link", { name: "Edit draft", exact: true }).click();
+  await page.getByLabel("Rate (INR) 1", { exact: true }).fill("120");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page).toHaveURL(original);
+  await expect(page.getByRole("region", { name: "Quotation items" })).toContainText("₹349.99");
+  await page.getByLabel("I have reviewed the saved items", { exact: false }).check();
+  await page.getByRole("button", { name: "Issue quotation", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Download issued PDF", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Edit draft", exact: true })).toHaveCount(0);
+  const downloadEvent = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Download issued PDF", exact: true }).click();
+  const downloaded = await downloadEvent;
+  expect(downloaded.suggestedFilename()).toMatch(/^SAR-SMART-.*\.pdf$/);
+  expect(await downloaded.failure()).toBeNull();
+  await expect(page).toHaveURL(original);
+  await page
+    .getByLabel("Customer communication / decision reference")
+    .fill("Customer accepted by phone; recorded at the counter.");
+  await page.getByLabel("I confirm this is a staff record").check();
+  await page.getByRole("button", { name: "Record acceptance", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Quotation audit history" })).toContainText(
+    "ACCEPTED STAFF"
+  );
+  await page.getByRole("button", { name: "Create revision draft", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/quotes\/[0-9]+\/edit$/);
+  await page.getByLabel("Quotation title").fill(label + " revised");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/quotes\/[0-9]+$/);
+  await page.getByLabel("I have reviewed the saved items", { exact: false }).check();
+  await page.getByRole("button", { name: "Issue quotation", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Download issued PDF", exact: true })).toBeVisible();
+  await page
+    .getByLabel("Customer communication / decision reference")
+    .fill("Customer declined the revised scope.");
+  await page.getByLabel("I confirm this is a staff record").check();
+  await page.getByRole("button", { name: "Record rejection", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Quotation audit history" })).toContainText(
+    "REJECTED STAFF"
+  );
+  await page.goto(original);
+  await expect(page.getByRole("region", { name: "Quotation items" })).toContainText("Accepted");
+  await page.goto("/admin/quotes");
+  await page.getByLabel("Quotation status", { exact: true }).selectOption("APPROVED");
+  await page.getByRole("searchbox", { name: "Search records", exact: true }).fill(label);
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.locator("tbody")).toContainText("Accepted");
+});
+test("quotation stale draft saves keep the first staff member's edit", async ({
+  page,
+  context
+}, testInfo) => {
+  await signIn(page);
+  await prepareQuote(page, "Concurrent quote " + testInfo.project.name);
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/quotes\/[0-9]+$/);
+  const url = page.url() + "/edit";
+  await page.goto(url);
+  const other = await context.newPage();
+  await other.goto(url);
+  await expect(other.getByLabel("Quotation title")).toBeVisible();
+  await page.getByLabel("Quotation title").fill("First staff update");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page).not.toHaveURL(url);
+  await other.getByLabel("Quotation title").fill("Stale second update");
+  await other.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(
+    other.getByRole("region", { name: "Quotation editor" }).getByRole("alert")
+  ).toContainText("draft changed");
+  await other.close();
+});
+test("quotation viewer downloads are authorized and mutation controls are hidden", async ({
+  page
+}) => {
+  await signIn(page, "viewer@example.test");
+  await page.goto("/admin/quotes");
+  await expect(page.getByRole("link", { name: "Create quotation", exact: true })).toHaveCount(0);
+  const row = await database(
+    async (client) =>
+      (
+        await client.query(
+          "SELECT id::text FROM sarathi.quotations WHERE tax_mode='NONE' AND status='APPROVED' AND division_id=2 ORDER BY id DESC LIMIT 1"
+        )
+      ).rows[0]
+  );
+  await page.goto("/admin/quotes/" + row.id);
+  await expect(page.getByRole("link", { name: "Download issued PDF", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Create revision draft", exact: true })
+  ).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Edit draft", exact: true })).toHaveCount(0);
+  const response = await page.request.get("/api/admin/quotations/" + row.id + "/pdf");
+  expect(response.status()).toBe(200);
+  expect((await response.body()).subarray(0, 5).toString()).toBe("%PDF-");
+  await page.goto("/admin/quotes/new");
+  await expect(page.getByRole("heading", { name: "Create quotation", exact: true })).toHaveCount(0);
 });

@@ -33,13 +33,17 @@ Status: **Production Website Live** ([sarathismartsolutions.in](https://sarathis
 
 ## 🚀 Phase 3: Post-Launch SEO & Business Presence
 
-- [ ] **Google Search Console**:
-  - Add property `https://sarathismartsolutions.in`.
-  - Submit sitemap: `https://sarathismartsolutions.in/sitemap.xml`.
-  - Request priority indexing for homepage and policy URLs.
+- [x] **Google Search Console**:
+  - [x] Verified ownership for property `https://sarathismartsolutions.in` via Cloudflare DNS.
+  - [x] Optimized clean canonical URLs in `sitemap.xml` (eliminated 307 redirects on policy routes).
+  - [x] Submitted clean sitemap: `https://sarathismartsolutions.in/sitemap.xml`.
+  - [x] Manually requested priority indexing for homepage, `/digital-seva-kendra`, and legal policies.
+- [x] **On-Page SEO Optimization**:
+  - [x] Formatted homepage title (60 chars) and meta description (157 chars) under Google SERP limits.
+  - [x] Formatted Digital Seva Kendra title (56 chars) and meta description (158 chars) under limits.
 - [ ] **Google Business Profile (Local SEO)**:
-  - Update primary website link to `https://sarathismartsolutions.in`.
-  - Confirm opening hours and category (CCTV installation, security system supplier).
+  - Create / update listing at `RNP Park, Bhayander East, Thane - 401105` (Place ID: `ChIJ4Ydlu3av5zsRPe9y8mQmG0Y`).
+  - Configure primary/secondary categories, opening hours, and phone `+91 83697 04457`.
 - [ ] **Open Graph / Social Sharing Validation**:
   - Test WhatsApp and Facebook card previews for proper logo, title, and description.
 
@@ -56,11 +60,24 @@ Status: **Production Website Live** ([sarathismartsolutions.in](https://sarathis
 
 ---
 
-## 🛠️ Phase 5: Operations & Crewing Desk (`operations/`)
+## 🛠️ Phase 5: Sarathi Business Manager (`operations/` on `feat/sarathi-business-manager`)
 
-- [ ] **Database Setup**:
-  - Verify local/production PostgreSQL schema for technician management.
-- [ ] **Crewing Desk & Dispatch Feature**:
-  - Technician scheduling, active service tickets, and site survey assignments.
-- [ ] **Authentication & Security**:
-  - Role-based access control for desk admins and field technicians.
+- [x] **Milestone 1 — Multi-Service Project Catalog Selection**:
+  - Replaced single service with catalog-backed multi-service selection in Create Project and Convert Lead.
+  - Preserved CCTV default; server validates stable IDs and preserves legacy unknown IDs.
+- [x] **Milestone 2 — Multi-Organization Tenant Foundation & Composite Security**:
+  - Migrations 006 & 007: Composite FKs, RLS, and scoped DAL (`authorizedDatabase`/`TenantPool`).
+  - Server context resolution with active-state checks, role intersection, and division isolation.
+- [x] **Milestone 3 — Safe Customer Management V2**:
+  - Migration 008: Composite-owned customer editing, advisory duplicates, safe retries, and scoped linked history.
+- [x] **Milestone 4 — Complete Quotation Management**:
+  - Migration 009: Exact paise calculations, line items, A4 PDF generation via PDFKit with Noto fonts.
+  - Revisions, staff decisions, and accepted baseline tracking per project/family.
+- [x] **Milestone 5 — Payments, Advances, Refunds, Balances & Receipts**:
+  - Migration 010: Manual receipts (Cash, UPI, Bank, Card), project advances, accepted standalone quotation links.
+  - Partial allocations, exact net balances, staff refund/correction audit trail, and private PDF receipts.
+- [ ] **Milestone 6 — Operations, Follow-ups & Reporting (Pending)**:
+  - Manual follow-ups, staff activity timeline, unified dashboard metrics, and division-level reporting.
+- [ ] **Milestone 7 — Production Release Gates (Pending)**:
+  - Staging verification with production-like connection pool (`DB_POOL_MAX=2`).
+  - Runtime grants reapplication as owner; backup restoration test drill before live release.

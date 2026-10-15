@@ -63,6 +63,12 @@ for (const signal of ["SIGINT", "SIGTERM"])
 try {
   tls = await temporaryHttps(3107, 3108);
   env.NODE_EXTRA_CA_CERTS = tls.certificate;
+  const fixtureConnection = new URL(cluster.connectionString);
+  fixtureConnection.searchParams.set(
+    "options",
+    "-c sarathi.organization_id=1 -c sarathi.division_id=2"
+  );
+  env.DATABASE_MIGRATION_URL = fixtureConnection.toString();
   await run(process.execPath, [
     "--conditions=react-server",
     "--import",
@@ -128,6 +134,13 @@ try {
     "--import",
     "tsx",
     "--test",
+    "tests/runtime-tenancy.ts"
+  ]);
+  await run(process.execPath, [
+    "--conditions=react-server",
+    "--import",
+    "tsx",
+    "--test",
     "tests/runtime-security.ts"
   ]);
   await run(process.execPath, [
@@ -136,6 +149,34 @@ try {
     "tsx",
     "--test",
     "tests/runtime-business.ts"
+  ]);
+  await run(process.execPath, [
+    "--conditions=react-server",
+    "--import",
+    "tsx",
+    "--test",
+    "tests/runtime-isolation.ts"
+  ]);
+  await run(process.execPath, [
+    "--conditions=react-server",
+    "--import",
+    "tsx",
+    "--test",
+    "tests/runtime-customers.ts"
+  ]);
+  await run(process.execPath, [
+    "--conditions=react-server",
+    "--import",
+    "tsx",
+    "--test",
+    "tests/runtime-quotations.ts"
+  ]);
+  await run(process.execPath, [
+    "--conditions=react-server",
+    "--import",
+    "tsx",
+    "--test",
+    "tests/runtime-payments.ts"
   ]);
   await run(
     process.execPath,

@@ -2,10 +2,20 @@
 import { useEffect, useState } from "react";
 import type { CustomerOption } from "@/lib/operations";
 
-export function CustomerSelect({ initial, label }: { initial: CustomerOption[]; label: string }) {
+export function CustomerSelect({
+  initial,
+  label,
+  defaultValue = "",
+  onChange
+}: {
+  initial: CustomerOption[];
+  label: string;
+  defaultValue?: string;
+  onChange?: (value: string) => void;
+}) {
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState(initial);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(defaultValue);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -50,6 +60,7 @@ export function CustomerSelect({ initial, label }: { initial: CustomerOption[]; 
         onChange={(event) => {
           setQuery(event.target.value);
           setValue("");
+          onChange?.("");
         }}
       />
       <label htmlFor="customerId">{label}</label>
@@ -60,7 +71,10 @@ export function CustomerSelect({ initial, label }: { initial: CustomerOption[]; 
         className="admin-input"
         value={value}
         disabled={pending}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          setValue(event.target.value);
+          onChange?.(event.target.value);
+        }}
       >
         <option value="">{pending ? "Searching…" : "Choose a customer (first 25 matches)"}</option>
         {options.map((customer) => (

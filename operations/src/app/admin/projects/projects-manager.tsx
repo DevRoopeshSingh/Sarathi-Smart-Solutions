@@ -2,6 +2,7 @@
 import { StageTooltip } from "@/components/workflow/stage-tooltip";
 import { formatIndiaDate } from "@/lib/date";
 import { CustomerSelect } from "../customer-select";
+import { ProjectServiceSelect } from "../project-service-select";
 import { ListSearch, useListFilters } from "../list-controls";
 
 import { useEffect, useRef, useState } from "react";
@@ -561,9 +562,8 @@ export function ProjectsManager({
                       <tr key={p.id}>
                         <td>
                           <div className="project-title-cell">
-                            <button
-                              type="button"
-                              onClick={() => router.push(`/admin/projects/${p.id}`)}
+                            <Link
+                              href={`/admin/projects/${p.id}`}
                               className="project-title-link"
                               style={{
                                 background: "none",
@@ -574,7 +574,7 @@ export function ProjectsManager({
                               }}
                             >
                               {p.name}
-                            </button>
+                            </Link>
                             <div className="project-id-tag">
                               #PRJ-{String(p.id).padStart(4, "0")}
                             </div>
@@ -664,7 +664,11 @@ export function ProjectsManager({
                 <article key={p.id} className="mobile-project-card">
                   <div className="mobile-card-header">
                     <div>
-                      <h4 className="mobile-card-title">{p.name}</h4>
+                      <h4 className="mobile-card-title">
+                        <Link href={`/admin/projects/${p.id}`} className="project-title-link">
+                          {p.name}
+                        </Link>
+                      </h4>
                       <div className="mobile-card-customer">{p.customerName}</div>
                     </div>
                     <span className="project-id-tag">#PRJ-{String(p.id).padStart(4, "0")}</span>
@@ -870,6 +874,8 @@ export function ProjectsManager({
                   className="admin-input"
                 />
               </div>
+
+              <ProjectServiceSelect />
 
               <div className="form-group">
                 <label htmlFor="scope">Initial Scope of Work</label>
