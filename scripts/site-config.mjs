@@ -48,6 +48,8 @@ export const PUBLIC_FILES = Object.freeze([
   "cancellation-refund.html",
   "digital-seva-kendra.html",
   "digital-seva-kendra.js",
+  "sarathi-digital-seva.vcf",
+  "marketing-kit.html",
   "404.html",
   "assets/images/camera-mounting.jpg",
   "assets/images/dvr-nvr-rack.jpg",

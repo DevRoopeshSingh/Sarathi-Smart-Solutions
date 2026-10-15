@@ -668,7 +668,7 @@ function initServiceEnquiries(servicesById) {
     const mode =
       form.querySelector('input[name="service-mode"]:checked')?.value === "online-wa"
         ? "Online assistance via WhatsApp"
-        : "Walk-in at RNP Park Centre (Bhayander East)";
+        : "Walk-in at Navghar Road Centre (Chandan Park, Bhayander East)";
     const notes = notesInput.value.trim();
     if (notes.length > 1000)
       return showError(error, notesInput, "Keep notes within 1,000 characters.");

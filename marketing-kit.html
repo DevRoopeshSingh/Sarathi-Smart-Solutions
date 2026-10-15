@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Printable Marketing Kit | Sarathi Digital Seva Kendra</title>
+    <meta
+      name="description"
+      content="Print-ready marketing collateral, merchant checklists, counter tent cards, and standee specifications for Sarathi Digital Seva Kendra, Bhayander East."
+    />
+    <link rel="icon" type="image/png" sizes="32x32" href="01_icon_primary.png" />
+    <style>
+      /* Screen & Print Reset */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1a202c;
+        background-color: #f0f4f8;
+        line-height: 1.4;
+      }
+
+      /* Screen Toolbar */
+      .screen-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: #0d2847;
+        color: #ffffff;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .toolbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        border: none;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: #e67e22;
+        color: #ffffff;
+      }
+      .btn-primary:hover {
+        background: #d35400;
+      }
+
+      .btn-secondary {
+        background: #1e3a5f;
+        color: #ffffff;
+      }
+      .btn-secondary:hover {
+        background: #2c4d75;
+      }
+
+      .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: #ffffff;
+      }
+      .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Page Shells for Preview and Printing */
+      .print-container {
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+
+      .print-sheet {
+        background: #ffffff;
+        width: 100%;
+        min-height: 297mm;
+        margin-bottom: 32px;
+        padding: 14mm 14mm 12mm 14mm;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .sheet-badge-indicator {
+        position: absolute;
+        top: 6px;
+        right: 12px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #a0aec0;
+        font-weight: 700;
+      }
+
+      /* Page 1: Merchant Checklist Flyer Styling */
+      .flyer-header {
+        border-bottom: 2px solid #0d2847;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+
+      .flyer-brand-top {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .flyer-brand-top h1 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #0d2847;
+        letter-spacing: 0.5px;
+      }
+
+      .flyer-subhead {
+        font-size: 11px;
+        font-weight: 600;
+        color: #4a5568;
+      }
+
+      .flyer-address-pill {
+        display: inline-block;
+        background: #edf2f7;
+        color: #2d3748;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 10.5px;
+        font-weight: 700;
+        margin-top: 5px;
+      }
+
+      .flyer-hero-banner {
+        background: #0d2847;
+        color: #ffffff;
+        text-align: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 14px;
+      }
+
+      .flyer-hero-banner h2 {
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .flyer-hero-banner p {
+        font-size: 11px;
+        opacity: 0.9;
+        margin-top: 2px;
+      }
+
+      .services-checklist-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .checklist-card {
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        padding: 10px 12px;
+        background: #fcfdfd;
+        position: relative;
+      }
+
+      .card-title-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .check-box-icon {
+        width: 15px;
+        height: 15px;
+        border: 2px solid #0d2847;
+        border-radius: 3px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .checklist-card h3 {
+        font-size: 12.5px;
+        font-weight: 800;
+        color: #0d2847;
+        line-height: 1.25;
+      }
+
+      .card-purpose {
+        font-size: 10px;
+        font-weight: 700;
+        color: #e67e22;
+        margin-bottom: 4px;
+      }
+
+      .card-docs {
+        font-size: 10px;
+        color: #4a5568;
+        line-height: 1.35;
+      }
+
+      .card-docs strong {
+        color: #2d3748;
+      }
+
+      .card-tat {
+        margin-top: 5px;
+        font-size: 9.5px;
+        font-weight: 700;
+        color: #2b6cb0;
+        background: #ebf8ff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      /* Combo Deal Highlight */
+      .combo-deal-box {
+        background: #fffaf0;
+        border: 1.5px dashed #dd6b20;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .combo-badge {
+        background: #dd6b20;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 3px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-bottom: 3px;
+      }
+
+      .combo-info h4 {
+        font-size: 13.5px;
+        font-weight: 800;
+        color: #7b341e;
+      }
+
+      .combo-info p {
+        font-size: 10.5px;
+        color: #4a5568;
+        margin-top: 2px;
+      }
+
+      .combo-perks {
+        font-size: 10px;
+        font-weight: 700;
+        color: #2d3748;
+      }
+
+      /* Flyer Footer with QR Codes */
+      .flyer-footer {
+        border-top: 1.5px solid #e2e8f0;
+        padding-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .footer-contact-details {
+        flex: 1;
+      }
+
+      .footer-contact-details h4 {
+        font-size: 13px;
+        font-weight: 800;
+        color: #0d2847;
+      }
+
+      .footer-contact-details p {
+        font-size: 10.5px;
+        color: #4a5568;
+        margin-top: 2px;
+        line-height: 1.4;
+      }
+
+      .footer-contact-details .phone-highlight {
+        font-size: 14px;
+        font-weight: 800;
+        color: #e67e22;
+        margin-top: 4px;
+      }
+
+      .footer-qr-group {
+        display: flex;
+        gap: 14px;
+      }
+
+      .qr-block {
+        text-align: center;
+      }
+
+      .qr-block img {
+        width: 76px;
+        height: 76px;
+        display: block;
+        margin: 0 auto;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+        padding: 2px;
+        background: #ffffff;
+      }
+
+      .qr-block span {
+        display: block;
+        font-size: 9px;
+        font-weight: 700;
+        color: #2d3748;
+        margin-top: 3px;
+      }
+
+      /* Page 2: Counter Display Card (2-Up Panel) */
+      .counter-panels-wrap {
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        gap: 20px;
+        height: 100%;
+      }
+
+      .tent-card-panel {
+        border: 2px dashed #0d2847;
+        border-radius: 8px;
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+        position: relative;
+      }
+
+      .tent-tag {
+        position: absolute;
+        top: 8px;
+        left: 14px;
+        font-size: 9.5px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #718096;
+      }
+
+      .tent-content {
+        max-width: 60%;
+      }
+
+      .tent-content h3 {
+        font-size: 18px;
+        font-weight: 800;
+        color: #0d2847;
+        line-height: 1.25;
+        margin-top: 10px;
+      }
+
+      .tent-content p {
+        font-size: 11.5px;
+        color: #4a5568;
+        margin-top: 6px;
+        line-height: 1.4;
+      }
+
+      .tent-content ul {
+        margin-top: 8px;
+        list-style: none;
+      }
+
+      .tent-content ul li {
+        font-size: 11px;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 3px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .tent-qr-box {
+        text-align: center;
+        padding: 10px 16px;
+        background: #f7fafc;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .tent-qr-box img {
+        width: 105px;
+        height: 105px;
+        display: block;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 4px;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+      }
+
+      .tent-qr-box span {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        color: #0d2847;
+        margin-top: 6px;
+      }
+
+      .tent-qr-box small {
+        display: block;
+        font-size: 9px;
+        color: #718096;
+      }
+
+      /* Review Panel Specifics */
+      .review-panel {
+        background: linear-gradient(135deg, #fefbf6 0%, #fffdfa 100%);
+        border-color: #dd6b20;
+      }
+
+      .review-panel h3 {
+        color: #9c4221;
+      }
+
+      .stars-row {
+        color: #f6ad55;
+        font-size: 18px;
+        margin: 4px 0;
+      }
+
+      /* Page 3: Standee Blueprint */
+      .standee-spec-grid {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 24px;
+        height: 100%;
+        align-items: start;
+      }
+
+      .standee-visual-preview {
+        background: #0d2847;
+        color: #ffffff;
+        border-radius: 8px;
+        padding: 16px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border: 3px solid #1a365d;
+        height: 600px;
+        text-align: center;
+      }
+
+      .standee-visual-preview h3 {
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+      }
+
+      .standee-services-list {
+        text-align: left;
+        margin: 14px 0;
+      }
+
+      .standee-services-list li {
+        font-size: 10px;
+        line-height: 1.45;
+        margin-bottom: 6px;
+        list-style: none;
+      }
+
+      .standee-notes {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      .standee-notes h4 {
+        font-size: 14px;
+        font-weight: 800;
+        color: #0d2847;
+        margin-bottom: 10px;
+      }
+
+      .standee-notes ul {
+        margin-left: 18px;
+        font-size: 12px;
+        color: #4a5568;
+        line-height: 1.6;
+      }
+
+      /* Print Media Engine */
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 8mm;
+        }
+
+        body {
+          background: #ffffff;
+        }
+
+        .screen-toolbar {
+          display: none !important;
+        }
+
+        .print-container {
+          max-width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+
+        .print-sheet {
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          margin: 0 !important;
+          padding: 6mm 8mm !important;
+          min-height: 280mm;
+          page-break-after: always;
+          break-after: page;
+        }
+
+        .print-sheet:last-child {
+          page-break-after: auto;
+          break-after: auto;
+        }
+
+        .sheet-badge-indicator {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Screen View Navigation Bar -->
+    <header class="screen-toolbar">
+      <div class="toolbar-brand">
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="#e67e22"
+          stroke-width="2.5"
+        >
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+          <polyline points="17 21 17 13 7 13 7 21" />
+        </svg>
+        <span>Sarathi Marketing &amp; Print Kit (Navghar Road)</span>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn btn-primary" onclick="window.print()">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+          <span>Print All Sheets (Cmd + P)</span>
+        </button>
+        <a class="btn btn-secondary" href="/digital-seva-kendra.html">
+          <span>&larr; Back to Website</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="print-container">
+      <!-- ========================================== -->
+      <!-- SHEET 1: A4 MERCHANT COMPLIANCE FLYER     -->
+      <!-- ========================================== -->
+      <section class="print-sheet" id="sheet-merchant-flyer">
+        <div class="sheet-badge-indicator">Page 1 • A4 Local Business Flyer</div>
+
+        <!-- Header -->
+        <div class="flyer-header">
+          <div class="flyer-brand-top">
+            <h1>SARATHI DIGITAL SEVA KENDRA</h1>
+          </div>
+          <p class="flyer-subhead">
+            Official Citizen &amp; Business Documentation Desk • Sister Division of Sarathi Smart
+            Solutions
+          </p>
+          <div class="flyer-address-pill">
+            📍 Shop No. 14, Subbalaxmi Sadan, Navghar Road, Chandan Park, Bhayander East (Neelkanth
+            Stationery)
+          </div>
+        </div>
+
+        <!-- Hero Headline -->
+        <div class="flyer-hero-banner">
+          <h2>Is Your Shop / Commercial Unit 100% Compliant in Mira-Bhayandar?</h2>
+          <p>
+            Avoid municipal notices, heavy penalties, or bank loan delays. Get registered locally in
+            24–48 hours.
+          </p>
+        </div>
+
+        <!-- 4-Grid Checklist -->
+        <div class="services-checklist-grid">
+          <!-- Item 1: Gumasta -->
+          <div class="checklist-card">
+            <div class="card-title-row">
+              <div class="check-box-icon"></div>
+              <h3>1. Gumasta / Shop Act License (MBMC)</h3>
+            </div>
+            <p class="card-purpose">
+              Mandatory for all retail shops, galas &amp; offices in MBMC area.
+            </p>
+            <p class="card-docs">
+              <strong>Requires:</strong> Light bill, rent agreement (or tax receipt), proprietor
+              Aadhaar &amp; PAN, shopfront photo with signboard.
+            </p>
+            <span class="card-tat">⏱ Issued in 24–48 Hours</span>
+          </div>
+
+          <!-- Item 2: Udyam MSME -->
+          <div class="checklist-card">
+            <div class="card-title-row">
+              <div class="check-box-icon"></div>
+              <h3>2. Udyam MSME Certificate (Govt of India)</h3>
+            </div>
+            <p class="card-purpose">
+              Unlocks collateral-free business loans &amp; subsidy schemes.
+            </p>
+            <p class="card-docs">
+              <strong>Benefits:</strong> Priority bank current accounts, legal protection against
+              delayed vendor payments, government tender access.
+            </p>
+            <span class="card-tat">⏱ Instant Verification</span>
+          </div>
+
+          <!-- Item 3: FSSAI Food License -->
+          <div class="checklist-card">
+            <div class="card-title-row">
+              <div class="check-box-icon"></div>
+              <h3>3. FSSAI Food Safety License / Registration</h3>
+            </div>
+            <p class="card-purpose">
+              Compulsory for tea stalls, bakeries, snacks &amp; restaurants.
+            </p>
+            <p class="card-docs">
+              <strong>Requires:</strong> 14-digit FSSAI number must be printed on all food bills,
+              menus, and Swiggy/Zomato profiles.
+            </p>
+            <span class="card-tat">⏱ Same-Day Filing &amp; Receipt</span>
+          </div>
+
+          <!-- Item 4: GST & Tax -->
+          <div class="checklist-card">
+            <div class="card-title-row">
+              <div class="check-box-icon"></div>
+              <h3>4. GST Registration &amp; Monthly Filing</h3>
+            </div>
+            <p class="card-purpose">Expand to e-commerce, wholesale &amp; inter-state trade.</p>
+            <p class="card-docs">
+              <strong>Services:</strong> Fresh GSTIN registration, LUT filing, monthly GSTR-1 &amp;
+              GSTR-3B compliance, revocation of cancelled GST.
+            </p>
+            <span class="card-tat">⏱ End-to-End Filing</span>
+          </div>
+        </div>
+
+        <!-- Combo Package Box -->
+        <div class="combo-deal-box">
+          <div class="combo-info">
+            <span class="combo-badge">Bhayander Merchant Special</span>
+            <h4>"Dukaan Launchpad Combo Pack"</h4>
+            <p>
+              Everything you need to open your current account and trade legally in Mira-Bhayandar.
+            </p>
+            <p class="combo-perks">
+              ✔ Shop Act (Gumasta) + ✔ Udyam MSME + ✔ 200 Visiting Cards + ✔ 1 Self-Inking Rubber
+              Stamp
+            </p>
+          </div>
+          <div style="text-align: right; flex-shrink: 0">
+            <span style="font-size: 11px; font-weight: 700; color: #7b341e">Ready in 48 Hours</span>
+            <br />
+            <span style="font-size: 10px; color: #4a5568">Zero Agent Hassle</span>
+          </div>
+        </div>
+
+        <!-- Footer with QR Codes -->
+        <footer class="flyer-footer">
+          <div class="footer-contact-details">
+            <h4>No Need to Stand in Queues!</h4>
+            <p>
+              Simply send clear photos of your documents on WhatsApp. We verify and prepare your
+              application before submission.
+            </p>
+            <p class="phone-highlight">📱 WhatsApp Desk: +91 83697 04457</p>
+            <p style="font-size: 10px; color: #718096; margin-top: 3px">
+              Open Mon–Sat 9:30 AM – 8:30 PM • Walk-in: Shop No. 14, Subbalaxmi Sadan, Navghar Road,
+              Chandan Park
+            </p>
+          </div>
+
+          <div class="footer-qr-group">
+            <div class="qr-block">
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&amp;data=https%3A%2F%2Fwa.me%2F918369704457%3Ftext%3DHello%20Sarathi%20Digital%20Seva%20Kendra,%20I%20would%20like%20to%20enquire%20about%20business%20compliance"
+                alt="Scan to Chat on WhatsApp"
+              />
+              <span>Scan for WhatsApp</span>
+            </div>
+            <div class="qr-block">
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&amp;data=https%3A%2F%2Fshare.google%2FiWIPNvJLy2FVB1wBf"
+                alt="Scan for Directions on Google Maps"
+              />
+              <span>Shop Location Map</span>
+            </div>
+          </div>
+        </footer>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SHEET 2: COUNTER ACRYLIC TENT CARDS (2-UP) -->
+      <!-- ========================================== -->
+      <section class="print-sheet" id="sheet-counter-tent">
+        <div class="sheet-badge-indicator">
+          Page 2 • Counter Acrylic Tent Display Cards (Cut along center)
+        </div>
+
+        <div class="counter-panels-wrap">
+          <!-- Panel 1: Walk-in Upsell Display -->
+          <div class="tent-card-panel">
+            <span class="tent-tag">Counter Stand • Side A (Customer Facing)</span>
+            <div class="tent-content">
+              <h3>Opening a New Shop or Firm in Bhayander?</h3>
+              <p>Get legally registered and bank-ready without visiting government offices:</p>
+              <ul>
+                <li>✔ Gumasta / Shop Act License (24–48 Hours)</li>
+                <li>✔ Udyam MSME Certificate (Government Loan Eligibility)</li>
+                <li>✔ FSSAI Food License (For Eateries, Stalls &amp; Bakeries)</li>
+                <li>✔ Instant e-PAN &amp; Physical PAN Assistance</li>
+                <li>✔ 200 Visiting Cards + Self-Inking Business Stamp</li>
+              </ul>
+              <p style="font-weight: 700; color: #e67e22; margin-top: 8px">
+                Ask our counter desk right now for our Combo Packages!
+              </p>
+            </div>
+            <div class="tent-qr-box">
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&amp;data=https%3A%2F%2Fwa.me%2F918369704457%3Ftext%3DHello%20Sarathi,%20I%20am%20at%20your%20counter%20and%20want%20to%20enquire%20about%20business%20registration"
+                alt="WhatsApp QR Code"
+              />
+              <span>WhatsApp Desk</span>
+              <small>+91 83697 04457</small>
+            </div>
+          </div>
+
+          <!-- Panel 2: Google Review Discount Card -->
+          <div class="tent-card-panel review-panel">
+            <span class="tent-tag" style="color: #c05621"
+              >Cash Desk • Side B (Billing Counter)</span
+            >
+            <div class="tent-content">
+              <div class="stars-row">★★★★★</div>
+              <h3 style="color: #7b341e">Enjoyed our service today? Get ₹10 OFF!</h3>
+              <p>
+                Help our local Bhayander East center grow on Google Maps. It takes only 30 seconds:
+              </p>
+              <ul style="margin-top: 8px">
+                <li><strong>1.</strong> Scan the QR code with your mobile camera.</li>
+                <li><strong>2.</strong> Tap 5 Stars and write 1 line about your experience.</li>
+                <li>
+                  <strong>3.</strong> Show your screen to the desk for an
+                  <strong>instant ₹10 discount</strong> on today's bill!
+                </li>
+              </ul>
+              <p style="font-size: 11px; color: #718096; margin-top: 8px">
+                Thank you for supporting Sarathi Digital Seva Kendra! 🙏
+              </p>
+            </div>
+            <div class="tent-qr-box" style="border-color: #fbd38d; background: #fffaf0">
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&amp;data=https%3A%2F%2Fshare.google%2FiWIPNvJLy2FVB1wBf"
+                alt="Google Review QR Code"
+              />
+              <span style="color: #7b341e">Scan to Review</span>
+              <small>Google Maps</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SHEET 3: SIDEWALK STANDEE BLUEPRINT        -->
+      <!-- ========================================== -->
+      <section class="print-sheet" id="sheet-standee-spec">
+        <div class="sheet-badge-indicator">Page 3 • Sidewalk Flex Standee Production Blueprint</div>
+
+        <div class="standee-spec-grid">
+          <!-- Visual Standee Layout -->
+          <div class="standee-visual-preview">
+            <div>
+              <div
+                style="
+                  font-size: 10px;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  color: #f6ad55;
+                  font-weight: 700;
+                "
+              >
+                Bhayander East • Navghar Road
+              </div>
+              <h3 style="margin-top: 4px; font-size: 16px">SARATHI DIGITAL SEVA KENDRA</h3>
+              <div style="font-size: 9px; opacity: 0.8; margin-top: 2px">
+                (At Neelkanth Stationery, Chandan Park)
+              </div>
+            </div>
+
+            <div
+              style="
+                background: rgba(255, 255, 255, 0.1);
+                padding: 8px;
+                border-radius: 6px;
+                margin: 10px 0;
+              "
+            >
+              <div style="font-size: 11px; font-weight: 800; color: #fbd38d">
+                NEW SHOP COMPLIANCE
+              </div>
+              <div style="font-size: 9.5px">Gumasta • MSME • FSSAI in 48 Hrs</div>
+            </div>
+
+            <ul class="standee-services-list">
+              <li>✔ <strong>Shop Act (Gumasta)</strong> Registration</li>
+              <li>✔ <strong>Udyam MSME</strong> Loan Eligibility</li>
+              <li>✔ <strong>FSSAI Food License</strong> (Stalls/Cafes)</li>
+              <li>✔ <strong>GST</strong> Registration &amp; Return Filing</li>
+              <li>✔ <strong>Instant PAN</strong> &amp; Aadhaar Updates</li>
+              <li>✔ <strong>Passport</strong> Fresh &amp; Renewal Slots</li>
+              <li>✔ <strong>Student Forms</strong> &amp; Admission Desk</li>
+              <li>✔ <strong>Visiting Cards</strong>, Stamps &amp; Printing</li>
+            </ul>
+
+            <div style="background: #ffffff; color: #0d2847; padding: 8px; border-radius: 6px">
+              <div style="font-size: 9px; font-weight: 800">DON'T WAIT IN QUEUE!</div>
+              <div style="font-size: 8px; color: #4a5568">
+                Send documents on WhatsApp &amp; pick up prints
+              </div>
+              <div style="font-size: 11px; font-weight: 800; color: #c05621; margin-top: 2px">
+                📱 +91 83697 04457
+              </div>
+            </div>
+          </div>
+
+          <!-- Production & Material Spec Sheet -->
+          <div class="standee-notes">
+            <h4>Roll-Up Standee Production Guidelines for Local Flex Printer</h4>
+            <p style="font-size: 12px; color: #4a5568; margin-bottom: 12px">
+              Take these exact specifications to any digital print shop in Bhayander East (Station
+              Road or Navghar):
+            </p>
+
+            <ul>
+              <li>
+                <strong>Dimensions:</strong> Standard Roll-Up Standee is
+                <strong>2.5 feet wide x 5 feet tall</strong> (or 3 ft x 6 ft for outdoor sidewalk
+                placement).
+              </li>
+              <li>
+                <strong>Material:</strong> Star Flex (Non-tearable matte vinyl, minimum 280–340
+                GSM). Avoid glossy flex as sunlight reflection makes text hard to read.
+              </li>
+              <li>
+                <strong>Stand Hardware:</strong> Aluminum Roll-Up Stand base with top clip bar and
+                tension rod.
+              </li>
+              <li>
+                <strong>Placement Strategy on Navghar Road:</strong>
+                <ul style="margin-top: 4px">
+                  <li>
+                    Place perpendicular to the pavement flow so pedestrians heading towards
+                    Bhayander Station read it directly.
+                  </li>
+                  <li>
+                    Ensure the WhatsApp number and QR code are placed between 3.5 ft to 4.5 ft from
+                    the ground (natural eye/hand level for scanning).
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <strong>Estimated Local Cost:</strong> ₹650 – ₹900 including vinyl printing,
+                mounting, and aluminum standee frame.
+              </li>
+            </ul>
+
+            <div style="margin-top: 20px; padding: 12px; background: #edf2f7; border-radius: 6px">
+              <h5 style="font-size: 12px; font-weight: 800; color: #2d3748; margin-bottom: 4px">
+                Immediate Steps to Deploy:
+              </h5>
+              <ol style="margin-left: 18px; font-size: 11.5px; color: #4a5568; line-height: 1.5">
+                <li>
+                  Print <strong>Page 1</strong> (50 copies) to distribute to shops in Chandan Park
+                  &amp; Navghar Road.
+                </li>
+                <li>
+                  Print <strong>Page 2</strong> on thick 250 GSM paper or photo paper and slide into
+                  standard acrylic stands on your counter.
+                </li>
+                <li>Give this spec sheet to your flex printer for the sidewalk standee.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

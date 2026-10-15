@@ -295,7 +295,7 @@ output_html = f"""<!doctype html>
     <meta property="og:type" content="website" />
     <meta property="og:url" content="__SITE_URL__/digital-seva-kendra" />
     <meta property="og:title" content="Sarathi Digital Seva Kendra | Bhayander East, Mira-Bhayandar" />
-    <meta property="og:description" content="{total_services_count} citizen, business registration, pharmacy, food, student, and print services with clear upfront pricing. Walk-in at RNP Park or WhatsApp online support." />
+    <meta property="og:description" content="{total_services_count} citizen, business registration, pharmacy, food, student, and print services with clear upfront pricing. Walk-in at Navghar Road (Chandan Park) or WhatsApp online support." />
     <meta property="og:site_name" content="Sarathi Digital Seva Kendra" />
     <meta property="og:locale" content="en_IN" />
     <meta property="og:image" content="__SITE_URL__/assets/images/seva-citizen-services.jpg" />
@@ -337,7 +337,7 @@ output_html = f"""<!doctype html>
         "logo": "__SITE_URL__/01_icon_primary.png",
         "address": {{
           "@type": "PostalAddress",
-          "streetAddress": "RNP Park, Bhayander East",
+          "streetAddress": "Shop No. 14, Subbalaxmi Sadan, Navghar Road, Chandan Park, Bhayander East",
           "addressLocality": "Mira-Bhayandar, Thane",
           "addressRegion": "Maharashtra",
           "postalCode": "401105",
@@ -345,9 +345,13 @@ output_html = f"""<!doctype html>
         }},
         "geo": {{
           "@type": "GeoCoordinates",
-          "latitude": 19.3152633,
-          "longitude": 72.8586247
+          "latitude": 19.3032,
+          "longitude": 72.8576
         }},
+        "hasMap": "https://share.google/iWIPNvJLy2FVB1wBf",
+        "sameAs": [
+          "https://share.google/iWIPNvJLy2FVB1wBf"
+        ],
         "openingHoursSpecification": [
           {{
             "@type": "OpeningHoursSpecification",
@@ -359,6 +363,13 @@ output_html = f"""<!doctype html>
         "priceRange": "₹",
         "areaServed": [
           "Bhayander East",
+          "Navghar Road",
+          "Chandan Park",
+          "Indralok",
+          "Jesal Park",
+          "Navghar",
+          "Goddev",
+          "Cabin Road",
           "Bhayander West",
           "Mira Road",
           "Thane",
@@ -447,7 +458,7 @@ output_html = f"""<!doctype html>
             </span>
             <span class="seva-badge seva-badge--location">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
-              RNP Park, Bhayander East
+              Navghar Road, Chandan Park, Bhayander East
             </span>
             <span class="seva-badge seva-badge--verified">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -844,7 +855,7 @@ output_html = f"""<!doctype html>
                       <div class="seva-radio-group">
                         <label class="seva-radio-label">
                           <input type="radio" name="service-mode" value="walk-in" checked />
-                          <span>🏢 Walk-in at RNP Park Centre (Bhayander East)</span>
+                          <span>🏢 Walk-in at Navghar Road Centre (Chandan Park, Bhayander East)</span>
                         </label>
                         <label class="seva-radio-label">
                           <input type="radio" name="service-mode" value="online-wa" />
@@ -936,7 +947,7 @@ output_html = f"""<!doctype html>
           <div class="seva-trust-pillars-grid">
             <div class="seva-pillar-item">
               <span class="seva-pillar-icon" aria-hidden="true">🏢</span>
-              <h4>Physical Centre in RNP Park</h4>
+              <h4>Physical Centre on Navghar Road</h4>
               <p>Walk in anytime during operating hours for physical document check and instant printing.</p>
             </div>
             <div class="seva-pillar-item">
@@ -971,7 +982,7 @@ output_html = f"""<!doctype html>
             <div class="seva-step-card">
               <span class="seva-step-number">01</span>
               <h3>Enquire &amp; Document Review</h3>
-              <p>Send your document photos or PDFs on WhatsApp, or visit our centre at RNP Park Bhayander East. We inspect your papers for eligibility, missing details, and exact statutory fees.</p>
+              <p>Send your document photos or PDFs on WhatsApp, or visit our centre at Navghar Road (Chandan Park), Bhayander East. We inspect your papers for eligibility, missing details, and exact statutory fees.</p>
             </div>
             <div class="seva-step-card">
               <span class="seva-step-number">02</span>
@@ -993,7 +1004,7 @@ output_html = f"""<!doctype html>
           <div class="section-heading">
             <span class="tag-core">Visit Us in Bhayander East</span>
             <h2 id="contact-title">Timings, Location &amp; Contact Details</h2>
-            <p>Conveniently located at RNP Park with fast walk-in support and dedicated WhatsApp assistance.</p>
+            <p>Conveniently located at Chandan Park, Navghar Road with fast walk-in support and dedicated WhatsApp assistance.</p>
           </div>
 
           <div class="seva-contact-grid">
@@ -1008,8 +1019,8 @@ output_html = f"""<!doctype html>
                 </div>
                 <div>
                   <strong>Address &amp; Landmark</strong>
-                  <address>RNP Park, Bhayander East, Mira-Bhayandar, Thane, Maharashtra - 401105</address>
-                  <p class="seva-landmark-note">📍 7 mins walk from Bhayander Railway Station (East exit). Easily accessible by auto from Station Road or Golden Nest Flyover.</p>
+                  <address>Shop No. 14, Subbalaxmi Sadan (Rashmi Laxmi), Navghar Road, Chandan Park, Bhayander East, Mira-Bhayandar, Thane, Maharashtra - 401105</address>
+                  <p class="seva-landmark-note">📍 Located on Navghar Road in Chandan Park (Neelkanth Stationery). 5–7 mins from Bhayander Railway Station (East exit). Easily accessible by walk or auto.</p>
                 </div>
               </div>
 
@@ -1051,8 +1062,12 @@ output_html = f"""<!doctype html>
                 <a class="button button--ghost" href="tel:+918369704457">
                   <span>Call 83697 04457</span>
                 </a>
-                <a class="button button--outline" href="https://www.google.com/maps/search/?api=1&query=19.3152633,72.8586247" target="_blank" rel="noopener noreferrer">
+                <a class="button button--outline" href="https://share.google/iWIPNvJLy2FVB1wBf" target="_blank" rel="noopener noreferrer">
                   <span>Open in Google Maps &rarr;</span>
+                </a>
+                <a class="button button--ghost" href="sarathi-digital-seva.vcf" download="Sarathi-Digital-Seva-Kendra.vcf" title="Save Contact to Phone">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>Save Contact (vCard)</span>
                 </a>
               </div>
             </div>
@@ -1092,7 +1107,7 @@ output_html = f"""<!doctype html>
                 <span class="seva-faq-toggle" aria-hidden="true">+</span>
               </summary>
               <div class="seva-faq-answer">
-                <p>Sarathi Digital Seva Kendra is a digital facilitation centre based in RNP Park, Bhayander East. We assist citizens, students, and businesses with online government applications (PAN, Aadhaar appointment guidance, Voter ID), business compliance (Udyam MSME, Gumasta, GST, FSSAI), healthcare and property documentation (FDA drug licences, MahaRERA), resume drafting, online admissions, and high-quality printing, scanning, and lamination.</p>
+                <p>Sarathi Digital Seva Kendra is a digital facilitation centre based on Navghar Road (Chandan Park), Bhayander East. We assist citizens, students, and businesses with online government applications (PAN, Aadhaar appointment guidance, Voter ID), business compliance (Udyam MSME, Gumasta, GST, FSSAI), healthcare and property documentation (FDA drug licences, MahaRERA), resume drafting, online admissions, and high-quality printing, scanning, and lamination.</p>
               </div>
             </details>
 
@@ -1143,6 +1158,26 @@ output_html = f"""<!doctype html>
               </summary>
               <div class="seva-faq-answer">
                 <p>Timing depends on document readiness, portal availability, and processing by the issuing authority. Our desk will explain the expected steps after reviewing your documents. Please use the official acknowledgment to check progress after submission.</p>
+              </div>
+            </details>
+
+            <details class="seva-faq-item">
+              <summary class="seva-faq-question">
+                <span>Do you serve nearby areas like Chandan Park, Indralok, and Jesal Park?</span>
+                <span class="seva-faq-toggle" aria-hidden="true">+</span>
+              </summary>
+              <div class="seva-faq-answer">
+                <p>Yes. Our physical centre is located at Shop No. 14, Subbalaxmi Sadan on Navghar Road in Chandan Park. We actively assist residents, students, and businesses from Chandan Park, Indralok (Phases 1 to 6), Jesal Park, Navghar Village, Goddev, Cabin Road, Station Road, and across Mira-Bhayandar through walk-ins or our dedicated WhatsApp desk.</p>
+              </div>
+            </details>
+
+            <details class="seva-faq-item">
+              <summary class="seva-faq-question">
+                <span>How fast can I get a Shop Act (Gumasta) or FSSAI food license?</span>
+                <span class="seva-faq-toggle" aria-hidden="true">+</span>
+              </summary>
+              <div class="seva-faq-answer">
+                <p>Most basic registrations—such as Maharashtra Shop Act Intimation (Gumasta for under 10 employees) and Udyam MSME—are typically completed within 24 to 48 hours once all required documents (Aadhaar, PAN, electricity bill, rent agreement/ownership proof) are verified. FSSAI food safety registrations are submitted immediately upon verification, and we provide you with the application reference number and tracking slip on the same day.</p>
               </div>
             </details>
 
@@ -1260,7 +1295,7 @@ output_html = f"""<!doctype html>
               <span>•</span>
               <a href="mailto:sarathidigitalsevakendra@gmail.com">sarathidigitalsevakendra@gmail.com</a>
               <span>•</span>
-              <span>RNP Park, Bhayander East</span>
+              <span>Navghar Road, Chandan Park, Bhayander East</span>
             </div>
           </div>
 

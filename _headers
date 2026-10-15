@@ -68,5 +68,8 @@
 /cancellation-refund
   Cache-Control: public, max-age=0, must-revalidate
 
+/marketing-kit
+  Cache-Control: public, max-age=0, must-revalidate
+
 /404
   Cache-Control: public, max-age=0, must-revalidate
