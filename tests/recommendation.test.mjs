@@ -204,7 +204,8 @@ test("all planned services and their enquiry options reach the recommendation an
     "it",
     "automation",
     "tv",
-    "ev"
+    "ev",
+    "web"
   ]) {
     assert.ok(SERVICE_CATALOGUE[need], `Missing planned service: ${need}`);
     const values = Object.fromEntries(
@@ -229,7 +230,7 @@ test("all planned services and their enquiry options reach the recommendation an
     }
     const url = new URL(buildWhatsAppUrl(CONTACT_CONFIG.whatsappNumber, result.summary));
     assert.equal(url.searchParams.get("text"), result.summary);
-    if (["appliance", "electrical", "it", "tv", "ev"].includes(need))
+    if (["appliance", "electrical", "it", "tv", "ev", "web"].includes(need))
       assert.doesNotMatch(result.title, /Secure Start/);
   }
 });

@@ -14,7 +14,7 @@ export const CONTACT_CONFIG = Object.freeze({
   whatsappNumber: "918369704457",
   email: "sarathismartsolutions@gmail.com",
   address: "Bhayander East, Mira-Bhayandar, Thane - 401105",
-  serviceAreas: "Mira Road, Bhayandar, Thane, Dahisar, Borivali & Mumbai MMR",
+  serviceAreas: "Bhayandar, Mira Road, Naigaon, Vasai, Dahisar, Borivali, Thane & Mumbai MMR",
   disclaimer:
     "Final recommendation and pricing depend on site survey, equipment selection, cable length, installation conditions, and customer requirements."
 });
@@ -326,6 +326,35 @@ export const SERVICE_CATALOGUE = Object.freeze({
       )
     ],
     { category: "additional", ctaLabel: "Check EV Charger Feasibility →" }
+  ),
+  web: service(
+    "Website & digital business solutions",
+    "Business websites, Google Business setup, domains, hosting and digital branding.",
+    "M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm4 18h8m-4-4v4M9 9l-3 3 3 3m6-6 3 3-3 3",
+    [
+      "Single-page business website, Google Business Profile setup and local search listing",
+      "Multi-page responsive business website, domain & hosting setup, contact form and WhatsApp integration",
+      "Complete digital business presence: custom website, catalogue/portfolio, Google profile, and ongoing updates"
+    ],
+    [
+      choice("work", "Digital requirement", [
+        "New business website",
+        "Website redesign / update",
+        "Google Business Profile setup",
+        "Domain, hosting & email",
+        "Website maintenance / AMC"
+      ]),
+      choice("type", "Type of business", [
+        "Local shop / retail",
+        "Professional / office",
+        "Clinic / pharmacy / food",
+        "Housing society / trust",
+        "Commercial / industrial"
+      ]),
+      quantity("Number of pages or sites"),
+      note("Website details", "Reference websites, required features, or existing domain")
+    ],
+    { category: "additional", ctaLabel: "Discuss Digital Setup →" }
   )
 });
 
@@ -545,7 +574,7 @@ export function buildRecommendation({ space, needs, size, enquiryOptions = {} })
   // Calculate bundle complexity based on service count and installation scale
   const complexity = needs.length + (size === "Standard" ? 1 : size === "Large" ? 2 : 0);
   const includesCareService = needs.some((need) =>
-    ["electrical", "appliance", "it", "tv", "ev"].includes(need)
+    ["electrical", "appliance", "it", "tv", "ev", "web"].includes(need)
   );
   const cctvOptions =
     needs.includes("cctv") && Object.hasOwn(enquiryOptions, "cctv") ? enquiryOptions.cctv : {};

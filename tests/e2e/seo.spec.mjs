@@ -147,6 +147,7 @@ test("Digital Seva identifies its own service photo and business", async ({ page
   expect(photo).toContain("/assets/images/seva-citizen-services.jpg");
   const business = await page
     .locator('script[type="application/ld+json"]')
+    .first()
     .evaluate((script) => JSON.parse(script.textContent));
   expect(business.name).toBe("Sarathi Digital Seva Kendra");
   expect(business.image).toBe(photo);

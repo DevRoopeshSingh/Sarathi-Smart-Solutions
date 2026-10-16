@@ -29,7 +29,8 @@ for (const [id, work, detailField, detail] of [
   ["electrical", "Earthing / distribution board", "notes", "Kitchen power points"],
   ["tv", "TV wall mounting", "wall", "Concrete / brick"],
   ["ev", "New charger installation", "parking", "Housing society parking"],
-  ["it", "Server / business IT support", "notes", "Office backups & printer setup"]
+  ["it", "Server / business IT support", "notes", "Office backups & printer setup"],
+  ["web", "New business website", "type", "Local shop / retail"]
 ]) {
   test(`${id} can be selected from its card and sent as a detailed enquiry`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
