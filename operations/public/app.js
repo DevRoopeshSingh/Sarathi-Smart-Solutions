@@ -70,6 +70,37 @@ function serviceIcon(pathData, className) {
   return wrapper;
 }
 
+const SERVICE_MEDIA_MAP = {
+  cctv: {
+    src: "assets/images/camera-mounting-480.webp",
+    alt: "Dome CCTV camera mounted above doorway with clean wiring"
+  },
+  network: {
+    src: "assets/images/wifi-ap-installation-480.webp",
+    alt: "Ceiling mounted enterprise Wi-Fi access point"
+  },
+  amc: {
+    src: "assets/images/dvr-nvr-rack-480.webp",
+    alt: "Organized 6U network server rack with NVR and patch cabling"
+  },
+  biometric: {
+    src: "https://images.unsplash.com/photo-1585079374502-415f8516dcc3?auto=format&fit=crop&w=600&h=380&q=80",
+    alt: "Biometric attendance and fingerprint access control terminal"
+  },
+  intercom: {
+    src: "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=600&h=380&q=80",
+    alt: "Video intercom and digital door access station"
+  },
+  locks: {
+    src: "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=600&h=380&q=80",
+    alt: "Smart digital fingerprint and keypad door lock"
+  },
+  automation: {
+    src: "https://images.unsplash.com/photo-1756109726755-5740473869d8?auto=format&fit=crop&w=600&h=380&q=80",
+    alt: "Smart home automation tablet controlling lighting and climate"
+  }
+};
+
 /** Render both public cards and selectable needs from the same catalogue. */
 function renderCatalogue() {
   Object.entries(SERVICE_CATALOGUE).forEach(([id, entry], index) => {
@@ -106,6 +137,20 @@ function renderCatalogue() {
       body.append(heading);
       card.append(body);
     } else {
+      const mediaInfo = SERVICE_MEDIA_MAP[id];
+      if (mediaInfo) {
+        const media = element("div", "service-media");
+        media.setAttribute("data-image-placeholder", "");
+        const img = element("img");
+        img.src = mediaInfo.src;
+        img.alt = mediaInfo.alt;
+        img.width = 480;
+        img.height = 280;
+        img.loading = "lazy";
+        img.decoding = "async";
+        media.append(img);
+        card.append(media);
+      }
       body.append(
         categoryTag,
         element("h4", "", entry.label),
@@ -929,6 +974,58 @@ function initNavigation() {
   revealAnchor(window.location.hash);
 }
 
+function initSurveillanceMonitor() {
+  const monitor = document.querySelector("#surveillanceMonitor");
+  if (!monitor) return;
+
+  const clock = monitor.querySelector("#hudClock");
+  const channelDisplay = monitor.querySelector("#hudChannel");
+  const feedImg = monitor.querySelector("#monitorFeedImg");
+  const channelBtns = monitor.querySelectorAll(".channel-btn");
+  const irBtn = monitor.querySelector("#irModeBtn");
+  const screen = monitor.querySelector("#monitorScreen");
+
+  function updateClock() {
+    if (!clock) return;
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    clock.textContent = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  channelBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      channelBtns.forEach((b) => {
+        b.classList.remove("is-active");
+        b.setAttribute("aria-selected", "false");
+      });
+      btn.classList.add("is-active");
+      btn.setAttribute("aria-selected", "true");
+
+      const newSrc = btn.dataset.feedSrc;
+      const newCh = btn.dataset.feedCh;
+      const newDesc = btn.dataset.feedDesc;
+
+      if (feedImg && newSrc) {
+        feedImg.src = newSrc;
+        feedImg.alt = newDesc || "Surveillance camera feed simulation";
+      }
+      if (channelDisplay && newCh) {
+        channelDisplay.textContent = newCh;
+      }
+    });
+  });
+
+  if (irBtn && screen) {
+    irBtn.addEventListener("click", () => {
+      const isNight = screen.classList.toggle("night-vision-active");
+      irBtn.setAttribute("aria-pressed", isNight ? "true" : "false");
+      irBtn.classList.toggle("is-active", isNight);
+    });
+  }
+}
+
 // Initialise page
 initImagePlaceholders();
 initNavigation();
@@ -937,3 +1034,4 @@ showStep(1, { moveFocus: false });
 initFaqAccordion();
 initLeadForms();
 initAnalytics();
+initSurveillanceMonitor();

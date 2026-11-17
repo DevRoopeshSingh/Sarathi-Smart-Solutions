@@ -8,6 +8,21 @@ const description =
 export const metadata: Metadata = {
   title: "CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions",
   description,
+  keywords: [
+    "CCTV installation Mira Road",
+    "CCTV installation Bhayandar",
+    "CCTV setup Naigaon",
+    "CCTV camera Vasai",
+    "CCTV AMC Mira Bhayandar",
+    "smart home automation",
+    "Wi-Fi networking solutions",
+    "biometric attendance system",
+    "video door phone",
+    "smart TV mounting",
+    "IT computer support",
+    "website development Bhayandar",
+    "security systems Thane Mumbai MMR"
+  ],
   robots: { index: true, follow: true, "max-image-preview": "large" },
   alternates: {
     canonical: "/"
@@ -48,6 +63,7 @@ const websiteJsonLd = {
   "@id": `${siteUrl}/#website`,
   url: `${siteUrl}/`,
   name: "Sarathi Smart Solutions",
+  alternateName: ["Sarathi Smart Solutions", "Sarathi CCTV & Smart Solutions"],
   publisher: { "@id": `${siteUrl}/#business` }
 };
 
@@ -55,8 +71,9 @@ const businessJsonLd = {
   "@context": "https://schema.org",
   "@type": "HomeAndConstructionBusiness",
   name: "Sarathi Smart Solutions",
+  alternateName: ["Sarathi Smart Solutions", "Sarathi CCTV & Smart Solutions"],
   description:
-    "Turnkey CCTV camera installation, structured Wi‑Fi networking, and smart security systems for homes, shops, offices, and housing societies in Mira-Bhayandar, Thane, and Mumbai MMR.",
+    "Turnkey CCTV camera installation, Wi-Fi networking, smart-home automation, biometric access control, video intercoms, IT support, website development, and electrical/AC services for homes, shops, offices, and housing societies in Mira Road, Bhayandar, Naigaon, Vasai, Thane, and Mumbai MMR.",
   image: `${siteUrl}/assets/images/camera-mounting-1200.webp`,
   logo: `${siteUrl}/assets/brand/sarathi-cctv-logo-pack/sarathi-logo-light-2048.png`,
   telephone: "+918369704457",
@@ -69,17 +86,173 @@ const businessJsonLd = {
     postalCode: "401105",
     addressCountry: "IN"
   },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 19.3152633,
+    longitude: 72.8586247
+  },
+  hasMap: "https://share.google/yKDsOqWwMYGzaVRIh",
+  sameAs: ["https://share.google/yKDsOqWwMYGzaVRIh"],
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      opens: "09:00",
+      closes: "21:00"
+    }
+  ],
+  priceRange: "₹₹",
+  paymentAccepted: "Cash, UPI, Credit Card, Debit Card, Net Banking",
+  currenciesAccepted: "INR",
+  serviceType: [
+    "CCTV Surveillance & Security Systems",
+    "Wi-Fi, LAN & Structured Networking Solutions",
+    "Smart-Home Automation & Connected Devices",
+    "Video Doorbells, Intercoms & Access Control",
+    "Biometric Attendance Systems",
+    "Smart TV & Home Entertainment Setup",
+    "Computer, Printer & IT Support",
+    "Electrical & AC Services",
+    "Website Development & Digital Business Solutions",
+    "CCTV Repair, Maintenance & AMC Contracts"
+  ],
   areaServed: [
     "Mira Road",
     "Bhayandar East",
     "Bhayandar West",
+    "Naigaon",
+    "Vasai",
     "Thane",
     "Dahisar",
     "Borivali",
     "Mumbai MMR"
   ],
-  priceRange: "₹₹",
-  sameAs: ["https://share.google/yKDsOqWwMYGzaVRIh"],
+  knowsAbout: [
+    "CCTV Surveillance and Security Cameras",
+    "Wi-Fi, LAN and Structured Cabling",
+    "Smart Home Automation and IoT Systems",
+    "Video Door Phones and Intercom Solutions",
+    "Biometric Time Attendance and Access Control",
+    "Smart TV Installation and Audio Setup",
+    "Computer, Printer and IT Support",
+    "Electrical Wiring and Air Conditioning Servicing",
+    "Website Development and Digital Solutions",
+    "CCTV AMC and Preventive Maintenance"
+  ],
+  hasOfferCatalog: {
+    "@type": "OfferCatalog",
+    name: "Sarathi Smart Solutions Service Offerings",
+    itemListElement: [
+      {
+        "@type": "OfferCatalog",
+        name: "Security & Surveillance Systems",
+        itemListElement: [
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "CCTV Surveillance & Security Systems",
+              description:
+                "High-definition indoor/outdoor CCTV cameras, digital/network video recorders, night vision, and remote mobile viewing."
+            }
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Video Doorbells, Intercoms & Access Control",
+              description:
+                "Smart video door phones, multi-apartment intercoms, and digital door access control."
+            }
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Biometric Attendance Systems",
+              description:
+                "Fingerprint and facial recognition biometric attendance systems for offices and commercial establishments."
+            }
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "CCTV Repair, Maintenance & AMC Contracts",
+              description:
+                "Comprehensive and non-comprehensive Annual Maintenance Contracts (AMC), camera alignment, cable troubleshooting, and power supply repair."
+            }
+          }
+        ]
+      },
+      {
+        "@type": "OfferCatalog",
+        name: "Networking & Smart Automation",
+        itemListElement: [
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Wi-Fi, LAN & Networking Solutions",
+              description:
+                "High-speed mesh Wi-Fi, structured Ethernet cabling, routers, switches, and network rack setup."
+            }
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Smart-Home Automation & Connected Devices",
+              description:
+                "Smart switches, voice assistant integration (Alexa/Google), sensor automation, and app control."
+            }
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Smart TV & Home Entertainment Setup",
+              description:
+                "Professional TV wall mounting, concealed wiring, soundbar setup, and streaming device integration."
+            }
+          }
+        ]
+      },
+      {
+        "@type": "OfferCatalog",
+        name: "IT, Digital & Support Services",
+        itemListElement: [
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Computer, Printer & IT Support",
+              description:
+                "Desktop/laptop diagnostics, OS installation, network printer configuration, data backup, and technical troubleshooting."
+            }
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Website Development & Digital Business Solutions",
+              description:
+                "Responsive modern business websites, local SEO setup, Google Business Profile optimization, and digital tools."
+            }
+          },
+          {
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: "Electrical & AC Services",
+              description:
+                "Electrical wiring, earthing, switchboards, and split/window AC installation and maintenance through qualified technicians."
+            }
+          }
+        ]
+      }
+    ]
+  },
   "@id": `${siteUrl}/#business`,
   url: `${siteUrl}/`
 };
@@ -105,7 +278,8 @@ const webPageJsonLd = {
 const serviceJsonLd = {
   "@context": "https://schema.org",
   "@type": "Service",
-  serviceType: "CCTV installation",
+  name: "CCTV & Smart Technology Installation Services",
+  serviceType: "CCTV installation, security systems, networking, smart automation and IT support",
   provider: {
     "@id": `${siteUrl}/#business`
   },
@@ -113,20 +287,23 @@ const serviceJsonLd = {
     "Mira Road",
     "Bhayandar East",
     "Bhayandar West",
+    "Naigaon",
+    "Vasai",
     "Thane",
     "Dahisar",
     "Borivali",
     "Mumbai MMR"
   ],
   description:
-    "Professional turnkey CCTV camera installation, Wi‑Fi networking, smart locks, biometric access control, video intercoms, and smart automation in Mira-Bhayandar and Mumbai MMR.",
+    "Professional turnkey CCTV camera installation, Wi‑Fi networking, smart locks, biometric access control, video intercoms, smart automation, website development, and IT support in Mira-Bhayandar, Naigaon, Vasai and Mumbai MMR.",
   offers: {
     "@type": "AggregateOffer",
     priceCurrency: "INR",
     lowPrice: "13900",
     offerCount: "4"
   },
-  url: `${siteUrl}/#packages`
+  "@id": `${siteUrl}/#security-services`,
+  url: `${siteUrl}/#services`
 };
 
 const faqJsonLd = {

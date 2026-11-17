@@ -44,7 +44,7 @@ const pages = [
       },
       {
         title: "Local survey and ongoing support",
-        text: "Initial surveys in Mira Road and Bhayandar are free, subject to appointment availability. For Thane, Dahisar, Borivali, or other Mumbai MMR locations, confirm availability and any travel charge. Installation timing depends on cable routes, property access, permissions, and the agreed equipment.",
+        text: "Initial surveys in Mira Road and Bhayandar are free, subject to appointment availability. For Naigaon, Vasai, Thane, Dahisar, Borivali, or other Mumbai MMR locations, confirm availability and any travel charge. Installation timing depends on cable routes, property access, permissions, and the agreed equipment.",
         link: ["/cctv-repair-amc-mira-bhayandar", "Explore CCTV maintenance & repair →"]
       }
     ]
@@ -162,7 +162,17 @@ for (const page of pages) {
       url: `__SITE_URL__/${page.slug}`,
       mainEntityOfPage: `__SITE_URL__/${page.slug}`,
       image: `__SITE_URL__/assets/images/${page.image}`,
-      areaServed: ["Mira Road", "Bhayandar East", "Bhayandar West"],
+      areaServed: [
+        "Mira Road",
+        "Bhayandar East",
+        "Bhayandar West",
+        "Naigaon",
+        "Vasai",
+        "Thane",
+        "Dahisar",
+        "Borivali",
+        "Mumbai MMR"
+      ],
       provider: {
         "@type": "HomeAndConstructionBusiness",
         "@id": "__SITE_URL__/#business",
@@ -176,7 +186,28 @@ for (const page of pages) {
           addressRegion: "Maharashtra",
           postalCode: "401105",
           addressCountry: "IN"
-        }
+        },
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: 19.3152633,
+          longitude: 72.8586247
+        },
+        openingHoursSpecification: [
+          {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ],
+            opens: "09:00",
+            closes: "21:00"
+          }
+        ]
       }
     },
     {

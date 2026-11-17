@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60">
+  <g transform="translate(6, 12) scale(0.23)">
+    <path d="m0 111.36c0 4.1599 3.4759 8.3198 8.2158 8.3198h31.615v32.003c0 4.1599 3.4759 8.3198 8.2158 8.3198h27.031v-76.002h-75.078zm100.21-111.36c-33.035 0-59.427 26.559-59.427 59.355v12.644h33.187v-12.644c0-14.236 11.54-25.755 26.239-25.755 14.54 0 24.659 10.236 24.659 25.435 0 15.044-10.908 26.083-25.455 26.083h-12.484v33.591h12.484c32.411 0 58.651-26.711 58.651-59.679 0-34.231-24.499-59.031-57.855-59.031" fill="#00b4b6"/>
+  </g>
+  <text x="56" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="700" fill="#1e293b" letter-spacing="-0.5">tp-link</text>
+  <text x="135" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="16" font-weight="800" fill="#00b4b6" letter-spacing="0.5"> | Omada</text>
+</svg>
