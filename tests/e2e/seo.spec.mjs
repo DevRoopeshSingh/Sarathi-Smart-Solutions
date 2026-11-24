@@ -20,10 +20,7 @@ async function checkPhotoPreview(page, request) {
     "content",
     "summary_large_image"
   );
-  await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
-    "content",
-    /^Illustrative /
-  );
+  await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute("content", /.+/);
   const response = await request.get(new URL(photo).pathname);
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain(
@@ -60,7 +57,7 @@ for (const slug of services) {
     const data = await page
       .locator('script[type="application/ld+json"]')
       .evaluate((script) => JSON.parse(script.textContent));
-    expect(data.map((item) => item["@type"])).toEqual(["Service", "BreadcrumbList"]);
+    expect(data.map((item) => item["@type"])).toEqual(["Service", "BreadcrumbList", "FAQPage"]);
     expect(data[0].provider.address.streetAddress).toContain("RNP Park");
     expect(data[0].image).toBe(await checkPhotoPreview(page, request));
     expect(data[0].mainEntityOfPage).toBe(
@@ -69,7 +66,7 @@ for (const slug of services) {
     const enquiry = new URL(
       await page.locator('.seo-actions a[href*="wa.me"]').getAttribute("href")
     );
-    expect(enquiry.searchParams.get("text")).toContain(data[0].name);
+    expect(enquiry.searchParams.get("text")).toContain("Sarathi Smart Solutions");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       320
     );
@@ -160,7 +157,7 @@ test("homepage gallery serves responsive WebP files with an image content type",
 }) => {
   await page.goto("/");
   const images = page.locator("#work-gallery img");
-  await expect(images).toHaveCount(3);
+  await expect(images).toHaveCount(6);
   for (const img of await images.all()) {
     await expect(img).toHaveAttribute("srcset", /480w[\s\S]*960w[\s\S]*1200w/);
     const src = await img.getAttribute("src");

@@ -6,6 +6,8 @@ export const PUBLIC_FILES = Object.freeze([
   "cctv-installation-mira-bhayandar.html",
   "cctv-repair-amc-mira-bhayandar.html",
   "housing-society-cctv-mira-bhayandar.html",
+  "wifi-networking-mira-bhayandar.html",
+  "smart-home-automation-mira-bhayandar.html",
   "assets/images/camera-mounting-480.webp",
   "assets/images/camera-mounting-960.webp",
   "assets/images/camera-mounting-1200.webp",

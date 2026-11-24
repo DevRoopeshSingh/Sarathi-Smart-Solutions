@@ -53,6 +53,12 @@
 /housing-society-cctv-mira-bhayandar
   Cache-Control: public, max-age=0, must-revalidate
 
+/wifi-networking-mira-bhayandar
+  Cache-Control: public, max-age=0, must-revalidate
+
+/smart-home-automation-mira-bhayandar
+  Cache-Control: public, max-age=0, must-revalidate
+
 /privacy
   Cache-Control: public, max-age=0, must-revalidate
 

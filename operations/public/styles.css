@@ -597,7 +597,28 @@ svg {
 }
 
 /* Mobile dropdown navigation */
-@media (max-width: 919px) {
+@media (max-width: 920px) {
+  .site-header {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .header-actions {
+    gap: 6px;
+    margin-left: auto;
+  }
+  .header-phone span,
+  .header-whatsapp-btn span {
+    display: none;
+  }
+  .header-phone,
+  .header-whatsapp-btn {
+    padding: 8px 10px;
+    min-width: 36px;
+    justify-content: center;
+  }
+  .menu-toggle {
+    padding: 8px 10px;
+  }
   .header-nav {
     position: absolute;
     top: 74px;
@@ -621,15 +642,59 @@ svg {
     border-radius: var(--radius-md);
     background: var(--bg-subtle);
   }
-  .header-phone span {
-    display: none;
+}
+
+@media (max-width: 420px) {
+  .site-header {
+    padding: 0 8px;
+    gap: 4px;
   }
-  .header-phone {
-    padding: 8px 10px;
+  .brand-logo {
+    width: 36px;
+    height: 36px;
+  }
+  .brand {
+    gap: 6px;
+  }
+  .brand-copy strong {
+    font-size: 0.95rem;
+  }
+  .brand-copy small {
+    font-size: 0.6rem;
+  }
+  .menu-toggle {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+  .header-phone,
+  .header-whatsapp-btn {
+    padding: 6px 8px;
   }
 }
 
-@media (min-width: 920px) {
+@media (min-width: 921px) and (max-width: 1150px) {
+  .header-actions .header-phone span,
+  .header-actions .header-whatsapp-btn span {
+    display: none;
+  }
+  .header-actions .header-phone,
+  .header-actions .header-whatsapp-btn {
+    padding: 8px 10px;
+  }
+  .header-nav {
+    gap: 10px;
+  }
+  .header-link {
+    font-size: 0.8rem;
+  }
+  .site-header {
+    gap: 10px;
+    padding: 0 16px;
+  }
+}
+
+@media (min-width: 921px) {
   .site-header {
     height: 80px;
   }
@@ -1839,6 +1904,44 @@ input:checked + .choice-check {
   color: var(--text-secondary);
 }
 
+.gallery-filter-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 24px;
+}
+
+.gallery-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 38px;
+}
+
+.gallery-filter-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.gallery-filter-btn.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 166, 244, 0.25);
+}
+
+.proof-card.is-hidden {
+  display: none !important;
+}
+
 /* ==========================================================================
    Video Showcase & Live Surveillance Monitor
    ========================================================================== */
@@ -2416,6 +2519,16 @@ input:checked + .choice-check {
   margin: 0;
 }
 
+.brands-disclaimer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  text-align: center;
+}
+
 /* ==========================================================================
    Horizontal Scrolling Packages Section (HomeTriangle Style)
    ========================================================================== */
@@ -2752,6 +2865,7 @@ input:checked + .choice-check {
 
 .quote-table {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.85rem;
@@ -2988,6 +3102,299 @@ input:checked + .choice-check {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   text-decoration: none !important;
+}
+
+/* ==========================================================================
+   About Sarathi Smart Solutions
+   ========================================================================== */
+
+.about-section {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 48px 20px;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 700px) {
+  .about-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .about-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.about-card {
+  padding: 28px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.about-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-border);
+}
+
+.about-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+  border: 1px solid var(--primary-border);
+}
+
+.about-card-icon svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.about-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.about-card p {
+  margin: 0 0 16px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.about-card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--line-light);
+  padding-top: 14px;
+}
+
+.about-card-list li {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  position: relative;
+  padding-left: 14px;
+}
+
+.about-card-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+}
+
+/* ==========================================================================
+   Customer Reviews & Google Profile
+   ========================================================================== */
+
+.reviews-section {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 48px 20px;
+}
+
+.google-rating-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 24px 28px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 28px;
+}
+
+.grb-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.google-badge-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.grb-text strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.grb-stars {
+  color: #f59e0b;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.grb-stars .rating-num {
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-left: 6px;
+}
+
+.grb-text small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.grb-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reviews-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .reviews-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.review-card {
+  padding: 24px 22px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.review-card.review-card--framework {
+  border: 1.5px dashed var(--line);
+  background: var(--bg-subtle);
+}
+
+.review-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.review-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.review-author strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.review-author small {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.review-stars {
+  color: #f59e0b;
+  font-size: 0.88rem;
+  letter-spacing: 1px;
+}
+
+.review-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 16px;
+  flex: 1;
+}
+
+.review-footer {
+  border-top: 1px solid var(--line-light);
+  padding-top: 12px;
+  margin-top: auto;
+}
+
+.verified-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #166534;
+  background: #dcfce7;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.reviews-disclaimer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
 /* ==========================================================================
@@ -3708,6 +4115,15 @@ input:checked + .choice-check {
   font-size: 0.85rem;
 }
 
+.lead-handoff .button {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
 /* ==========================================================================
    Floating Contact Bar (Mobile & Desktop Quick Actions)
    ========================================================================== */
@@ -3802,6 +4218,12 @@ input:checked + .choice-check {
   }
   body {
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 768px) {
+  .floating-contact .call-pill {
+    display: none;
   }
 }
 
@@ -3980,6 +4402,8 @@ input:checked + .choice-check {
   *,
   *::before,
   *::after {
+    animation-name: none !important;
+    animation: none !important;
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -4073,8 +4497,22 @@ input:checked + .choice-check {
 .seva-header-sticky .site-header {
   border-bottom: none;
   height: 72px;
-  width: min(1280px, calc(100% - 32px));
-  gap: clamp(14px, 2vw, 24px);
+  width: 100%;
+  max-width: 1280px;
+  padding: 0 16px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  gap: 12px;
+}
+.seva-body .header-nav {
+  gap: 10px;
+}
+.seva-body .header-link {
+  font-size: 0.82rem;
+  padding: 6px 8px;
+}
+.seva-body .brand {
+  gap: 8px;
 }
 
 /* Header Links */
@@ -6702,15 +7140,158 @@ input:checked + .choice-check {
   align-items: center;
   min-height: 44px;
 }
+
+/* ==========================================================================
+   Service Pages Enhancements: Hero Media, FAQs & Local Service Areas
+   ========================================================================== */
+
+.seo-hero-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: center;
+  margin-bottom: 36px;
+}
+
+@media (min-width: 900px) {
+  .seo-hero-layout {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
+.seo-media-card {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--navy-900);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.seo-media-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  aspect-ratio: 16 / 10;
+}
+
+.seo-media-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(7, 19, 31, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.seo-faq-section {
+  margin-top: 48px;
+  padding-top: 36px;
+  border-top: 1px solid var(--line);
+}
+
+.seo-faq-section h2 {
+  font-size: 1.5rem;
+  margin: 0 0 10px;
+}
+
+.seo-faq-section > p {
+  color: #bdcdda;
+  font-size: 0.95rem;
+  margin: 0 0 24px;
+  max-width: 700px;
+}
+
+.seo-faq-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .seo-faq-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.seo-faq-card {
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--navy-900);
+}
+
+.seo-faq-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.seo-faq-card p {
+  margin: 0;
+  color: #bdcdda;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.seo-areas-card {
+  margin-top: 28px;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--navy-900);
+}
+
+.seo-areas-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+.seo-areas-card p {
+  margin: 0 0 12px;
+  color: #bdcdda;
+  font-size: 0.9rem;
+}
+
+.seo-areas-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.seo-area-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 166, 244, 0.1);
+  border: 1px solid rgba(0, 166, 244, 0.25);
+  color: var(--cyan);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 @media (max-width: 639px) {
   .seo-service-hero {
     padding: 32px 0;
   }
   .seo-detail-grid,
-  .seo-related-links {
+  .seo-related-links,
+  .seo-faq-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-  .seo-detail-card {
+  .seo-detail-card,
+  .seo-faq-card,
+  .seo-areas-card {
     padding: 22px;
   }
   .seo-actions .button {

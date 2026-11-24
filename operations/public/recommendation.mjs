@@ -463,6 +463,46 @@ export function buildWhatsAppUrl(phoneNumber, messageText) {
 }
 
 /**
+ * Pre-filled service-specific enquiry messages designed for high conversion.
+ */
+export const SERVICE_WHATSAPP_MESSAGES = Object.freeze({
+  cctv: "Hello Sarathi Smart Solutions, I am interested in CCTV installation. Please share available packages and arrange a site survey.",
+  network:
+    "Hello Sarathi Smart Solutions, I need Wi-Fi/networking installation. Please contact me regarding the available solutions.",
+  automation:
+    "Hello Sarathi Smart Solutions, I am interested in smart home automation. Please share the available options.",
+  amc: "Hello Sarathi Smart Solutions, I need CCTV repair or maintenance support. Please contact me.",
+  locks:
+    "Hello Sarathi Smart Solutions, I am interested in smart digital locks. Please share the available options.",
+  intercom:
+    "Hello Sarathi Smart Solutions, I am interested in video doorbell/intercom setup. Please share the available options.",
+  biometric:
+    "Hello Sarathi Smart Solutions, I need biometric attendance / access control. Please contact me regarding available solutions.",
+  electrical:
+    "Hello Sarathi Smart Solutions, I need electrical / wiring service support. Please contact me.",
+  appliance:
+    "Hello Sarathi Smart Solutions, I need AC / refrigerator service or repair support. Please contact me.",
+  it: "Hello Sarathi Smart Solutions, I need IT / computer support for my office/home. Please contact me.",
+  tv: "Hello Sarathi Smart Solutions, I need smart TV installation / wall mounting service. Please contact me.",
+  ev: "Hello Sarathi Smart Solutions, I need EV charger installation / feasibility guidance. Please contact me.",
+  web: "Hello Sarathi Smart Solutions, I am interested in website development and digital solutions. Please contact me."
+});
+
+/**
+ * Constructs a safely-encoded WhatsApp Click-to-Chat URL for a specific service.
+ *
+ * @param {string} serviceId - Catalogue service identifier
+ * @param {string} [phoneNumber=CONTACT_CONFIG.whatsappNumber] - Destination phone number
+ * @returns {string} Secure https://wa.me URL
+ */
+export function getServiceWhatsAppUrl(serviceId, phoneNumber = CONTACT_CONFIG.whatsappNumber) {
+  const message =
+    SERVICE_WHATSAPP_MESSAGES[serviceId] ||
+    `Hello Sarathi Smart Solutions, I would like to enquire about ${NEED_LABELS[serviceId] || "your services"}.`;
+  return buildWhatsAppUrl(phoneNumber, message);
+}
+
+/**
  * Formats a consistent, structured lead enquiry for WhatsApp.
  * Follows the standard customer site-survey request format.
  */

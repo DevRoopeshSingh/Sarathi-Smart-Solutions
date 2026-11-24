@@ -25,7 +25,9 @@ test.describe("Sarathi Smart Solutions Website & Planner", () => {
       panel.open = true;
     });
 
-    await expect(page).toHaveTitle("CCTV Installation in Mira-Bhayandar | Sarathi Smart Solutions");
+    await expect(page).toHaveTitle(
+      "Sarathi Smart Solutions | CCTV, Wi-Fi & Smart Home Automation in Mira-Bhayandar"
+    );
 
     const brand = page.locator(".brand").first();
     await expect(brand).toBeVisible();

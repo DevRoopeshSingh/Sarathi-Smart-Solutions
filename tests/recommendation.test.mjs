@@ -4,6 +4,8 @@ import {
   buildRecommendation,
   formatEnquiryMessage,
   buildWhatsAppUrl,
+  SERVICE_WHATSAPP_MESSAGES,
+  getServiceWhatsAppUrl,
   CONTACT_CONFIG,
   NEED_LABELS,
   SIZE_OPTIONS,
@@ -367,4 +369,34 @@ test("buildWhatsAppUrl generates safe, properly formatted wa.me URLs", () => {
 
   const fallbackUrl = buildWhatsAppUrl("918369704457", "");
   assert.equal(fallbackUrl, "https://wa.me/918369704457?text=");
+});
+
+test("SERVICE_WHATSAPP_MESSAGES provides tailored, conversion-focused messages for all core services", () => {
+  assert.equal(
+    SERVICE_WHATSAPP_MESSAGES.cctv,
+    "Hello Sarathi Smart Solutions, I am interested in CCTV installation. Please share available packages and arrange a site survey."
+  );
+  assert.equal(
+    SERVICE_WHATSAPP_MESSAGES.network,
+    "Hello Sarathi Smart Solutions, I need Wi-Fi/networking installation. Please contact me regarding the available solutions."
+  );
+  assert.equal(
+    SERVICE_WHATSAPP_MESSAGES.automation,
+    "Hello Sarathi Smart Solutions, I am interested in smart home automation. Please share the available options."
+  );
+  assert.equal(
+    SERVICE_WHATSAPP_MESSAGES.amc,
+    "Hello Sarathi Smart Solutions, I need CCTV repair or maintenance support. Please contact me."
+  );
+
+  for (const serviceId of Object.keys(SERVICE_CATALOGUE)) {
+    assert.ok(
+      typeof SERVICE_WHATSAPP_MESSAGES[serviceId] === "string" &&
+        SERVICE_WHATSAPP_MESSAGES[serviceId].length > 10,
+      `Service ${serviceId} must have a valid WhatsApp message`
+    );
+    const url = getServiceWhatsAppUrl(serviceId);
+    assert.match(url, /^https:\/\/wa\.me\/918369704457\?text=/);
+    assert.ok(!url.includes(" "));
+  }
 });

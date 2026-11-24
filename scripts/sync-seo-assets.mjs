@@ -15,7 +15,7 @@ const files = PUBLIC_FILES.filter(
     file.startsWith("assets/brand/") ||
     file.startsWith("assets/images/seva-") ||
     file.endsWith(".webp") ||
-    /^(cctv-|housing-society-cctv-).*\.html$/.test(file)
+    /^(cctv-|housing-society-cctv-|wifi-|smart-home-).*\.html$/.test(file)
 );
 for (const file of files) {
   const destination = new URL(`../operations/public/${file}`, import.meta.url);
@@ -40,8 +40,10 @@ await writeFile(
   new URL("../operations/src/lib/seo-sitemap.json", import.meta.url),
   JSON.stringify(entries, null, 2) + "\n"
 );
-// Native Next.js metadata routes now own these URLs; public copies would conflict.
-for (const file of ["robots.txt", "sitemap.xml"]) {
-  await rm(new URL(`../operations/public/${file}`, import.meta.url), { force: true });
-}
+// Sync sitemap.xml to operations/public for repository consistency; Next.js metadata routes own robots.txt.
+await copyFile(
+  new URL("../sitemap.xml", import.meta.url),
+  new URL("../operations/public/sitemap.xml", import.meta.url)
+);
+await rm(new URL("../operations/public/robots.txt", import.meta.url), { force: true });
 console.log(`Synced ${files.length} SEO assets and ${entries.length} sitemap entries.`);

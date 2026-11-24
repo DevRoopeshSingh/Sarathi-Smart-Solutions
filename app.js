@@ -84,20 +84,20 @@ const SERVICE_MEDIA_MAP = {
     alt: "Organized 6U network server rack with NVR and patch cabling"
   },
   biometric: {
-    src: "https://images.unsplash.com/photo-1585079374502-415f8516dcc3?auto=format&fit=crop&w=600&h=380&q=80",
-    alt: "Biometric attendance and fingerprint access control terminal"
+    src: "assets/images/cable-casing-finish-480.webp",
+    alt: "Biometric attendance and fingerprint access control terminal with protected wiring"
   },
   intercom: {
-    src: "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=600&h=380&q=80",
-    alt: "Video intercom and digital door access station"
+    src: "assets/images/camera-mounting-480.webp",
+    alt: "Video intercom and digital door access station installation"
   },
   locks: {
-    src: "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=600&h=380&q=80",
-    alt: "Smart digital fingerprint and keypad door lock"
+    src: "assets/images/cable-casing-finish-480.webp",
+    alt: "Smart digital fingerprint and keypad door lock with neat finish"
   },
   automation: {
-    src: "https://images.unsplash.com/photo-1756109726755-5740473869d8?auto=format&fit=crop&w=600&h=380&q=80",
-    alt: "Smart home automation tablet controlling lighting and climate"
+    src: "assets/images/wifi-ap-installation-480.webp",
+    alt: "Smart home automation controller and wireless network installation"
   }
 };
 
@@ -1026,6 +1026,38 @@ function initSurveillanceMonitor() {
   }
 }
 
+/**
+ * Initialises interactive category filter controls for the installation portfolio gallery.
+ */
+function initGalleryFilters() {
+  const filterNav = document.querySelector(".gallery-filter-nav");
+  if (!filterNav) return;
+
+  const filterBtns = filterNav.querySelectorAll(".gallery-filter-btn");
+  const proofCards = document.querySelectorAll("#work-gallery .proof-card");
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach((b) => {
+        b.classList.remove("is-active");
+        b.setAttribute("aria-selected", "false");
+      });
+      btn.classList.add("is-active");
+      btn.setAttribute("aria-selected", "true");
+
+      const filter = btn.dataset.filter;
+      proofCards.forEach((card) => {
+        const category = card.dataset.galleryCategory;
+        if (filter === "all" || category === filter) {
+          card.classList.remove("is-hidden");
+        } else {
+          card.classList.add("is-hidden");
+        }
+      });
+    });
+  });
+}
+
 // Initialise page
 initImagePlaceholders();
 initNavigation();
@@ -1035,3 +1067,4 @@ initFaqAccordion();
 initLeadForms();
 initAnalytics();
 initSurveillanceMonitor();
+initGalleryFilters();
